@@ -8,6 +8,7 @@ import (
 // Service interface
 type Service interface {
 	ListDefinitionByConnectorType(pageSize int, pageCursor string, connectorType string) ([]datamodel.ConnectorDefinition, string, error)
+	GetDefinition(ID string) (*datamodel.ConnectorDefinition, error)
 }
 
 type service struct {
@@ -23,4 +24,8 @@ func NewService(r repository.Repository) Service {
 
 func (s *service) ListDefinitionByConnectorType(pageSize int, pageCursor string, connectorType string) ([]datamodel.ConnectorDefinition, string, error) {
 	return s.repository.ListDefinitionByConnectorType(pageSize, pageCursor, connectorType)
+}
+
+func (s *service) GetDefinition(ID string) (*datamodel.ConnectorDefinition, error) {
+	return s.repository.GetDefinition(ID)
 }

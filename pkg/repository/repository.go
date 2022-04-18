@@ -4,8 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"google.golang.org/grpc/codes"
 	"gorm.io/gorm"
 
+	"github.com/gogo/status"
 	"github.com/instill-ai/connector-backend/internal/paginate"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 )
@@ -13,6 +15,7 @@ import (
 // Repository interface
 type Repository interface {
 	ListDefinitionByConnectorType(pageSize int, pageCursor string, connectorType string) ([]datamodel.ConnectorDefinition, string, error)
+	GetDefinition(ID string) (*datamodel.ConnectorDefinition, error)
 }
 
 type repository struct {
@@ -64,4 +67,14 @@ func (r *repository) ListDefinitionByConnectorType(pageSize int, pageCursor stri
 	}
 
 	return nil, "", nil
+}
+
+func (r *repository) GetDefinition(ID string) (*datamodel.ConnectorDefinition, error) {
+	var connectorDefinition datamodel.ConnectorDefinition
+	if result := r.db.Model(&datamodel.ConnectorDefinition{}).
+		Where("id = ?", ID).
+		First(&connectorDefinition); result.Error != nil {
+		return nil, status.Errorf(codes.NotFound, "The connector id %s you specified is not found", ID)
+	}
+	return &connectorDefinition, nil
 }

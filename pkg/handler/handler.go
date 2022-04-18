@@ -13,6 +13,7 @@ type handler struct {
 	service service.Service
 }
 
+// NewHandler initiates a handler instance
 func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
 	return &handler{
 		service: s,
@@ -35,9 +36,9 @@ func (h *handler) Readiness(ctx context.Context, in *connectorPB.ReadinessReques
 	}, nil
 }
 
-func (h *handler) ListSourceDefinition(ctx context.Context, in *connectorPB.ListSourceDefinitionRequest) (*connectorPB.ListSourceDefinitionResponse, error) {
+func (h *handler) ListSourceDefinition(ctx context.Context, req *connectorPB.ListSourceDefinitionRequest) (*connectorPB.ListSourceDefinitionResponse, error) {
 
-	dbSrcDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(int(in.PageSize), in.PageCursor, "CONNECTOR_TYPE_SOURCE")
+	dbSrcDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(int(req.PageSize), req.PageCursor, "CONNECTOR_TYPE_SOURCE")
 	if err != nil {
 		return &connectorPB.ListSourceDefinitionResponse{}, err
 	}
@@ -55,9 +56,21 @@ func (h *handler) ListSourceDefinition(ctx context.Context, in *connectorPB.List
 	return &resp, nil
 }
 
-func (h *handler) ListDestinationDefinition(ctx context.Context, in *connectorPB.ListDestinationDefinitionRequest) (*connectorPB.ListDestinationDefinitionResponse, error) {
+func (h *handler) GetSourceDefinition(ctx context.Context, req *connectorPB.GetSourceDefinitionRequest) (*connectorPB.GetSourceDefinitionResponse, error) {
+	dbSrcDef, err := h.service.GetDefinition(req.Id)
+	if err != nil {
+		return &connectorPB.GetSourceDefinitionResponse{}, err
+	}
+	pbSrcDef := convertDBSourceDefinitionToPBSourceDefinition(dbSrcDef)
+	resp := connectorPB.GetSourceDefinitionResponse{
+		SourceDefinition: pbSrcDef,
+	}
+	return &resp, nil
+}
 
-	dbDstDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(int(in.PageSize), in.PageCursor, "CONNECTOR_TYPE_DESTINATION")
+func (h *handler) ListDestinationDefinition(ctx context.Context, req *connectorPB.ListDestinationDefinitionRequest) (*connectorPB.ListDestinationDefinitionResponse, error) {
+
+	dbDstDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(int(req.PageSize), req.PageCursor, "CONNECTOR_TYPE_DESTINATION")
 	if err != nil {
 		return &connectorPB.ListDestinationDefinitionResponse{}, err
 	}
@@ -72,5 +85,17 @@ func (h *handler) ListDestinationDefinition(ctx context.Context, in *connectorPB
 		NextPageCursor:         nextPageCursor,
 	}
 
+	return &resp, nil
+}
+
+func (h *handler) GetDestinationDefinition(ctx context.Context, req *connectorPB.GetDestinationDefinitionRequest) (*connectorPB.GetDestinationDefinitionResponse, error) {
+	dbDstDef, err := h.service.GetDefinition(req.Id)
+	if err != nil {
+		return &connectorPB.GetDestinationDefinitionResponse{}, err
+	}
+	pbDstDef := convertDBDestinationDefinitionToPBDestinationDefinition(dbDstDef)
+	resp := connectorPB.GetDestinationDefinitionResponse{
+		DestinationDefinition: pbDstDef,
+	}
 	return &resp, nil
 }
