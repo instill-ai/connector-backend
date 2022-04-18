@@ -1,0 +1,10 @@
+- name: http
+  destinationDefinitionId: 909c3278-f7d1-461c-9352-87741bef11d3
+  documentationUrl: https://docs.instill.tech/integrations/sources/http
+  icon: http.svg
+  destinationType: directness
+- name: gRPC
+  destinationDefinitionId: c0e4a82c-9620-4a72-abd1-18586f2acccd
+  documentationUrl: https://docs.instill.tech/integrations/sources/grpc
+  icon: grpc.svg
+  destinationType: directness
