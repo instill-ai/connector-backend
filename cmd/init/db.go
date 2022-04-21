@@ -12,41 +12,66 @@ import (
 
 func createConnectorDefinitionRecord(
 	db *gorm.DB,
-	Name string,
-	ID uuid.UUID,
-	DockerRepository string,
-	DockerImageTag string,
-	DocumentationURL string,
-	Icon string,
-	Tombstone bool,
-	Public bool,
-	Custom bool,
-	ReleaseDate *time.Time,
-	Spec datatypes.JSON,
-	ResourceRequirements datatypes.JSON,
-	ConnectorType datamodel.ValidConectorType,
-	ConnectionType *datamodel.ValidConnectionType,
-	ReleaseStage *datamodel.ValidReleaseStage) error {
+	name string,
+	id uuid.UUID,
+	dockerRepository string,
+	dockerImageTag string,
+	documentationURL string,
+	icon string,
+	tombstone bool,
+	public bool,
+	custom bool,
+	releaseDate *time.Time,
+	spec datatypes.JSON,
+	resourceRequirements datatypes.JSON,
+	connectorType datamodel.ValidConectorType,
+	connectionType *datamodel.ValidConnectionType,
+	releaseStage *datamodel.ValidReleaseStage) error {
 
 	connectorDef := datamodel.ConnectorDefinition{
-		Name:                 Name,
-		DockerRepository:     DockerRepository,
-		DockerImageTag:       DockerImageTag,
-		DocumentationURL:     DocumentationURL,
-		Icon:                 Icon,
-		Spec:                 Spec,
-		Tombstone:            Tombstone,
-		ResourceRequirements: ResourceRequirements,
-		Public:               true, // Public field is not used in definition yaml. Set it to true by default now.
-		Custom:               Custom,
-		ConnectorType:        ConnectorType,
-		BaseStatic:           datamodel.BaseStatic{ID: ID},
-		ReleaseDate:          ReleaseDate,
-		ConnectionType:       ConnectionType,
-		ReleaseStage:         ReleaseStage,
+		BaseStatic:           datamodel.BaseStatic{ID: id},
+		Name:                 name,
+		DockerRepository:     dockerRepository,
+		DockerImageTag:       dockerImageTag,
+		DocumentationURL:     documentationURL,
+		Icon:                 icon,
+		Spec:                 spec,
+		Tombstone:            tombstone,
+		ResourceRequirements: resourceRequirements,
+		Public:               public, // Public field is not used in definition yaml. Set it to true by default now.
+		Custom:               custom,
+		ConnectorType:        connectorType,
+		ReleaseDate:          releaseDate,
+		ConnectionType:       connectionType,
+		ReleaseStage:         releaseStage,
 	}
 
 	if result := db.Model(&datamodel.ConnectorDefinition{}).Create(&connectorDef); result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
+
+func createDirectnessConnector(
+	db *gorm.DB,
+	workspaceID uuid.UUID,
+	connectorDefinitionID uuid.UUID,
+	name string,
+	tombstone bool,
+	configuration datatypes.JSON,
+	connectorType datamodel.ValidConectorType) error {
+
+	directnessConnector := datamodel.Connector{
+		WorkspaceID:           workspaceID,
+		ConnectorDefinitionID: connectorDefinitionID,
+		Name:                  name,
+		Tombstone:             tombstone,
+		Configuration:         configuration,
+		ConnectorType:         connectorType,
+	}
+
+	if result := db.Model(&datamodel.Connector{}).Create(&directnessConnector); result.Error != nil {
 		return result.Error
 	}
 

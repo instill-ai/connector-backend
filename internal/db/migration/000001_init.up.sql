@@ -39,6 +39,7 @@ CREATE INDEX connector_definition_id_created_at_pagination ON public.connector_d
 -- connector
 CREATE TABLE public.connector(
   id UUID NOT NULL,
+  workspace_id UUID NOT NULL,
   connector_definition_id UUID NOT NULL,
   name VARCHAR(256) NOT NULL,
   configuration JSONB NOT NULL,

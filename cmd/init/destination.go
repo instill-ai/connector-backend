@@ -20,7 +20,7 @@ import (
 func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.DestinationDefinition, spec datatypes.JSON) error {
 	logger, _ := logger.GetZapLogger()
 
-	ID, err := uuid.FromString(dstDef.GetDestinationDefinitionId())
+	id, err := uuid.FromString(dstDef.GetDestinationDefinitionId())
 	if err != nil {
 		return err
 	}
@@ -65,13 +65,13 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.Desti
 	if err := createConnectorDefinitionRecord(
 		db,
 		dstDef.GetName(),
-		ID,
+		id,
 		dstDef.GetDockerRepository(),
 		dstDef.GetDockerImageTag(),
 		dstDef.GetDocumentationUrl(),
 		dstDef.GetIcon(),
 		dstDef.GetTombstone(),
-		dstDef.GetPublic(),
+		true, //dstDef.GetPublic(),
 		dstDef.GetCustom(),
 		releaseDate,
 		spec,

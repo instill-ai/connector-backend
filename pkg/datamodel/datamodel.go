@@ -36,7 +36,7 @@ func (base *BaseDynamic) BeforeCreate(db *gorm.DB) error {
 	return nil
 }
 
-// ConnectorDefinition is the data model of the connection_definition table
+// ConnectorDefinition is the data model of the connector_definition table
 type ConnectorDefinition struct {
 	BaseStatic
 	Name                 string
@@ -55,13 +55,28 @@ type ConnectorDefinition struct {
 	ReleaseStage         *ValidReleaseStage   `sql:"type:valid_release_stage"`
 }
 
+// Connector is the data model of the connector table
+type Connector struct {
+	BaseDynamic
+	WorkspaceID           uuid.UUID
+	ConnectorDefinitionID uuid.UUID
+	Name                  string
+	Tombstone             bool
+	Configuration         datatypes.JSON    `gorm:"type:jsonb"`
+	ConnectorType         ValidConectorType `sql:"type:valid_connector_type"`
+}
+
+// ValidConectorType enumerates the type of connector
 type ValidConectorType string
 
 const (
-	ConnectorTypeSource      ValidConectorType = "CONNECTOR_TYPE_SOURCE"
+	// ConnectorTypeSource represents a source connector
+	ConnectorTypeSource ValidConectorType = "CONNECTOR_TYPE_SOURCE"
+	// ConnectorTypeDestination represents a destination connector
 	ConnectorTypeDestination ValidConectorType = "CONNECTOR_TYPE_DESTINATION"
 )
 
+// Scan function for custom GORM type ValidConectorType
 func (p *ValidConectorType) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
@@ -74,20 +89,28 @@ func (p *ValidConectorType) Scan(value interface{}) error {
 	return nil
 }
 
+// Value function for custom GORM type ValidConectorType
 func (p ValidConectorType) Value() (driver.Value, error) {
 	return string(p), nil
 }
 
+// ValidConnectionType enumerates the type of connection
 type ValidConnectionType string
 
 const (
+	// ConnectionTypeDirectness represents directness connection
 	ConnectionTypeDirectness ValidConnectionType = "CONNECTION_TYPE_DIRECTNESS"
-	ConnectionTypeFile       ValidConnectionType = "CONNECTION_TYPE_FILE"
-	ConnectionTypeAPI        ValidConnectionType = "CONNECTION_TYPE_API"
-	ConnectionTypeDatabase   ValidConnectionType = "CONNECTION_TYPE_DATABASE"
-	ConnectionTypeCustom     ValidConnectionType = "CONNECTION_TYPE_CUSTOM"
+	// ConnectionTypeFile represents file connection
+	ConnectionTypeFile ValidConnectionType = "CONNECTION_TYPE_FILE"
+	// ConnectionTypeAPI represents API connection
+	ConnectionTypeAPI ValidConnectionType = "CONNECTION_TYPE_API"
+	// ConnectionTypeDatabase represents database connection
+	ConnectionTypeDatabase ValidConnectionType = "CONNECTION_TYPE_DATABASE"
+	// ConnectionTypeCustom represents custom connection
+	ConnectionTypeCustom ValidConnectionType = "CONNECTION_TYPE_CUSTOM"
 )
 
+// Scan function for custom GORM type ValidConnectionType
 func (p *ValidConnectionType) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
@@ -100,19 +123,26 @@ func (p *ValidConnectionType) Scan(value interface{}) error {
 	return nil
 }
 
+// Value function for custom GORM type ValidConnectionType
 func (p ValidConnectionType) Value() (driver.Value, error) {
 	return string(p), nil
 }
 
+// ValidReleaseStage enumerates release stages
 type ValidReleaseStage string
 
 const (
-	ReleaseStageAlpha              ValidReleaseStage = "RELEASE_STAGE_ALPHA"
-	ReleaseStageBeta               ValidReleaseStage = "RELEASE_STAGE_BETA"
+	// ReleaseStageAlpha represents release stage alpha
+	ReleaseStageAlpha ValidReleaseStage = "RELEASE_STAGE_ALPHA"
+	// ReleaseStageBeta represents release stage beta
+	ReleaseStageBeta ValidReleaseStage = "RELEASE_STAGE_BETA"
+	// ReleaseStageGenerallyAvailable represents release stage general available
 	ReleaseStageGenerallyAvailable ValidReleaseStage = "RELEASE_STAGE_GENERALLY_AVAILABLE"
-	ReleaseStageCustom             ValidReleaseStage = "RELEASE_STAGE_CUSTOM"
+	// ReleaseStageCustom represents release stage custom
+	ReleaseStageCustom ValidReleaseStage = "RELEASE_STAGE_CUSTOM"
 )
 
+// Scan function for custom GORM type ValidReleaseStage
 func (p *ValidReleaseStage) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
@@ -125,6 +155,7 @@ func (p *ValidReleaseStage) Scan(value interface{}) error {
 	return nil
 }
 
+// Value function for custom GORM type ValidReleaseStage
 func (p ValidReleaseStage) Value() (driver.Value, error) {
 	return string(p), nil
 }

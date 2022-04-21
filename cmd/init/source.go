@@ -20,7 +20,7 @@ import (
 func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefinition, spec datatypes.JSON) error {
 	logger, _ := logger.GetZapLogger()
 
-	ID, err := uuid.FromString(srcDef.GetSourceDefinitionId())
+	id, err := uuid.FromString(srcDef.GetSourceDefinitionId())
 	if err != nil {
 		return err
 	}
@@ -65,13 +65,13 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 	if err := createConnectorDefinitionRecord(
 		db,
 		srcDef.GetName(),
-		ID,
+		id,
 		srcDef.GetDockerRepository(),
 		srcDef.GetDockerImageTag(),
 		srcDef.GetDocumentationUrl(),
 		srcDef.GetIcon(),
 		srcDef.GetTombstone(),
-		srcDef.GetPublic(),
+		true, //srcDef.GetPublic(),
 		srcDef.GetCustom(),
 		releaseDate,
 		spec,
