@@ -1,4 +1,4 @@
-- name: http
+- name: HTTP
   sourceDefinitionId: f20a3c02-c70e-4e76-8566-7c13ca11d18d
   documentationUrl: https://docs.instill.tech/integrations/sources/http
   icon: http.svg

@@ -50,13 +50,6 @@ func main() {
 			if err := createSourceConnectorDefinition(db, def, spec); err != nil {
 				logger.Fatal(err.Error())
 			}
-
-			// Create source directness connector record
-			if def.SourceType == connectorPB.SourceDefinition_SOURCE_TYPE_DIRECTNESS {
-				if err := createSourceDirectnessConnector(db, def); err != nil {
-					logger.Fatal(err.Error())
-				}
-			}
 		}
 	}
 
@@ -66,13 +59,6 @@ func main() {
 		} else {
 			if err := createDestinationConnectorDefinition(db, def, spec); err != nil {
 				logger.Fatal(err.Error())
-			}
-
-			// Create source directness connector record
-			if def.DestinationType == connectorPB.DestinationDefinition_DESTINATION_TYPE_DIRECTNESS {
-				if err := createDestinationDirectnessConnector(db, def); err != nil {
-					logger.Fatal(err.Error())
-				}
 			}
 		}
 	}

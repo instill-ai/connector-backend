@@ -4,8 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/genproto/googleapis/type/date"
-	"google.golang.org/protobuf/types/known/structpb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
@@ -25,15 +23,17 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.Desti
 		return err
 	}
 
-	releaseDate := func(releaseDate *date.Date) *time.Time {
+	releaseDate := func() *time.Time {
+		releaseDate := dstDef.GetReleaseDate()
 		if releaseDate != nil {
 			t := time.Date(int(releaseDate.Year), time.Month(releaseDate.Month), int(releaseDate.Day), 0, 0, 0, 0, time.UTC)
 			return &t
 		}
 		return nil
-	}(dstDef.GetReleaseDate())
+	}()
 
-	resourceRequirements := func(s *structpb.Struct) datatypes.JSON {
+	resourceRequirements := func() datatypes.JSON {
+		s := dstDef.GetResourceRequirements()
 		if s != nil {
 			if b, err := s.MarshalJSON(); err != nil {
 				logger.Fatal(err.Error())
@@ -42,25 +42,21 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.Desti
 			}
 		}
 		return []byte("{}")
-	}(dstDef.GetResourceRequirements())
+	}()
 
 	connectorType := datamodel.ConnectorTypeDestination
 
-	connectionType := func(enum string) *datamodel.ValidConnectionType {
-		if enum == "DESTINATION_TYPE_UNSPECIFIED" {
-			return nil
-		}
-		e := datamodel.ValidConnectionType(strings.ReplaceAll(enum, "DESTINATION_TYPE", "CONNECTION_TYPE"))
+	connectionType := func() *datamodel.ValidConnectionType {
+		destinationType := dstDef.GetDestinationType().String()
+		e := datamodel.ValidConnectionType(strings.ReplaceAll(destinationType, "DESTINATION_TYPE", "CONNECTION_TYPE"))
 		return &e
-	}(dstDef.GetDestinationType().String())
+	}()
 
-	releaseStage := func(enum string) *datamodel.ValidReleaseStage {
-		if enum == "RELEASE_STAGE_UNSPECIFIED" {
-			return nil
-		}
-		e := datamodel.ValidReleaseStage(enum)
+	releaseStage := func() *datamodel.ValidReleaseStage {
+		releaseStage := dstDef.GetReleaseStage().String()
+		e := datamodel.ValidReleaseStage(releaseStage)
 		return &e
-	}(dstDef.GetReleaseStage().String())
+	}()
 
 	if err := createConnectorDefinitionRecord(
 		db,

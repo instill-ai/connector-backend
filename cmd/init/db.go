@@ -24,7 +24,7 @@ func createConnectorDefinitionRecord(
 	releaseDate *time.Time,
 	spec datatypes.JSON,
 	resourceRequirements datatypes.JSON,
-	connectorType datamodel.ValidConectorType,
+	connectorType datamodel.ValidConnectorType,
 	connectionType *datamodel.ValidConnectionType,
 	releaseStage *datamodel.ValidReleaseStage) error {
 
@@ -47,31 +47,6 @@ func createConnectorDefinitionRecord(
 	}
 
 	if result := db.Model(&datamodel.ConnectorDefinition{}).Create(&connectorDef); result.Error != nil {
-		return result.Error
-	}
-
-	return nil
-}
-
-func createDirectnessConnector(
-	db *gorm.DB,
-	workspaceID uuid.UUID,
-	connectorDefinitionID uuid.UUID,
-	name string,
-	tombstone bool,
-	configuration datatypes.JSON,
-	connectorType datamodel.ValidConectorType) error {
-
-	directnessConnector := datamodel.Connector{
-		WorkspaceID:           workspaceID,
-		ConnectorDefinitionID: connectorDefinitionID,
-		Name:                  name,
-		Tombstone:             tombstone,
-		Configuration:         configuration,
-		ConnectorType:         connectorType,
-	}
-
-	if result := db.Model(&datamodel.Connector{}).Create(&directnessConnector); result.Error != nil {
 		return result.Error
 	}
 

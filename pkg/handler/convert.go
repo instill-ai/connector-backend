@@ -57,11 +57,14 @@ func convertDBSourceDefinitionToPBSourceDefinition(dbSrcDef *datamodel.Connector
 
 		Spec: func() *connectorPB.Spec {
 			spec := connectorPB.Spec{}
-			if err := protojson.Unmarshal(dbSrcDef.Spec, &spec); err != nil {
-				logger.Fatal(err.Error())
-				return nil
+			if dbSrcDef.Spec != nil {
+				if err := protojson.Unmarshal(dbSrcDef.Spec, &spec); err != nil {
+					logger.Fatal(err.Error())
+					return nil
+				}
+				return &spec
 			}
-			return &spec
+			return nil
 		}(),
 
 		ResourceRequirements: func() *structpb.Struct {
@@ -117,12 +120,15 @@ func convertDBDestinationDefinitionToPBDestinationDefinition(dbDstDef *datamodel
 		}(),
 
 		Spec: func() *connectorPB.Spec {
-			spec := connectorPB.Spec{}
-			if err := protojson.Unmarshal(dbDstDef.Spec, &spec); err != nil {
-				logger.Fatal(err.Error())
-				return nil
+			if dbDstDef.Spec != nil {
+				spec := connectorPB.Spec{}
+				if err := protojson.Unmarshal(dbDstDef.Spec, &spec); err != nil {
+					logger.Fatal(err.Error())
+					return nil
+				}
+				return &spec
 			}
-			return &spec
+			return nil
 		}(),
 
 		ResourceRequirements: func() *structpb.Struct {
@@ -134,4 +140,29 @@ func convertDBDestinationDefinitionToPBDestinationDefinition(dbDstDef *datamodel
 			return &s
 		}(),
 	}
+}
+
+func convertDBConnectorToPBConnector(dbConnector *datamodel.Connector) *connectorPB.Connector {
+	logger, _ := logger.GetZapLogger()
+
+	configuration := connectorPB.Spec{}
+	err := protojson.Unmarshal(dbConnector.Configuration, &configuration)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	pbConnector := connectorPB.Connector{
+		Id:                    dbConnector.BaseDynamic.ID.String(),
+		ConnectorDefinitionId: dbConnector.ConnectorDefinitionID.String(),
+		Name:                  dbConnector.Name,
+		Configuration:         &configuration,
+		ConnectorType:         connectorPB.ConnectorType(connectorPB.ConnectorType_value[string(dbConnector.ConnectorType)]),
+		Tombstone:             dbConnector.Tombstone,
+		OwnerId:               dbConnector.OwnerID.String(),
+		FullName:              dbConnector.FullName,
+		CreatedAt:             timestamppb.New(dbConnector.CreatedAt),
+		UpdateAt:              timestamppb.New(dbConnector.UpdatedAt),
+	}
+
+	return &pbConnector
 }

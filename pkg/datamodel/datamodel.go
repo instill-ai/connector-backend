@@ -50,7 +50,7 @@ type ConnectorDefinition struct {
 	ReleaseDate          *time.Time
 	Spec                 datatypes.JSON       `gorm:"type:jsonb"`
 	ResourceRequirements datatypes.JSON       `gorm:"type:jsonb"`
-	ConnectorType        ValidConectorType    `sql:"type:valid_connector_type"`
+	ConnectorType        ValidConnectorType   `sql:"type:valid_connector_type"`
 	ConnectionType       *ValidConnectionType `sql:"type:valid_connection_type"`
 	ReleaseStage         *ValidReleaseStage   `sql:"type:valid_release_stage"`
 }
@@ -58,39 +58,44 @@ type ConnectorDefinition struct {
 // Connector is the data model of the connector table
 type Connector struct {
 	BaseDynamic
-	WorkspaceID           uuid.UUID
+	OwnerID               uuid.UUID
 	ConnectorDefinitionID uuid.UUID
 	Name                  string
 	Tombstone             bool
-	Configuration         datatypes.JSON    `gorm:"type:jsonb"`
-	ConnectorType         ValidConectorType `sql:"type:valid_connector_type"`
+	Configuration         datatypes.JSON     `gorm:"type:jsonb"`
+	ConnectorType         ValidConnectorType `sql:"type:valid_connector_type"`
+
+	// Output-only field
+	FullName string `gorm:"-"`
 }
 
-// ValidConectorType enumerates the type of connector
-type ValidConectorType string
+// ValidConnectorType enumerates the type of connector
+type ValidConnectorType string
 
 const (
+	// ConnectorTypeUnspecified represents a null connector
+	ConnectorTypeUnspecified ValidConnectorType = "CONNECTOR_TYPE_UNSPECIFIED"
 	// ConnectorTypeSource represents a source connector
-	ConnectorTypeSource ValidConectorType = "CONNECTOR_TYPE_SOURCE"
+	ConnectorTypeSource ValidConnectorType = "CONNECTOR_TYPE_SOURCE"
 	// ConnectorTypeDestination represents a destination connector
-	ConnectorTypeDestination ValidConectorType = "CONNECTOR_TYPE_DESTINATION"
+	ConnectorTypeDestination ValidConnectorType = "CONNECTOR_TYPE_DESTINATION"
 )
 
-// Scan function for custom GORM type ValidConectorType
-func (p *ValidConectorType) Scan(value interface{}) error {
+// Scan function for custom GORM type ValidConnectorType
+func (p *ValidConnectorType) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case string:
-		*p = ValidConectorType(v)
+		*p = ValidConnectorType(v)
 	case []byte:
-		*p = ValidConectorType(v)
+		*p = ValidConnectorType(v)
 	default:
 		return errors.New("Incompatible type for ValidConecctorType")
 	}
 	return nil
 }
 
-// Value function for custom GORM type ValidConectorType
-func (p ValidConectorType) Value() (driver.Value, error) {
+// Value function for custom GORM type ValidConnectorType
+func (p ValidConnectorType) Value() (driver.Value, error) {
 	return string(p), nil
 }
 
@@ -98,6 +103,8 @@ func (p ValidConectorType) Value() (driver.Value, error) {
 type ValidConnectionType string
 
 const (
+	// ConnectionTypeUnspecified represents a null connection
+	ConnectionTypeUnspecified ValidConnectionType = "CONNECTION_TYPE_UNSPECIFIED"
 	// ConnectionTypeDirectness represents directness connection
 	ConnectionTypeDirectness ValidConnectionType = "CONNECTION_TYPE_DIRECTNESS"
 	// ConnectionTypeFile represents file connection
@@ -132,6 +139,8 @@ func (p ValidConnectionType) Value() (driver.Value, error) {
 type ValidReleaseStage string
 
 const (
+	// ReleaseStageUnspecified represents a null release stage
+	ReleaseStageUnspecified ValidReleaseStage = "RELEASE_STAGE_UNSPECIFIED"
 	// ReleaseStageAlpha represents release stage alpha
 	ReleaseStageAlpha ValidReleaseStage = "RELEASE_STAGE_ALPHA"
 	// ReleaseStageBeta represents release stage beta

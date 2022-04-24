@@ -17,7 +17,7 @@ func DecodeCursor(encodedCursor string) (time.Time, string, error) {
 
 	arrStr := strings.Split(string(byt), ",")
 	if len(arrStr) != 2 {
-		err = errors.New("cursor is invalid")
+		err = errors.New("Cursor is invalid")
 		return time.Time{}, "", err
 	}
 

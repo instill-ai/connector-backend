@@ -10,7 +10,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220418025916-6bde31da3b78
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220424030156-d7ad6024bcf1
 	github.com/knadh/koanf v1.4.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5

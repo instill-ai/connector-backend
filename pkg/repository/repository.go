@@ -1,21 +1,28 @@
 package repository
 
 import (
-	"errors"
 	"time"
 
 	"google.golang.org/grpc/codes"
 	"gorm.io/gorm"
 
+	"github.com/gofrs/uuid"
 	"github.com/gogo/status"
 	"github.com/instill-ai/connector-backend/internal/paginate"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+
+	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
 )
 
 // Repository interface
 type Repository interface {
-	ListDefinitionByConnectorType(pageSize int, pageCursor string, connectorType string) ([]datamodel.ConnectorDefinition, string, error)
-	GetDefinition(ID string) (*datamodel.ConnectorDefinition, error)
+	ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error)
+	GetDefinition(ID uuid.UUID, view connectorPB.DefinitionView) (*datamodel.ConnectorDefinition, error)
+	CreateConnector(connector *datamodel.Connector) error
+	ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
+	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error)
+	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, connector *datamodel.Connector) error
+	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error
 }
 
 type repository struct {
@@ -29,8 +36,12 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) ListDefinitionByConnectorType(pageSize int, pageCursor string, connectorType string) ([]datamodel.ConnectorDefinition, string, error) {
-	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("connector_type = ?", connectorType).Order("created_at DESC")
+func (r *repository) ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error) {
+	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Order("created_at DESC, id DESC")
+
+	if connectorType != "" {
+		queryBuilder = queryBuilder.Where("connector_type = ?", connectorType)
+	}
 
 	if pageSize > 0 {
 		queryBuilder = queryBuilder.Limit(pageSize)
@@ -39,10 +50,13 @@ func (r *repository) ListDefinitionByConnectorType(pageSize int, pageCursor stri
 	if pageCursor != "" {
 		createdAt, uuid, err := paginate.DecodeCursor(pageCursor)
 		if err != nil {
-			err = errors.New("invalid page cursor")
-			return nil, "", err
+			return nil, "", status.Errorf(codes.InvalidArgument, "Invalid page cursor: %s", err.Error())
 		}
-		queryBuilder = queryBuilder.Where("created_at <= ? AND id > ?", createdAt, uuid)
+		queryBuilder = queryBuilder.Where("(created_at,id) < (?::timestamp, ?)", createdAt, uuid)
+	}
+
+	if view != connectorPB.DefinitionView_DEFINITION_VIEW_FULL {
+		queryBuilder.Omit("connector.spec")
 	}
 
 	var connectorDefinitions []datamodel.ConnectorDefinition
@@ -55,7 +69,7 @@ func (r *repository) ListDefinitionByConnectorType(pageSize int, pageCursor stri
 	for rows.Next() {
 		var item datamodel.ConnectorDefinition
 		if err = r.db.ScanRows(rows, &item); err != nil {
-			return nil, "", err
+			return nil, "", status.Errorf(codes.Internal, "Error %v", err.Error())
 		}
 		createdAt = item.CreatedAt
 		connectorDefinitions = append(connectorDefinitions, item)
@@ -69,12 +83,103 @@ func (r *repository) ListDefinitionByConnectorType(pageSize int, pageCursor stri
 	return nil, "", nil
 }
 
-func (r *repository) GetDefinition(ID string) (*datamodel.ConnectorDefinition, error) {
+func (r *repository) GetDefinition(ID uuid.UUID, view connectorPB.DefinitionView) (*datamodel.ConnectorDefinition, error) {
 	var connectorDefinition datamodel.ConnectorDefinition
-	if result := r.db.Model(&datamodel.ConnectorDefinition{}).
-		Where("id = ?", ID).
-		First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector id %s you specified is not found", ID)
+	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("id = ?", ID.String())
+	if view != connectorPB.DefinitionView_DEFINITION_VIEW_FULL {
+		queryBuilder.Omit("connector.spec")
+	}
+	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
+		return nil, status.Errorf(codes.NotFound, "The connector definition id %s you specified is not found", ID)
 	}
 	return &connectorDefinition, nil
+}
+
+func (r *repository) CreateConnector(connector *datamodel.Connector) error {
+	if result := r.db.Model(&datamodel.Connector{}).Create(connector); result.Error != nil {
+		return status.Errorf(codes.Internal, "Error %v", result.Error)
+	}
+	return nil
+}
+
+func (r *repository) ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error) {
+	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("created_at DESC, id DESC")
+
+	if connectorType != datamodel.ConnectorTypeUnspecified {
+		queryBuilder = queryBuilder.Where("owner_id = ? AND connector_type = ?", ownerID, connectorType)
+	} else {
+		queryBuilder = queryBuilder.Where("owner_id = ?", ownerID)
+	}
+
+	if pageSize > 0 {
+		queryBuilder = queryBuilder.Limit(pageSize)
+	}
+
+	if pageCursor != "" {
+		createdAt, uuid, err := paginate.DecodeCursor(pageCursor)
+		if err != nil {
+			return nil, "", status.Errorf(codes.InvalidArgument, "Invalid page cursor: %s", err.Error())
+
+		}
+		queryBuilder = queryBuilder.Where("(created_at,id) < (?::timestamp, ?)", createdAt, uuid)
+	}
+
+	var connectors []datamodel.Connector
+	var createdAt time.Time // only using one for all loops, we only need the latest one in the end
+	rows, err := queryBuilder.Rows()
+	if err != nil {
+		return nil, "", err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item datamodel.Connector
+		if err = r.db.ScanRows(rows, &item); err != nil {
+			return nil, "", status.Errorf(codes.Internal, "Error %v", err.Error())
+		}
+		createdAt = item.CreatedAt
+		connectors = append(connectors, item)
+	}
+
+	if len(connectors) > 0 {
+		nextPageCursor := paginate.EncodeCursor(createdAt, (connectors)[len(connectors)-1].ID.String())
+		return connectors, nextPageCursor, nil
+	}
+
+	return nil, "", nil
+}
+
+func (r *repository) GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error) {
+	var connector datamodel.Connector
+	if result := r.db.Model(&datamodel.Connector{}).
+		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
+		First(&connector); result.Error != nil {
+		return nil, status.Errorf(codes.NotFound, "The connector with connector_type \"%s\" and name \"%s\" you specified is not found", connectorType, name)
+	}
+	return &connector, nil
+}
+
+func (r *repository) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, connector *datamodel.Connector) error {
+	if result := r.db.Model(&datamodel.Connector{}).
+		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
+		Updates(connector); result.Error != nil {
+		return status.Errorf(codes.Internal, "Error %v", result.Error)
+	}
+	return nil
+}
+
+func (r *repository) DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error {
+
+	result := r.db.Model(&datamodel.Connector{}).
+		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
+		Delete(&datamodel.Connector{})
+
+	if result.Error != nil {
+		return status.Errorf(codes.Internal, "Error %v", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return status.Errorf(codes.NotFound, "The connector with connector_type \"%s\" and name \"%s\" you specified is not found", connectorType, name)
+	}
+
+	return nil
 }

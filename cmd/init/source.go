@@ -4,8 +4,6 @@ import (
 	"strings"
 	"time"
 
-	"google.golang.org/genproto/googleapis/type/date"
-	"google.golang.org/protobuf/types/known/structpb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
@@ -25,15 +23,17 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 		return err
 	}
 
-	releaseDate := func(releaseDate *date.Date) *time.Time {
+	releaseDate := func() *time.Time {
+		releaseDate := srcDef.GetReleaseDate()
 		if releaseDate != nil {
 			t := time.Date(int(releaseDate.Year), time.Month(releaseDate.Month), int(releaseDate.Day), 0, 0, 0, 0, time.UTC)
 			return &t
 		}
 		return nil
-	}(srcDef.GetReleaseDate())
+	}()
 
-	resourceRequirements := func(s *structpb.Struct) datatypes.JSON {
+	resourceRequirements := func() datatypes.JSON {
+		s := srcDef.GetResourceRequirements()
 		if s != nil {
 			if b, err := s.MarshalJSON(); err != nil {
 				logger.Fatal(err.Error())
@@ -42,25 +42,21 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 			}
 		}
 		return []byte("{}")
-	}(srcDef.GetResourceRequirements())
+	}()
 
 	connectorType := datamodel.ConnectorTypeSource
 
-	connectionType := func(enum string) *datamodel.ValidConnectionType {
-		if enum == "SOURCE_TYPE_UNSPECIFIED" {
-			return nil
-		}
-		e := datamodel.ValidConnectionType(strings.ReplaceAll(enum, "SOURCE_TYPE", "CONNECTION_TYPE"))
+	connectionType := func() *datamodel.ValidConnectionType {
+		sourceType := srcDef.GetSourceType().String()
+		e := datamodel.ValidConnectionType(strings.ReplaceAll(sourceType, "SOURCE_TYPE", "CONNECTION_TYPE"))
 		return &e
-	}(srcDef.GetSourceType().String())
+	}()
 
-	releaseStage := func(enum string) *datamodel.ValidReleaseStage {
-		if enum == "RELEASE_STAGE_UNSPECIFIED" {
-			return nil
-		}
-		e := datamodel.ValidReleaseStage(enum)
+	releaseStage := func() *datamodel.ValidReleaseStage {
+		releaseStage := srcDef.GetReleaseStage().String()
+		e := datamodel.ValidReleaseStage(releaseStage)
 		return &e
-	}(srcDef.GetReleaseStage().String())
+	}()
 
 	if err := createConnectorDefinitionRecord(
 		db,
