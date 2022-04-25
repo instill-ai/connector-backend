@@ -234,6 +234,8 @@ func (h *handler) UpdateConnector(ctx context.Context, req *connectorPB.UpdateCo
 			switch field {
 			case "name":
 				dbConnector.Name = req.ConnectorPatch.Name
+			case "description":
+				dbConnector.Description = req.ConnectorPatch.Description
 			case "tombstone":
 				dbConnector.Tombstone = req.ConnectorPatch.Tombstone
 			}

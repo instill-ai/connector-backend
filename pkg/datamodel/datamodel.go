@@ -71,6 +71,7 @@ type Connector struct {
 	OwnerID               uuid.UUID
 	ConnectorDefinitionID uuid.UUID
 	Name                  string
+	Description           string
 	Tombstone             bool
 	Configuration         datatypes.JSON `gorm:"type:jsonb"`
 	ConnectorType         ConnectorType  `sql:"type:valid_connector_type"`

@@ -135,6 +135,7 @@ func convertDBConnectorToPBConnector(dbConnector *datamodel.Connector) *connecto
 		Id:                    dbConnector.BaseDynamic.ID.String(),
 		ConnectorDefinitionId: dbConnector.ConnectorDefinitionID.String(),
 		Name:                  dbConnector.Name,
+		Description:           dbConnector.Description,
 		Configuration:         &configuration,
 		ConnectorType:         connectorPB.ConnectorType(connectorPB.ConnectorType_value[string(dbConnector.ConnectorType)]),
 		Tombstone:             dbConnector.Tombstone,

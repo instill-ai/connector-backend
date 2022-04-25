@@ -108,6 +108,7 @@ export function CheckUpdate() {
             "connector_definition_id": constant.csvDstDefinitionId,
             "connector_type": "CONNECTOR_TYPE_DESTINATION",
             "name": "origin",
+            "description": "this is the original connector",
             "configuration": constant.csvDstConfig
         }
 
@@ -126,6 +127,7 @@ export function CheckUpdate() {
 
         var csvDstConnectorUpdate = {
             "name": "updated",
+            "description": "this is the updated connector",
             "tombstone": true,
             "configuration": constant.csvDstConfig
         }
@@ -142,6 +144,7 @@ export function CheckUpdate() {
             [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector id`]: (r) => helper.isUUID(r.json().connector.id),
             [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector connector_definition_id`]: (r) => r.json().connector.connector_definition_id === constant.csvDstDefinitionId,
             [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector name`]: (r) => r.json().connector.name === csvDstConnectorUpdate.name,
+            [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector description`]: (r) => r.json().connector.description === csvDstConnectorUpdate.description,
             [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector tombstone`]: (r) => r.json().connector.tombstone === csvDstConnectorUpdate.tombstone,
             [`PATCH /connectors/${res.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response body connector configuration`]: (r) => r.json().connector.configuration.connection_specification.destination_path === csvDstConnectorUpdate.configuration.connection_specification.destination_path
         });
