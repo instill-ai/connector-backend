@@ -16,13 +16,13 @@ import (
 
 // Repository interface
 type Repository interface {
-	ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error)
+	ListDefinitionByConnectorType(connectorType datamodel.ConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error)
 	GetDefinition(ID uuid.UUID, view connectorPB.DefinitionView) (*datamodel.ConnectorDefinition, error)
 	CreateConnector(connector *datamodel.Connector) error
-	ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
-	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error)
-	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, connector *datamodel.Connector) error
-	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error
+	ListConnector(ownerID uuid.UUID, connectorType datamodel.ConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
+	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) (*datamodel.Connector, error)
+	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
+	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) error
 }
 
 type repository struct {
@@ -36,10 +36,10 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error) {
+func (r *repository) ListDefinitionByConnectorType(connectorType datamodel.ConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error) {
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Order("created_at DESC, id DESC")
 
-	if connectorType != "" {
+	if connectorType != datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		queryBuilder = queryBuilder.Where("connector_type = ?", connectorType)
 	}
 
@@ -102,10 +102,10 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	return nil
 }
 
-func (r *repository) ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error) {
+func (r *repository) ListConnector(ownerID uuid.UUID, connectorType datamodel.ConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error) {
 	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("created_at DESC, id DESC")
 
-	if connectorType != datamodel.ConnectorTypeUnspecified {
+	if connectorType != datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		queryBuilder = queryBuilder.Where("owner_id = ? AND connector_type = ?", ownerID, connectorType)
 	} else {
 		queryBuilder = queryBuilder.Where("owner_id = ?", ownerID)
@@ -148,17 +148,17 @@ func (r *repository) ListConnector(ownerID uuid.UUID, connectorType datamodel.Va
 	return nil, "", nil
 }
 
-func (r *repository) GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error) {
+func (r *repository) GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) (*datamodel.Connector, error) {
 	var connector datamodel.Connector
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
 		First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type \"%s\" and name \"%s\" you specified is not found", connectorType, name)
+		return nil, status.Errorf(codes.NotFound, "The connector with connector_type \"%s\" and name \"%s\" you specified is not found", connectorPB.ConnectorType(connectorType), name)
 	}
 	return &connector, nil
 }
 
-func (r *repository) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, connector *datamodel.Connector) error {
+func (r *repository) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
 		Updates(connector); result.Error != nil {
@@ -167,7 +167,7 @@ func (r *repository) UpdateConnector(ownerID uuid.UUID, name string, connectorTy
 	return nil
 }
 
-func (r *repository) DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error {
+func (r *repository) DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) error {
 
 	result := r.db.Model(&datamodel.Connector{}).
 		Where("owner_id = ? AND name = ? AND connector_type = ?", ownerID, name, connectorType).
@@ -178,7 +178,7 @@ func (r *repository) DeleteConnector(ownerID uuid.UUID, name string, connectorTy
 	}
 
 	if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "The connector with connector_type \"%s\" and name \"%s\" you specified is not found", connectorType, name)
+		return status.Errorf(codes.NotFound, "The connector with connector_type \"%v\" and name \"%s\" you specified is not found", connectorPB.ConnectorType(connectorType), name)
 	}
 
 	return nil

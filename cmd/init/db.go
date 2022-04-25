@@ -24,9 +24,9 @@ func createConnectorDefinitionRecord(
 	releaseDate *time.Time,
 	spec datatypes.JSON,
 	resourceRequirements datatypes.JSON,
-	connectorType datamodel.ValidConnectorType,
-	connectionType *datamodel.ValidConnectionType,
-	releaseStage *datamodel.ValidReleaseStage) error {
+	connectorType datamodel.ConnectorType,
+	connectionType datamodel.ConnectionType,
+	releaseStage datamodel.ReleaseStage) error {
 
 	connectorDef := datamodel.ConnectorDefinition{
 		BaseStatic:           datamodel.BaseStatic{ID: id},

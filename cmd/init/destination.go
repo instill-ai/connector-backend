@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"time"
 
 	"gorm.io/datatypes"
@@ -44,20 +43,6 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.Desti
 		return []byte("{}")
 	}()
 
-	connectorType := datamodel.ConnectorTypeDestination
-
-	connectionType := func() *datamodel.ValidConnectionType {
-		destinationType := dstDef.GetDestinationType().String()
-		e := datamodel.ValidConnectionType(strings.ReplaceAll(destinationType, "DESTINATION_TYPE", "CONNECTION_TYPE"))
-		return &e
-	}()
-
-	releaseStage := func() *datamodel.ValidReleaseStage {
-		releaseStage := dstDef.GetReleaseStage().String()
-		e := datamodel.ValidReleaseStage(releaseStage)
-		return &e
-	}()
-
 	if err := createConnectorDefinitionRecord(
 		db,
 		dstDef.GetName(),
@@ -72,9 +57,9 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstDef *connectorPB.Desti
 		releaseDate,
 		spec,
 		resourceRequirements,
-		connectorType,
-		connectionType,
-		releaseStage,
+		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
+		datamodel.ConnectionType(dstDef.GetConnectionType()),
+		datamodel.ReleaseStage(dstDef.GetReleaseStage()),
 	); err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strings"
 	"time"
 
 	"gorm.io/datatypes"
@@ -44,20 +43,6 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 		return []byte("{}")
 	}()
 
-	connectorType := datamodel.ConnectorTypeSource
-
-	connectionType := func() *datamodel.ValidConnectionType {
-		sourceType := srcDef.GetSourceType().String()
-		e := datamodel.ValidConnectionType(strings.ReplaceAll(sourceType, "SOURCE_TYPE", "CONNECTION_TYPE"))
-		return &e
-	}()
-
-	releaseStage := func() *datamodel.ValidReleaseStage {
-		releaseStage := srcDef.GetReleaseStage().String()
-		e := datamodel.ValidReleaseStage(releaseStage)
-		return &e
-	}()
-
 	if err := createConnectorDefinitionRecord(
 		db,
 		srcDef.GetName(),
@@ -72,9 +57,9 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 		releaseDate,
 		spec,
 		resourceRequirements,
-		connectorType,
-		connectionType,
-		releaseStage,
+		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
+		datamodel.ConnectionType(srcDef.GetConnectionType()),
+		datamodel.ReleaseStage(srcDef.GetReleaseStage()),
 	); err != nil {
 		return err
 	}

@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"strings"
-
 	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -29,19 +27,10 @@ func convertDBSourceDefinitionToPBSourceDefinition(dbSrcDef *datamodel.Connector
 		Custom:             dbSrcDef.Custom,
 		CreatedAt:          timestamppb.New(dbSrcDef.CreatedAt),
 		UpdateAt:           timestamppb.New(dbSrcDef.UpdatedAt),
-
-		SourceType: func() connectorPB.SourceDefinition_SourceType {
-			if dbSrcDef.ConnectionType != nil {
-				return connectorPB.SourceDefinition_SourceType(connectorPB.SourceDefinition_SourceType_value[strings.ReplaceAll(string(*dbSrcDef.ConnectionType), "CONNECTION_TYPE", "SOURCE_TYPE")])
-			}
-			return connectorPB.SourceDefinition_SourceType(connectorPB.SourceDefinition_SourceType_value["SOURCE_TYPE_UNSPECIFIED"])
-		}(),
+		ConnectionType:     connectorPB.ConnectionType(dbSrcDef.ConnectionType),
 
 		ReleaseStage: func() connectorPB.ReleaseStage {
-			if dbSrcDef.ReleaseStage != nil {
-				return connectorPB.ReleaseStage(connectorPB.ReleaseStage_value[string(*dbSrcDef.ReleaseStage)])
-			}
-			return connectorPB.ReleaseStage(connectorPB.SourceDefinition_SourceType_value["RELEASE_STAGE_UNSPECIFIED"])
+			return connectorPB.ReleaseStage(dbSrcDef.ReleaseStage)
 		}(),
 
 		ReleaseDate: func() *date.Date {
@@ -93,19 +82,10 @@ func convertDBDestinationDefinitionToPBDestinationDefinition(dbDstDef *datamodel
 		Custom:                  dbDstDef.Custom,
 		CreatedAt:               timestamppb.New(dbDstDef.CreatedAt),
 		UpdateAt:                timestamppb.New(dbDstDef.UpdatedAt),
-
-		DestinationType: func() connectorPB.DestinationDefinition_DestinationType {
-			if dbDstDef.ConnectionType != nil {
-				return connectorPB.DestinationDefinition_DestinationType(connectorPB.DestinationDefinition_DestinationType_value[strings.ReplaceAll(string(*dbDstDef.ConnectionType), "CONNECTION_TYPE", "DESTINATION_TYPE")])
-			}
-			return connectorPB.DestinationDefinition_DestinationType(connectorPB.DestinationDefinition_DestinationType_value["DESTINATION_TYPE_UNSPECIFIED"])
-		}(),
+		ConnectionType:          connectorPB.ConnectionType(dbDstDef.ConnectionType),
 
 		ReleaseStage: func() connectorPB.ReleaseStage {
-			if dbDstDef.ReleaseStage != nil {
-				return connectorPB.ReleaseStage(connectorPB.ReleaseStage_value[string(*dbDstDef.ReleaseStage)])
-			}
-			return connectorPB.ReleaseStage(connectorPB.SourceDefinition_SourceType_value["RELEASE_STAGE_UNSPECIFIED"])
+			return connectorPB.ReleaseStage(dbDstDef.ReleaseStage)
 		}(),
 
 		ReleaseDate: func() *date.Date {

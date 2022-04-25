@@ -16,13 +16,13 @@ import (
 
 // Service interface
 type Service interface {
-	ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error)
+	ListDefinitionByConnectorType(connectorType datamodel.ConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error)
 	GetDefinition(ID uuid.UUID, view connectorPB.DefinitionView) (*datamodel.ConnectorDefinition, error)
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
-	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error)
-	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, connector *datamodel.Connector) (*datamodel.Connector, error)
-	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error
+	ListConnector(ownerID uuid.UUID, connectorType datamodel.ConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
+	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) (*datamodel.Connector, error)
+	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) (*datamodel.Connector, error)
+	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) error
 }
 
 type service struct {
@@ -36,7 +36,7 @@ func NewService(r repository.Repository) Service {
 	}
 }
 
-func (s *service) ListDefinitionByConnectorType(connectorType datamodel.ValidConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error) {
+func (s *service) ListDefinitionByConnectorType(connectorType datamodel.ConnectorType, view connectorPB.DefinitionView, pageSize int, pageCursor string) ([]datamodel.ConnectorDefinition, string, error) {
 	return s.repository.ListDefinitionByConnectorType(connectorType, view, pageSize, pageCursor)
 }
 
@@ -52,7 +52,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 	}
 
 	// Validation: Directness connector uniqueness and assign its name from definition
-	if *def.ConnectionType == datamodel.ConnectionTypeDirectness {
+	if connectorPB.ConnectionType(def.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
 		if connector.Name != "" {
 			return &datamodel.Connector{}, status.Errorf(codes.FailedPrecondition, "Directness connector name is not configurable")
 		}
@@ -63,7 +63,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 		connector.Name = def.Name
 		if existingConnector, _ := s.GetConnector(connector.OwnerID, connector.Name, connector.ConnectorType); existingConnector != nil {
-			return &datamodel.Connector{}, status.Errorf(codes.AlreadyExists, "Directness connector name %s with connector_type %s exists already", connector.Name, connector.ConnectorType)
+			return &datamodel.Connector{}, status.Errorf(codes.AlreadyExists, "Directness connector name \"%s\" with connector_type \"%s\" exists already", connector.Name, connectorPB.ConnectorType(connector.ConnectorType))
 		}
 	}
 
@@ -78,7 +78,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 	}
 
 	// Validatation: Required field
-	if connector.ConnectorType == datamodel.ConnectorTypeUnspecified {
+	if connector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		return &datamodel.Connector{}, status.Error(codes.FailedPrecondition, "The required field connector_type is not specified")
 	}
 
@@ -112,18 +112,18 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 }
 
-func (s *service) ListConnector(ownerID uuid.UUID, connectorType datamodel.ValidConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error) {
+func (s *service) ListConnector(ownerID uuid.UUID, connectorType datamodel.ConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error) {
 	return s.repository.ListConnector(ownerID, connectorType, pageSize, pageCursor)
 }
 
-func (s *service) GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) (*datamodel.Connector, error) {
+func (s *service) GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) (*datamodel.Connector, error) {
 	// Validatation: Required field
 	if name == "" {
 		return &datamodel.Connector{}, status.Error(codes.FailedPrecondition, "The required field name is not specified")
 	}
 
 	// Validatation: Required field
-	if connectorType == datamodel.ConnectorTypeUnspecified {
+	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		return &datamodel.Connector{}, status.Error(codes.FailedPrecondition, "The required field connector_type is not specified")
 	}
 
@@ -138,19 +138,19 @@ func (s *service) GetConnector(ownerID uuid.UUID, name string, connectorType dat
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+func (s *service) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
 	// Validatation: Required field
 	if name == "" {
 		return &datamodel.Connector{}, status.Error(codes.FailedPrecondition, "The required field name not specify")
 	}
 
 	// Validatation: Required field
-	if connectorType == datamodel.ConnectorTypeUnspecified {
+	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		return &datamodel.Connector{}, status.Error(codes.FailedPrecondition, "The required field connector_type is not specified")
 	}
 
 	if existingConnector, _ := s.GetConnector(ownerID, name, connectorType); existingConnector == nil {
-		return &datamodel.Connector{}, status.Errorf(codes.NotFound, "Directness connector name %s with connector_type %s is not found", updatedConnector.Name, updatedConnector.ConnectorType)
+		return &datamodel.Connector{}, status.Errorf(codes.NotFound, "Directness connector name \"%s\" with connector_type \"%s\" is not found", updatedConnector.Name, connectorPB.ConnectorType(updatedConnector.ConnectorType))
 	}
 
 	if err := s.repository.UpdateConnector(ownerID, name, connectorType, updatedConnector); err != nil {
@@ -166,7 +166,7 @@ func (s *service) UpdateConnector(ownerID uuid.UUID, name string, connectorType 
 
 }
 
-func (s *service) DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ValidConnectorType) error {
+func (s *service) DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) error {
 
 	// Validatation: Required field
 	if name == "" {
@@ -174,7 +174,7 @@ func (s *service) DeleteConnector(ownerID uuid.UUID, name string, connectorType 
 	}
 
 	// Validatation: Required field
-	if connectorType == datamodel.ConnectorTypeUnspecified {
+	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
 		return status.Error(codes.FailedPrecondition, "The required field connector_type is not specified")
 	}
 

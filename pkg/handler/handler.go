@@ -46,7 +46,12 @@ func (h *handler) Readiness(ctx context.Context, in *connectorPB.ReadinessReques
 
 func (h *handler) ListSourceDefinition(ctx context.Context, req *connectorPB.ListSourceDefinitionRequest) (*connectorPB.ListSourceDefinitionResponse, error) {
 
-	dbSrcDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(datamodel.ConnectorTypeSource, req.View, int(req.PageSize), req.PageCursor)
+	dbSrcDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(
+		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
+		req.View,
+		int(req.PageSize),
+		req.PageCursor,
+	)
 	if err != nil {
 		return &connectorPB.ListSourceDefinitionResponse{}, err
 	}
@@ -84,7 +89,11 @@ func (h *handler) GetSourceDefinition(ctx context.Context, req *connectorPB.GetS
 
 func (h *handler) ListDestinationDefinition(ctx context.Context, req *connectorPB.ListDestinationDefinitionRequest) (*connectorPB.ListDestinationDefinitionResponse, error) {
 
-	dbDstDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(datamodel.ConnectorTypeDestination, req.View, int(req.PageSize), req.PageCursor)
+	dbDstDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(
+		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
+		req.View,
+		int(req.PageSize), req.PageCursor,
+	)
 	if err != nil {
 		return &connectorPB.ListDestinationDefinitionResponse{}, err
 	}
@@ -142,7 +151,7 @@ func (h *handler) CreateConnector(ctx context.Context, req *connectorPB.CreateCo
 		Name:                  req.Name,
 		Tombstone:             false,
 		Configuration:         configuration,
-		ConnectorType:         datamodel.ValidConnectorType(req.ConnectorType.String()),
+		ConnectorType:         datamodel.ConnectorType(req.ConnectorType),
 	}
 
 	dbConnector, err = h.service.CreateConnector(dbConnector)
@@ -169,7 +178,7 @@ func (h *handler) ListConnector(ctx context.Context, req *connectorPB.ListConnec
 		return &connectorPB.ListConnectorResponse{}, err
 	}
 
-	dbConnectors, nextPageCursor, err := h.service.ListConnector(ownerID, datamodel.ValidConnectorType(req.ConnectorType.String()), int(req.PageSize), req.PageCursor)
+	dbConnectors, nextPageCursor, err := h.service.ListConnector(ownerID, datamodel.ConnectorType(req.ConnectorType), int(req.PageSize), req.PageCursor)
 	if err != nil {
 		return &connectorPB.ListConnectorResponse{}, err
 	}
@@ -195,7 +204,7 @@ func (h *handler) GetConnector(ctx context.Context, req *connectorPB.GetConnecto
 	dbConnector, err := h.service.GetConnector(
 		ownerID,
 		req.GetName(),
-		datamodel.ValidConnectorType(req.GetConnectorType().String()))
+		datamodel.ConnectorType(req.GetConnectorType()))
 	if err != nil {
 		return &connectorPB.GetConnectorResponse{}, err
 	}
@@ -217,7 +226,7 @@ func (h *handler) UpdateConnector(ctx context.Context, req *connectorPB.UpdateCo
 
 	dbConnector := &datamodel.Connector{
 		OwnerID:       ownerID,
-		ConnectorType: datamodel.ValidConnectorType(req.ConnectorType.String()),
+		ConnectorType: datamodel.ConnectorType(req.GetConnectorType()),
 	}
 
 	if req.FieldMask != nil && len(req.FieldMask.Paths) > 0 {
@@ -238,7 +247,7 @@ func (h *handler) UpdateConnector(ctx context.Context, req *connectorPB.UpdateCo
 		}
 	}
 
-	dbConnector, err = h.service.UpdateConnector(ownerID, req.GetName(), datamodel.ValidConnectorType(req.GetConnectorType().String()), dbConnector)
+	dbConnector, err = h.service.UpdateConnector(ownerID, req.GetName(), datamodel.ConnectorType(req.GetConnectorType()), dbConnector)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +266,7 @@ func (h *handler) DeleteConnector(ctx context.Context, req *connectorPB.DeleteCo
 		return &connectorPB.DeleteConnectorResponse{}, err
 	}
 
-	if err := h.service.DeleteConnector(ownerID, req.GetName(), datamodel.ValidConnectorType(req.GetConnectorType().String())); err != nil {
+	if err := h.service.DeleteConnector(ownerID, req.GetName(), datamodel.ConnectorType(req.GetConnectorType())); err != nil {
 		return &connectorPB.DeleteConnectorResponse{}, err
 	}
 
