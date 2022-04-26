@@ -54,6 +54,8 @@ func (h *handler) ListSourceDefinition(ctx context.Context, req *connectorPB.Lis
 	)
 	if err != nil {
 		return &connectorPB.ListSourceDefinitionResponse{}, err
+	} else if dbSrcDefs == nil {
+		return &connectorPB.ListSourceDefinitionResponse{}, nil
 	}
 
 	pbSrcDefs := []*connectorPB.SourceDefinition{}
@@ -96,6 +98,8 @@ func (h *handler) ListDestinationDefinition(ctx context.Context, req *connectorP
 	)
 	if err != nil {
 		return &connectorPB.ListDestinationDefinitionResponse{}, err
+	} else if dbDstDefs == nil {
+		return &connectorPB.ListDestinationDefinitionResponse{}, nil
 	}
 
 	pbDstDefs := []*connectorPB.DestinationDefinition{}
