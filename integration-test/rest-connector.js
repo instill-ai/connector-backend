@@ -83,6 +83,22 @@ export function CheckCreate() {
             "POST /connectors response status 201": (r) => r.status === 201,
         });
 
+        var dirGRPCDstConnectorUpdate = {
+            "name": "try-to-update-grpc-name",
+            "description": "this shall return 400 bad request since directness connector cannot be updated",
+            "tombstone": true,
+            "configuration": {},
+        }
+
+        check(http.request(
+            "PATCH",
+            `${connectorHost}/connectors/${resDstGRPC.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION`,
+            JSON.stringify(dirGRPCDstConnectorUpdate), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            [`PATCH /connectors/${resDstGRPC.json().connector.name}?connector_type=CONNECTOR_TYPE_DESTINATION response status 400`]: (r) => r.status === 400,
+        });
+
         // Delete test records
         check(http.request("DELETE", `${connectorHost}/connectors/${resSrcHTTP.json().connector.name}?connector_type=CONNECTOR_TYPE_SOURCE`), {
             [`DELETE /connectors/${resSrcHTTP.json().connector.name}?connector_type=CONNECTOR_TYPE_SOURCE response status 204`]: (r) => r.status === 204,

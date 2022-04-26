@@ -21,7 +21,7 @@ type Service interface {
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
 	ListConnector(ownerID uuid.UUID, connectorType datamodel.ConnectorType, pageSize int, pageCursor string) ([]datamodel.Connector, string, error)
 	GetConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) (*datamodel.Connector, error)
-	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) (*datamodel.Connector, error)
+	UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
 	DeleteConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType) error
 }
 
@@ -139,6 +139,7 @@ func (s *service) GetConnector(ownerID uuid.UUID, name string, connectorType dat
 }
 
 func (s *service) UpdateConnector(ownerID uuid.UUID, name string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+
 	// Validatation: Required field
 	if name == "" {
 		return nil, status.Error(codes.FailedPrecondition, "The required field name not specify")
@@ -149,8 +150,17 @@ func (s *service) UpdateConnector(ownerID uuid.UUID, name string, connectorType 
 		return nil, status.Error(codes.FailedPrecondition, "The required field connector_type is not specified")
 	}
 
-	if existingConnector, _ := s.GetConnector(ownerID, name, connectorType); existingConnector == nil {
-		return nil, status.Errorf(codes.NotFound, "Directness connector name \"%s\" with connector_type \"%s\" is not found", updatedConnector.Name, connectorPB.ConnectorType(updatedConnector.ConnectorType))
+	// Validatation: Directness connectors cannot be updated
+	existingConnector, _ := s.GetConnector(ownerID, name, connectorType)
+	if existingConnector == nil {
+		return nil, status.Errorf(codes.NotFound, "Connector name \"%s\" with connector_type \"%s\" is not found", updatedConnector.Name, connectorPB.ConnectorType(updatedConnector.ConnectorType))
+	}
+	def, err := s.GetDefinition(existingConnector.ConnectorDefinitionID, connectorPB.DefinitionView_DEFINITION_VIEW_BASIC)
+	if err != nil {
+		return nil, err
+	}
+	if connectorPB.ConnectionType(def.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
+		return nil, status.Errorf(codes.FailedPrecondition, "Directness connector cannot be updated")
 	}
 
 	if err := s.repository.UpdateConnector(ownerID, name, connectorType, updatedConnector); err != nil {

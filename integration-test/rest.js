@@ -16,12 +16,9 @@ export let options = {
   },
 };
 
-export function setup() {
-  constant
-}
+export function setup() {}
 
 export default function (data) {
-  let res;
 
   /*
    * Connector API - API CALLS
@@ -38,7 +35,7 @@ export default function (data) {
   sourceDefinition.CheckList()
   sourceDefinition.CheckGet()
 
-  // // Destination connector definitions
+  // Destination connector definitions
   destinationDefinition.CheckList()
   destinationDefinition.CheckGet()
 
@@ -49,28 +46,4 @@ export default function (data) {
 
 }
 
-export function teardown(data) {
-  // group("Connector API: Delete all connectors created by this test", () => {
-  //   for (const pipeline of http
-  //     .request("GET", `${connectorHost}/pipelines`, null, {
-  //       headers: genHeader(
-  //         "application/json"
-  //       ),
-  //     })
-  //     .json("pipelines")) {
-  //     check(pipeline, {
-  //       "GET /clients response contents[*] id": (c) => c.id !== undefined,
-  //     });
-
-  //     check(
-  //       http.request("DELETE", `${connectorHost}/pipelines/${pipeline.name}`, null, {
-  //         headers: genHeader("application/json"),
-  //       }),
-  //       {
-  //         [`DELETE /pipelines/${pipeline.name} response status is 204`]: (r) =>
-  //           r.status === 204,
-  //       }
-  //     );
-  //   }
-  // });
-}
+export function teardown(data) {}
