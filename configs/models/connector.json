@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/instill-ai/connector-backend/blob/main/configs/models/connector.json",
+  "title": "Connector",
+  "description": "The standard connector data structure",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "connector_specification"
+  ],
+  "properties": {
+    "connector_specification": {
+      "$ref": "#/definitions/ConnectorSpecification"
+    }
+  },
+  "definitions": {
+    "ConnectorSpecification": {
+      "type": "object",
+      "title": "Connector specification",
+      "description": "Specification of a connector (source/destination)",
+      "required": [
+        "connectionSpecification"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "documentation_url": {
+          "type": "string",
+          "format": "uri",
+          "title": "Documentation URL",
+          "description": "The documentation URL of the connector",
+          "minLength": 1,
+          "maxLength": 1024,
+          "readOnly": true,
+          "instill_order": 1
+        },
+        "changelog_url": {
+          "type": "string",
+          "format": "uri",
+          "title": "Changelog URL",
+          "description": "The Changelog URL of the connector",
+          "minLength": 1,
+          "maxLength": 1024,
+          "readOnly": true,
+          "instill_order": 2
+        },
+        "connection_specification": {
+          "type": "object",
+          "title": "Connection specification",
+          "description": "ConnectorDefinition specific blob. Must be a valid JSON string.",
+          "instill_order": 3
+        },
+        "supportsIncremental": {
+          "type": "boolean",
+          "title": "Support incremental",
+          "description": "If the connector supports incremental mode or not.",
+          "default": false,
+          "readOnly": true,
+          "instill_order": 4
+        },
+        "supportsNormalization": {
+          "type": "boolean",
+          "title": "Support normalization",
+          "description": "If the connector supports normalization or not.",
+          "default": false,
+          "readOnly": true,
+          "instill_order": 5
+        },
+        "supportsDBT": {
+          "type": "boolean",
+          "title": "Support DBT",
+          "description": "If the connector supports DBT or not.",
+          "default": false,
+          "readOnly": true,
+          "instill_order": 6
+        },
+        "supported_destination_sync_modes": {
+          "type": "array",
+          "title": "Support DBT",
+          "description": "List of destination sync modes supported by the connector",
+          "items": {
+            "$ref": "#/definitions/DestinationSyncMode"
+          },
+          "readOnly": true,
+          "instill_order": 7
+        }
+      }
+    },
+    "DestinationSyncMode": {
+      "type": "string",
+      "title": "Destination sync mode",
+      "description": "Destination sync mode/",
+      "enum": [
+        "SUPPORTED_DESTINATION_SYNC_MODES_UNSPECIFIED",
+        "SUPPORTED_DESTINATION_SYNC_MODES_APPEND",
+        "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+        "SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP"
+      ]
+    }
+  }
+}
