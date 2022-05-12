@@ -306,8 +306,8 @@ export function CheckRename() {
             [`POST /v1alpha/destination-connectors/${resCSV.json().destination_connector.id}:rename response id is some-id-not-${csvDstConnector.id}`]: (r) => r.json().destination_connector.id === `some-id-not-${csvDstConnector.id}`,
         });
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resHTTP.json().destination_connector.id}`), {
-            [`DELETE /v1alpha/destination-connectors/${resHTTP.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/some-id-not-${csvDstConnector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/some-id-not-${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });    });
 
 }

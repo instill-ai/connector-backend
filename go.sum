@@ -605,8 +605,8 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220512201618-15475b6e803f h1:hU//AUPB1gI7SyWAPXFqbdsnpvvQhXFdheqwiGv0Acw=
 github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220512201618-15475b6e803f/go.mod h1:q2Pq4P0AY/59RGibT4nSDnOsA4wD4XhLueFRoGYNBjk=
-github.com/instill-ai/x v0.1.0-alpha.0.20220511011451-83b1d7b1bffd h1:7cG3uE2hrEF25Lnsa6+p2s5fo1L8A21BFrEtOzNOvjw=
-github.com/instill-ai/x v0.1.0-alpha.0.20220511011451-83b1d7b1bffd/go.mod h1:JWQnISvj4v7+lXTTjw0mK0TOzGUDpiT78lPa+x/DO8s=
+github.com/instill-ai/x v0.1.0-alpha.0.20220512224808-b70482b82463 h1:ho04zkOFJ+6hp3/S1W3q5J/FdqdSYAlUDWppigUEu9M=
+github.com/instill-ai/x v0.1.0-alpha.0.20220512224808-b70482b82463/go.mod h1:JWQnISvj4v7+lXTTjw0mK0TOzGUDpiT78lPa+x/DO8s=
 github.com/j-keck/arping v0.0.0-20160618110441-2cf9dc699c56/go.mod h1:ymszkNOg6tORTn+6F6j+Jc8TOr5osrynvN6ivFWZ2GA=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
