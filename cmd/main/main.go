@@ -113,7 +113,7 @@ func main() {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames:   true,
-				EmitUnpopulated: false,
+				EmitUnpopulated: true,
 				UseEnumNumbers:  false,
 			},
 			UnmarshalOptions: protojson.UnmarshalOptions{

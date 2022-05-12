@@ -1,9 +1,10 @@
 import http from "k6/http";
 import { check, group } from "k6";
 
-import * as sourceDefinition from './rest-source-definition.js';
-import * as destinationDefinition from './rest-destination-definition.js';
-import * as connector from './rest-connector.js';
+import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
+import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
+import * as sourceConnector from './rest-source-connector.js';
+import * as destinationConnector from './rest-destination-connector.js';
 import * as constant from "./const.js";
 
 const connectorHost = "http://localhost:8080";
@@ -26,23 +27,34 @@ export default function (data) {
 
   // Health check
   group("Connector API: Health check", () => {
-    check(http.request("GET", `${connectorHost}/health/connector`), {
+    check(http.request("GET", `${connectorHost}/v1alpha/health/connector`), {
       "GET /health/connector response status is 200": (r) => r.status === 200,
     });
   });
 
   // Source connector definitions
-  sourceDefinition.CheckList()
-  sourceDefinition.CheckGet()
+  sourceConnectorDefinition.CheckList()
+  sourceConnectorDefinition.CheckGet()
 
   // Destination connector definitions
-  destinationDefinition.CheckList()
-  destinationDefinition.CheckGet()
+  destinationConnectorDefinition.CheckList()
+  destinationConnectorDefinition.CheckGet()
 
-  // Connector
-  connector.CheckCreate()
-  connector.CheckUpdate()
-  connector.CheckGet()
+  // Source connectors
+  sourceConnector.CheckCreate()
+  sourceConnector.CheckList()
+  sourceConnector.CheckGet()
+  sourceConnector.CheckUpdate()
+  sourceConnector.CheckLookUp()
+  sourceConnector.CheckRename()
+
+  // Destination connectors
+  destinationConnector.CheckCreate()
+  destinationConnector.CheckList()
+  destinationConnector.CheckGet()
+  destinationConnector.CheckUpdate()
+  destinationConnector.CheckLookUp()
+  destinationConnector.CheckRename()
 
 }
 

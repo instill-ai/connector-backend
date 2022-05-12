@@ -11,8 +11,10 @@ const (
 )
 
 func loadDefinitionAndDockerImageSpecs(
-	srcDefs *[]*connectorPB.SourceDefinition,
-	dstDefs *[]*connectorPB.DestinationDefinition,
+	srcConnDefs *[]*connectorPB.SourceConnectorDefinition,
+	srcDefs *[]*connectorPB.ConnectorDefinition,
+	dstConnDefs *[]*connectorPB.DestinationConnectorDefinition,
+	dstDefs *[]*connectorPB.ConnectorDefinition,
 	dockerImageSpecs *[]*connectorPB.DockerImageSpec) error {
 
 	sourceDefsFiles := []string{
@@ -32,6 +34,9 @@ func loadDefinitionAndDockerImageSpecs(
 
 	for _, filename := range sourceDefsFiles {
 		if jsonSliceMap, err := processJSONSliceMap(filename); err == nil {
+			if err := unmarshalConnectorPB(jsonSliceMap, srcConnDefs); err != nil {
+				return err
+			}
 			if err := unmarshalConnectorPB(jsonSliceMap, srcDefs); err != nil {
 				return err
 			}
@@ -42,6 +47,9 @@ func loadDefinitionAndDockerImageSpecs(
 
 	for _, filename := range destinationDefsFiles {
 		if jsonSliceMap, err := processJSONSliceMap(filename); err == nil {
+			if err := unmarshalConnectorPB(jsonSliceMap, dstConnDefs); err != nil {
+				return err
+			}
 			if err := unmarshalConnectorPB(jsonSliceMap, dstDefs); err != nil {
 				return err
 			}

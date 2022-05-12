@@ -13,7 +13,7 @@ import (
 var enumRegistry = map[string]map[string]int32{
 	"release_stage":                    connectorPB.ReleaseStage_value,
 	"connection_type":                  connectorPB.ConnectionType_value,
-	"supported_destination_sync_modes": connectorPB.SupportedDestinationSyncModes_value,
+	"supported_destination_sync_modes": connectorPB.Spec_SupportedDestinationSyncModes_value,
 	"auth_flow_type":                   connectorPB.AdvancedAuth_AuthFlowType_value,
 }
 
@@ -33,30 +33,32 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	srcDefs := []*connectorPB.SourceDefinition{}
-	dstDefs := []*connectorPB.DestinationDefinition{}
+	srcConnDefs := []*connectorPB.SourceConnectorDefinition{}
+	srcDefs := []*connectorPB.ConnectorDefinition{}
+	dstConnDefs := []*connectorPB.DestinationConnectorDefinition{}
+	dstDefs := []*connectorPB.ConnectorDefinition{}
 	dockerImageSpecs := []*connectorPB.DockerImageSpec{}
 
-	if err := loadDefinitionAndDockerImageSpecs(&srcDefs, &dstDefs, &dockerImageSpecs); err != nil {
+	if err := loadDefinitionAndDockerImageSpecs(&srcConnDefs, &srcDefs, &dstConnDefs, &dstDefs, &dockerImageSpecs); err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	for _, def := range srcDefs {
-		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
+	for idx, def := range srcDefs {
+		spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs)
+		if err != nil {
 			logger.Fatal(err.Error())
-		} else {
-			// Create source definition record
-			if err := createSourceConnectorDefinition(db, def, spec); err != nil {
-				logger.Fatal(err.Error())
-			}
+		}
+		// Create source definition record
+		if err := createSourceConnectorDefinition(db, srcConnDefs[idx], def, spec); err != nil {
+			logger.Fatal(err.Error())
 		}
 	}
 
-	for _, def := range dstDefs {
+	for idx, def := range dstDefs {
 		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
 			logger.Fatal(err.Error())
 		} else {
-			if err := createDestinationConnectorDefinition(db, def, spec); err != nil {
+			if err := createDestinationConnectorDefinition(db, dstConnDefs[idx], def, spec); err != nil {
 				logger.Fatal(err.Error())
 			}
 		}

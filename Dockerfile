@@ -14,10 +14,13 @@ FROM gcr.io/distroless/base AS runtime
 ENV GIN_MODE=release
 WORKDIR /connector-backend
 
-COPY --from=build /connector-backend ./
+COPY --from=build /go/src/internal/db/migration ./internal/db/migration
 COPY --from=build /connector-backend-migrate ./
+
 COPY --from=build /connector-backend-init ./
+
 COPY --from=build /go/src/configs ./configs
+COPY --from=build /connector-backend ./
 
 EXPOSE 8080/tcp
 ENTRYPOINT ["./connector-backend"]

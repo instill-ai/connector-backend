@@ -1,10 +1,10 @@
 - name: HTTP
-  destinationDefinitionId: 909c3278-f7d1-461c-9352-87741bef11d3
-  documentationUrl: https://docs.instill.tech/integrations/sources/http
+  uid: 909c3278-f7d1-461c-9352-87741bef11d3
+  documentation_url: https://docs.instill.tech/integrations/sources/http
   icon: http.svg
-  connectionType: directness
+  connection_type: directness
 - name: gRPC
-  destinationDefinitionId: c0e4a82c-9620-4a72-abd1-18586f2acccd
-  documentationUrl: https://docs.instill.tech/integrations/sources/grpc
+  uid: c0e4a82c-9620-4a72-abd1-18586f2acccd
+  documentation_url: https://docs.instill.tech/integrations/sources/grpc
   icon: grpc.svg
-  connectionType: directness
+  connection_type: directness

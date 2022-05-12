@@ -1,12 +1,10 @@
-package util
+package main
 
 import (
 	"bytes"
 	"encoding/json"
 	"log"
 	"testing"
-
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
 )
 
 func TestConvertJSONKeySnakeCase(t *testing.T) {
@@ -97,13 +95,6 @@ func TestConvertJSONKeySnakeCase(t *testing.T) {
 }
 
 func TestConvertJSONEnumValue(t *testing.T) {
-
-	var enumRegistry = map[string]map[string]int32{
-		"release_stage":                    connectorPB.ReleaseStage_value,
-		"connection_type":                  connectorPB.ConnectionType_value,
-		"supported_destination_sync_modes": connectorPB.SupportedDestinationSyncModes_value,
-		"auth_flow_type":                   connectorPB.AdvancedAuth_AuthFlowType_value,
-	}
 
 	tests := []struct {
 		inputJSON    string

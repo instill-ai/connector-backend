@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// DecodeCursor decodes the cursor string into created_at time and UUID
+// DecodeCursor decodes the token string into create_time and UUID
 func DecodeCursor(encodedCursor string) (time.Time, string, error) {
 	byt, err := base64.StdEncoding.DecodeString(encodedCursor)
 	if err != nil {
@@ -30,7 +30,7 @@ func DecodeCursor(encodedCursor string) (time.Time, string, error) {
 	return createdAt, uuid, nil
 }
 
-// EncodeCursor encodes created_at time and UUID into a single string
+// EncodeCursor encodes create_time and UUID into a single string
 func EncodeCursor(t time.Time, uuid string) string {
 	key := fmt.Sprintf("%s,%s", t.Format(time.RFC3339Nano), uuid)
 	return base64.StdEncoding.EncodeToString([]byte(key))

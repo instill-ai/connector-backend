@@ -27,7 +27,6 @@ func httpResponseModifier(ctx context.Context, w http.ResponseWriter, p proto.Me
 		delete(w.Header(), "Grpc-Metadata-X-Http-Code")
 		delete(w.Header(), "Grpc-Metadata-Content-Type")
 		delete(w.Header(), "Grpc-Metadata-Trailer")
-
 		w.WriteHeader(code)
 	}
 
@@ -40,7 +39,7 @@ func customMatcher(key string) (string, bool) {
 	}
 
 	switch key {
-	case "owner_id":
+	case "owner":
 		return key, true
 	default:
 		return runtime.DefaultHeaderMatcher(key)

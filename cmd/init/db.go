@@ -12,8 +12,9 @@ import (
 
 func createConnectorDefinitionRecord(
 	db *gorm.DB,
-	name string,
-	id uuid.UUID,
+	uid uuid.UUID,
+	id string,
+	title string,
 	dockerRepository string,
 	dockerImageTag string,
 	documentationURL string,
@@ -29,8 +30,9 @@ func createConnectorDefinitionRecord(
 	releaseStage datamodel.ReleaseStage) error {
 
 	connectorDef := datamodel.ConnectorDefinition{
-		BaseStatic:           datamodel.BaseStatic{ID: id},
-		Name:                 name,
+		BaseStatic:           datamodel.BaseStatic{UID: uid},
+		ID:                   id,
+		Title:                title,
 		DockerRepository:     dockerRepository,
 		DockerImageTag:       dockerImageTag,
 		DocumentationURL:     documentationURL,

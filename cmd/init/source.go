@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"gorm.io/datatypes"
@@ -14,16 +15,25 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
 )
 
-func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefinition, spec datatypes.JSON) error {
+func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.SourceConnectorDefinition, connDef *connectorPB.ConnectorDefinition, spec datatypes.JSON) error {
 	logger, _ := logger.GetZapLogger()
 
-	id, err := uuid.FromString(srcDef.GetSourceDefinitionId())
+	uid, err := uuid.FromString(srcConnDef.GetUid())
 	if err != nil {
 		return err
 	}
 
+	id := srcConnDef.GetId()
+	if id == "" {
+		id = connDef.GetDockerRepository()[strings.LastIndex(connDef.GetDockerRepository(), "/")+1:]
+		if id == "" {
+			// Only directness connector ends up this
+			id = strings.ToLower(connDef.GetTitle())
+		}
+	}
+
 	releaseDate := func() *time.Time {
-		releaseDate := srcDef.GetReleaseDate()
+		releaseDate := connDef.GetReleaseDate()
 		if releaseDate != nil {
 			t := time.Date(int(releaseDate.Year), time.Month(releaseDate.Month), int(releaseDate.Day), 0, 0, 0, 0, time.UTC)
 			return &t
@@ -32,7 +42,7 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 	}()
 
 	resourceRequirements := func() datatypes.JSON {
-		s := srcDef.GetResourceRequirements()
+		s := connDef.GetResourceRequirements()
 		if s != nil {
 			if b, err := s.MarshalJSON(); err != nil {
 				logger.Fatal(err.Error())
@@ -45,21 +55,22 @@ func createSourceConnectorDefinition(db *gorm.DB, srcDef *connectorPB.SourceDefi
 
 	if err := createConnectorDefinitionRecord(
 		db,
-		srcDef.GetName(),
+		uid,
 		id,
-		srcDef.GetDockerRepository(),
-		srcDef.GetDockerImageTag(),
-		srcDef.GetDocumentationUrl(),
-		srcDef.GetIcon(),
-		srcDef.GetTombstone(),
+		connDef.GetTitle(),
+		connDef.GetDockerRepository(),
+		connDef.GetDockerImageTag(),
+		connDef.GetDocumentationUrl(),
+		connDef.GetIcon(),
+		connDef.GetTombstone(),
 		true, //srcDef.GetPublic(),
-		srcDef.GetCustom(),
+		connDef.GetCustom(),
 		releaseDate,
 		spec,
 		resourceRequirements,
 		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
-		datamodel.ConnectionType(srcDef.GetConnectionType()),
-		datamodel.ReleaseStage(srcDef.GetReleaseStage()),
+		datamodel.ConnectionType(connDef.GetConnectionType()),
+		datamodel.ReleaseStage(connDef.GetReleaseStage()),
 	); err != nil {
 		return err
 	}

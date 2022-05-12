@@ -2,19 +2,33 @@ package handler
 
 import (
 	"context"
-	"net/http"
-	"strconv"
-	"strings"
+	"database/sql"
+	"fmt"
 
 	"github.com/gofrs/uuid"
+	"github.com/gogo/status"
+	"github.com/iancoleman/strcase"
+	"google.golang.org/grpc/codes"
+	"gorm.io/datatypes"
+
+	fieldmask_utils "github.com/mennanov/fieldmask-utils"
+
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/service"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/instill-ai/x/checkfield"
 
 	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
 )
+
+// requiredFields are Protobuf message fields with REQUIRED field_behavior annotation
+var requiredFields = []string{"connector", "connector.configuration"}
+
+// immutableFields* are Protobuf message fields with IMMUTABLE field_behavior annotation
+var immutableFieldsDestination = []string{"id", "destination_connector_definition"}
+var immutableFieldsSource = []string{"id", "source_connector_definition"}
+
+// outputOnlyFields are Protobuf message fields with OUTPUT_ONLY field_behavior annotation
+var outputOnlyFields = []string{"name", "uid", "connector.tombstone", "connector.owner", "connector.create_time", "connector.update_time"}
 
 type handler struct {
 	connectorPB.UnimplementedConnectorServiceServer
@@ -44,242 +58,661 @@ func (h *handler) Readiness(ctx context.Context, in *connectorPB.ReadinessReques
 	}, nil
 }
 
-func (h *handler) ListSourceDefinition(ctx context.Context, req *connectorPB.ListSourceDefinitionRequest) (*connectorPB.ListSourceDefinitionResponse, error) {
+func (h *handler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	dbSrcDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(
-		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
-		req.View,
-		int(req.PageSize),
-		req.PageCursor,
-	)
+	var connID string
+	var connDesc sql.NullString
+	var connType datamodel.ConnectorType
+	var connConfig datatypes.JSON
+
+	var connDefUID uuid.UUID
+	var connDefRscName string
+
+	switch v := req.(type) {
+	case *connectorPB.CreateSourceConnectorRequest:
+
+		resp = &connectorPB.CreateSourceConnectorResponse{}
+
+		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		if err := checkfield.CheckOutputOnlyFieldsCreate(v.GetSourceConnector(), outputOnlyFields); err != nil {
+			return resp, err
+		}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFieldsCreate(v.GetSourceConnector(), append(requiredFields, immutableFieldsSource...)); err != nil {
+			return resp, err
+		}
+
+		connID = v.GetSourceConnector().GetId()
+
+		connConfig = []byte(v.GetSourceConnector().GetConnector().GetConfiguration())
+
+		connDesc = sql.NullString{
+			String: v.SourceConnector.GetConnector().GetDescription(),
+			Valid:  len(v.SourceConnector.GetConnector().GetDescription()) > 0,
+		}
+
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+
+		connDefResp, err := h.GetSourceConnectorDefinition(
+			ctx,
+			&connectorPB.GetSourceConnectorDefinitionRequest{
+				Name: v.GetSourceConnector().GetSourceConnectorDefinition(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		connDefUID, err = uuid.FromString(connDefResp.SourceConnectorDefinition.GetUid())
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", connDefResp.SourceConnectorDefinition.GetId())
+
+	case *connectorPB.CreateDestinationConnectorRequest:
+
+		resp = &connectorPB.CreateDestinationConnectorResponse{}
+
+		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		if err := checkfield.CheckOutputOnlyFieldsCreate(v.GetDestinationConnector(), outputOnlyFields); err != nil {
+			return resp, err
+		}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFieldsCreate(v.GetDestinationConnector(), append(requiredFields, immutableFieldsDestination...)); err != nil {
+			return resp, err
+		}
+
+		connID = v.GetDestinationConnector().GetId()
+
+		connConfig = []byte(v.GetDestinationConnector().GetConnector().GetConfiguration())
+
+		connDesc = sql.NullString{
+			String: v.DestinationConnector.GetConnector().GetDescription(),
+			Valid:  len(v.DestinationConnector.GetConnector().GetDescription()) > 0,
+		}
+
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+
+		connDefResp, err := h.GetDestinationConnectorDefinition(
+			ctx,
+			&connectorPB.GetDestinationConnectorDefinitionRequest{
+				Name: v.GetDestinationConnector().GetDestinationConnectorDefinition(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		connDefUID, err = uuid.FromString(connDefResp.DestinationConnectorDefinition.GetUid())
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", connDefResp.DestinationConnectorDefinition.GetId())
+	}
+
+	// Return error if resource ID does not follow RFC-1034
+	if err := checkfield.CheckResourceID(connID); err != nil {
+		return resp, err
+	}
+
+	owner, err := getOwner(ctx)
 	if err != nil {
-		return &connectorPB.ListSourceDefinitionResponse{}, err
-	} else if dbSrcDefs == nil {
-		return &connectorPB.ListSourceDefinitionResponse{}, nil
-	}
-
-	pbSrcDefs := []*connectorPB.SourceDefinition{}
-	for _, dbSrcDef := range dbSrcDefs {
-		pbSrcDefs = append(pbSrcDefs, convertDBSourceDefinitionToPBSourceDefinition(&dbSrcDef))
-	}
-
-	resp := connectorPB.ListSourceDefinitionResponse{
-		SourceDefinitions: pbSrcDefs,
-		NextPageCursor:    nextPageCursor,
-	}
-
-	return &resp, nil
-}
-
-func (h *handler) GetSourceDefinition(ctx context.Context, req *connectorPB.GetSourceDefinitionRequest) (*connectorPB.GetSourceDefinitionResponse, error) {
-	defUUID, err := uuid.FromString(req.Id)
-	if err != nil {
-		return &connectorPB.GetSourceDefinitionResponse{}, err
-	}
-
-	dbSrcDef, err := h.service.GetDefinition(defUUID, req.View)
-	if err != nil {
-		return &connectorPB.GetSourceDefinitionResponse{}, err
-	}
-
-	pbSrcDef := convertDBSourceDefinitionToPBSourceDefinition(dbSrcDef)
-	resp := connectorPB.GetSourceDefinitionResponse{
-		SourceDefinition: pbSrcDef,
-	}
-	return &resp, nil
-}
-
-func (h *handler) ListDestinationDefinition(ctx context.Context, req *connectorPB.ListDestinationDefinitionRequest) (*connectorPB.ListDestinationDefinitionResponse, error) {
-
-	dbDstDefs, nextPageCursor, err := h.service.ListDefinitionByConnectorType(
-		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
-		req.View,
-		int(req.PageSize), req.PageCursor,
-	)
-	if err != nil {
-		return &connectorPB.ListDestinationDefinitionResponse{}, err
-	} else if dbDstDefs == nil {
-		return &connectorPB.ListDestinationDefinitionResponse{}, nil
-	}
-
-	pbDstDefs := []*connectorPB.DestinationDefinition{}
-	for _, dbDstDef := range dbDstDefs {
-		pbDstDefs = append(pbDstDefs, convertDBDestinationDefinitionToPBDestinationDefinition(&dbDstDef))
-	}
-
-	resp := connectorPB.ListDestinationDefinitionResponse{
-		DestinationDefinitions: pbDstDefs,
-		NextPageCursor:         nextPageCursor,
-	}
-
-	return &resp, nil
-}
-
-func (h *handler) GetDestinationDefinition(ctx context.Context, req *connectorPB.GetDestinationDefinitionRequest) (*connectorPB.GetDestinationDefinitionResponse, error) {
-	defUUID, err := uuid.FromString(req.Id)
-	if err != nil {
-		return &connectorPB.GetDestinationDefinitionResponse{}, err
-	}
-
-	dbDstDef, err := h.service.GetDefinition(defUUID, req.View)
-	if err != nil {
-		return &connectorPB.GetDestinationDefinitionResponse{}, err
-	}
-	pbDstDef := convertDBDestinationDefinitionToPBDestinationDefinition(dbDstDef)
-	resp := connectorPB.GetDestinationDefinitionResponse{
-		DestinationDefinition: pbDstDef,
-	}
-	return &resp, nil
-}
-
-func (h *handler) CreateConnector(ctx context.Context, req *connectorPB.CreateConnectorRequest) (*connectorPB.CreateConnectorResponse, error) {
-
-	ownerID, err := getOwnerID(ctx)
-	if err != nil {
-		return &connectorPB.CreateConnectorResponse{}, err
-	}
-
-	connectiondefUUID, err := uuid.FromString(req.ConnectorDefinitionId)
-	if err != nil {
-		return &connectorPB.CreateConnectorResponse{}, err
-	}
-
-	configuration, err := protojson.Marshal(req.Configuration)
-	if err != nil {
-		return &connectorPB.CreateConnectorResponse{}, err
+		return resp, err
 	}
 
 	dbConnector := &datamodel.Connector{
-		OwnerID:               ownerID,
-		ConnectorDefinitionID: connectiondefUUID,
-		Name:                  req.Name,
-		Tombstone:             false,
-		Configuration:         configuration,
-		ConnectorType:         datamodel.ConnectorType(req.ConnectorType),
+		ID:                     connID,
+		Owner:                  owner,
+		ConnectorDefinitionUID: connDefUID,
+		Tombstone:              false,
+		Configuration:          connConfig,
+		ConnectorType:          connType,
+		Description:            connDesc,
 	}
 
 	dbConnector, err = h.service.CreateConnector(dbConnector)
 	if err != nil {
-		return &connectorPB.CreateConnectorResponse{}, err
+		return resp, err
 	}
 
-	pbConnector := convertDBConnectorToPBConnector(dbConnector)
-	resp := connectorPB.CreateConnectorResponse{
-		Connector: pbConnector,
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		owner,
+		connDefRscName)
+
+	switch v := resp.(type) {
+	case *connectorPB.CreateSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.CreateDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
 	}
 
-	// We need to manually set the custom header to have a StatusCreated http response for REST endpoint
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusCreated))); err != nil {
-		return &connectorPB.CreateConnectorResponse{}, err
-	}
-
-	return &resp, nil
+	return resp, nil
 }
 
-func (h *handler) ListConnector(ctx context.Context, req *connectorPB.ListConnectorRequest) (*connectorPB.ListConnectorResponse, error) {
-	ownerID, err := getOwnerID(ctx)
-	if err != nil {
-		return &connectorPB.ListConnectorResponse{}, err
+func (h *handler) listConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var pageSize int64
+	var pageToken string
+	var isBasicView bool
+
+	var connType datamodel.ConnectorType
+
+	var connDefColID string
+
+	switch v := req.(type) {
+	case *connectorPB.ListSourceConnectorRequest:
+		resp = &connectorPB.ListSourceConnectorResponse{}
+		pageSize = v.PageSize
+		pageToken = v.PageToken
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "source-connector-definitions"
+	case *connectorPB.ListDestinationConnectorRequest:
+		resp = &connectorPB.ListDestinationConnectorResponse{}
+		pageSize = v.PageSize
+		pageToken = v.PageToken
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "destination-connector-definitions"
 	}
 
-	dbConnectors, nextPageCursor, err := h.service.ListConnector(ownerID, datamodel.ConnectorType(req.ConnectorType), int(req.PageSize), req.PageCursor)
+	owner, err := getOwner(ctx)
 	if err != nil {
-		return &connectorPB.ListConnectorResponse{}, err
+		return resp, err
 	}
 
-	pbConnectors := []*connectorPB.Connector{}
+	dbConnectors, nextPageToken, totalSize, err := h.service.ListConnector(owner, connType, pageSize, pageToken, isBasicView)
+	if err != nil {
+		return resp, err
+	}
+
+	var pbConnectors []interface{}
 	for _, dbConnector := range dbConnectors {
-		pbConnectors = append(pbConnectors, convertDBConnectorToPBConnector(&dbConnector))
-	}
-
-	resp := connectorPB.ListConnectorResponse{
-		Connectors:     pbConnectors,
-		NextPageCursor: nextPageCursor,
-	}
-	return &resp, nil
-}
-
-func (h *handler) GetConnector(ctx context.Context, req *connectorPB.GetConnectorRequest) (*connectorPB.GetConnectorResponse, error) {
-	ownerID, err := getOwnerID(ctx)
-	if err != nil {
-		return &connectorPB.GetConnectorResponse{}, err
-	}
-
-	dbConnector, err := h.service.GetConnector(
-		ownerID,
-		req.GetName(),
-		datamodel.ConnectorType(req.GetConnectorType()))
-	if err != nil {
-		return &connectorPB.GetConnectorResponse{}, err
-	}
-
-	pbConnector := convertDBConnectorToPBConnector(dbConnector)
-	resp := connectorPB.GetConnectorResponse{
-		Connector: pbConnector,
-	}
-
-	return &resp, nil
-}
-
-func (h *handler) UpdateConnector(ctx context.Context, req *connectorPB.UpdateConnectorRequest) (*connectorPB.UpdateConnectorResponse, error) {
-
-	ownerID, err := getOwnerID(ctx)
-	if err != nil {
-		return &connectorPB.UpdateConnectorResponse{}, err
-	}
-
-	dbConnector := &datamodel.Connector{
-		OwnerID:       ownerID,
-		ConnectorType: datamodel.ConnectorType(req.GetConnectorType()),
-	}
-
-	if req.FieldMask != nil && len(req.FieldMask.Paths) > 0 {
-		for _, field := range req.FieldMask.Paths {
-			switch field {
-			case "name":
-				dbConnector.Name = req.ConnectorPatch.Name
-			case "description":
-				dbConnector.Description = req.ConnectorPatch.Description
-			case "tombstone":
-				dbConnector.Tombstone = req.ConnectorPatch.Tombstone
-			}
-			if strings.HasPrefix(field, "configuration") {
-				configuration, err := protojson.Marshal(req.ConnectorPatch.Configuration)
-				if err != nil {
-					return &connectorPB.UpdateConnectorResponse{}, err
-				}
-				dbConnector.Configuration = configuration
-			}
+		dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+		if err != nil {
+			return resp, err
 		}
+		pbConnectors = append(
+			pbConnectors,
+			DBToPBConnector(
+				dbConnector,
+				connType,
+				dbConnector.Owner,
+				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+			))
 	}
 
-	dbConnector, err = h.service.UpdateConnector(ownerID, req.GetName(), datamodel.ConnectorType(req.GetConnectorType()), dbConnector)
-	if err != nil {
-		return nil, err
+	switch v := resp.(type) {
+	case *connectorPB.ListSourceConnectorResponse:
+		var pbSrcConns []*connectorPB.SourceConnector
+		for _, pbConnector := range pbConnectors {
+			pbSrcConns = append(pbSrcConns, pbConnector.(*connectorPB.SourceConnector))
+		}
+		v.SourceConnectors = pbSrcConns
+		v.NextPageToken = nextPageToken
+		v.TotalSize = totalSize
+	case *connectorPB.ListDestinationConnectorResponse:
+		var pbDstConns []*connectorPB.DestinationConnector
+		for _, pbConnector := range pbConnectors {
+			pbDstConns = append(pbDstConns, pbConnector.(*connectorPB.DestinationConnector))
+		}
+		v.DestinationConnectors = pbDstConns
+		v.NextPageToken = nextPageToken
+		v.TotalSize = totalSize
 	}
 
-	pbConnector := convertDBConnectorToPBConnector(dbConnector)
-	resp := connectorPB.UpdateConnectorResponse{
-		Connector: pbConnector,
-	}
+	return resp, nil
 
-	return &resp, nil
 }
 
-func (h *handler) DeleteConnector(ctx context.Context, req *connectorPB.DeleteConnectorRequest) (*connectorPB.DeleteConnectorResponse, error) {
-	ownerID, err := getOwnerID(ctx)
+func (h *handler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var isBasicView bool
+
+	var connID string
+	var connType datamodel.ConnectorType
+
+	var connDefColID string
+
+	switch v := req.(type) {
+	case *connectorPB.GetSourceConnectorRequest:
+		resp = &connectorPB.GetSourceConnectorResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "source-connector-definitions"
+	case *connectorPB.GetDestinationConnectorRequest:
+		resp = &connectorPB.GetDestinationConnectorResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "destination-connector-definitions"
+	}
+
+	owner, err := getOwner(ctx)
 	if err != nil {
-		return &connectorPB.DeleteConnectorResponse{}, err
+		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(ownerID, req.GetName(), datamodel.ConnectorType(req.GetConnectorType())); err != nil {
-		return &connectorPB.DeleteConnectorResponse{}, err
+	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, isBasicView)
+	if err != nil {
+		return resp, err
 	}
 
-	// We need to manually set the custom header to have a StatusCreated http response for REST endpoint
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
-		return &connectorPB.DeleteConnectorResponse{}, err
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	if err != nil {
+		return resp, err
 	}
 
-	return &connectorPB.DeleteConnectorResponse{}, nil
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		dbConnector.Owner,
+		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+	)
+
+	switch v := resp.(type) {
+	case *connectorPB.GetSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.GetDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
+}
+
+func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var pbConnectorReq interface{}
+	var pbConnectorToUpdate interface{}
+
+	var mask fieldmask_utils.Mask
+
+	var connID string
+	var connType datamodel.ConnectorType
+
+	var connDefRscName string
+	var connDefUID uuid.UUID
+
+	switch v := req.(type) {
+	case *connectorPB.UpdateSourceConnectorRequest:
+		resp = &connectorPB.UpdateDestinationConnectorResponse{}
+		pbConnectorReq = v.GetSourceConnector()
+		pbUpdateMask := v.GetUpdateMask()
+		if !pbUpdateMask.IsValid(v.GetSourceConnector()) {
+			return resp, status.Error(codes.InvalidArgument, "The update_mask is invalid")
+		}
+		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		pbUpdateMask, err = checkfield.CheckOutputOnlyFieldsUpdate(pbUpdateMask, outputOnlyFields)
+		if err != nil {
+			return resp, err
+		}
+		getResp, err := h.GetSourceConnector(
+			ctx,
+			&connectorPB.GetSourceConnectorRequest{
+				Name: v.GetSourceConnector().GetName(),
+				View: connectorPB.View_VIEW_FULL.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		// Return error if IMMUTABLE fields are intentionally changed
+		if err := checkfield.CheckImmutableFieldsUpdate(v.GetSourceConnector(), getResp.GetSourceConnector(), immutableFieldsDestination); err != nil {
+			return resp, err
+		}
+
+		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if mask.IsEmpty() {
+			return &connectorPB.UpdateSourceConnectorResponse{
+				SourceConnector: getResp.GetSourceConnector(),
+			}, nil
+		}
+
+		pbConnectorToUpdate = getResp.GetSourceConnector()
+
+		connID = getResp.GetSourceConnector().GetId()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+
+		dbConnDefID, err := getResourceNameID(v.GetSourceConnector().GetSourceConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+		connDefUID = dbConnDef.UID
+
+	case *connectorPB.UpdateDestinationConnectorRequest:
+		resp = &connectorPB.UpdateDestinationConnectorResponse{}
+		pbConnectorReq = v.GetDestinationConnector()
+		pbUpdateMask := v.GetUpdateMask()
+		if !pbUpdateMask.IsValid(v.GetDestinationConnector()) {
+			return resp, status.Error(codes.InvalidArgument, "The update_mask is invalid")
+		}
+		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		pbUpdateMask, err = checkfield.CheckOutputOnlyFieldsUpdate(pbUpdateMask, outputOnlyFields)
+		if err != nil {
+			return resp, err
+		}
+
+		getResp, err := h.GetDestinationConnector(
+			ctx,
+			&connectorPB.GetDestinationConnectorRequest{
+				Name: fmt.Sprintf("destination-connectors/%s", v.GetDestinationConnector().GetId()),
+				View: connectorPB.View_VIEW_FULL.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		// Return error if IMMUTABLE fields are intentionally changed
+		if err := checkfield.CheckImmutableFieldsUpdate(v.GetDestinationConnector(), getResp.GetDestinationConnector(), immutableFieldsDestination); err != nil {
+			return resp, err
+		}
+
+		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if mask.IsEmpty() {
+			return &connectorPB.UpdateDestinationConnectorResponse{
+				DestinationConnector: getResp.GetDestinationConnector(),
+			}, nil
+		}
+
+		pbConnectorToUpdate = getResp.GetDestinationConnector()
+
+		connID = getResp.GetDestinationConnector().GetId()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+
+		dbConnDefID, err := getResourceNameID(v.GetDestinationConnector().GetDestinationConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+		connDefUID = dbConnDef.UID
+	}
+
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	// Only the fields mentioned in the field mask will be copied to `pbPipelineToUpdate`, other fields are left intact
+	err = fieldmask_utils.StructToStruct(mask, pbConnectorReq, pbConnectorToUpdate)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.UpdateConnector(connID, owner, connType, PBToDBConnector(pbConnectorToUpdate, connType, owner, connDefUID))
+	if err != nil {
+		return resp, err
+	}
+
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		owner,
+		connDefRscName)
+
+	switch v := resp.(type) {
+	case *connectorPB.UpdateSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.UpdateDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
+}
+
+func (h *handler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var connID string
+	var connType datamodel.ConnectorType
+
+	// Cast all used types and data
+	switch v := req.(type) {
+	case *connectorPB.DeleteSourceConnectorRequest:
+		resp = &connectorPB.DeleteSourceConnectorResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+	case *connectorPB.DeleteDestinationConnectorRequest:
+		resp = &connectorPB.DeleteDestinationConnectorResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+	}
+
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	if err := h.service.DeleteConnector(connID, owner, connType); err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var isBasicView bool
+
+	var connUID uuid.UUID
+	var connType datamodel.ConnectorType
+
+	var connDefColID string
+
+	switch v := req.(type) {
+	case *connectorPB.LookUpSourceConnectorRequest:
+		resp = &connectorPB.LookUpSourceConnectorResponse{}
+		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
+		if err != nil {
+			return resp, err
+		}
+		connUID, err = uuid.FromString(connUIDStr)
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "source-connector-definitions"
+	case *connectorPB.LookUpDestinationConnectorRequest:
+		resp = &connectorPB.LookUpDestinationConnectorResponse{}
+		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
+		if err != nil {
+			return resp, err
+		}
+		connUID, err = uuid.FromString(connUIDStr)
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+		connDefColID = "destination-connector-definitions"
+	}
+
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.GetConnectorByUID(connUID, owner, connType, isBasicView)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	if err != nil {
+		return resp, err
+	}
+
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		dbConnector.Owner,
+		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+	)
+
+	switch v := resp.(type) {
+	case *connectorPB.LookUpSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.LookUpDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
+}
+
+func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var connID string
+	var connNewID string
+	var connType datamodel.ConnectorType
+
+	var connDefRscName string
+
+	switch v := req.(type) {
+	case *connectorPB.RenameSourceConnectorRequest:
+		resp = &connectorPB.RenameSourceConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if v.GetName() == "" {
+			return resp, status.Error(codes.InvalidArgument, "The `name` field is required")
+		}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if v.GetNewSourceConnectorId() == "" {
+			return resp, status.Error(codes.InvalidArgument, "The `new_source_connector_id` field is required")
+		}
+
+		connID, err = getResourceNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connNewID = v.GetNewSourceConnectorId()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+
+		getResp, err := h.GetSourceConnector(
+			ctx,
+			&connectorPB.GetSourceConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := getResourceNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+
+	case *connectorPB.RenameDestinationConnectorRequest:
+		resp = &connectorPB.RenameDestinationConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if v.GetName() == "" {
+			return resp, status.Error(codes.InvalidArgument, "The `name` field is required")
+		}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if v.GetNewDestinationConnectorId() == "" {
+			return resp, status.Error(codes.InvalidArgument, "The `new_destination_connector_id` field is required")
+		}
+
+		connID, err = getResourceNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connNewID = v.GetNewDestinationConnectorId()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+
+		getResp, err := h.GetDestinationConnector(
+			ctx,
+			&connectorPB.GetDestinationConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := getResourceNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+	}
+
+	// Return error if resource ID does not follow RFC-1034
+	if err := checkfield.CheckResourceID(connNewID); err != nil {
+		return resp, err
+	}
+
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.UpdateConnectorID(connID, owner, connType, connNewID)
+	if err != nil {
+		return resp, err
+	}
+
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		dbConnector.Owner,
+		connDefRscName,
+	)
+
+	switch v := resp.(type) {
+	case *connectorPB.RenameSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.RenameDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
 }
