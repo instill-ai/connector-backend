@@ -17,13 +17,13 @@ import (
 // Repository interface
 type Repository interface {
 	// ConnectorDefinition
-	ListConnectorDefinition(connectorType datamodel.ConnectorType, isBasicView bool, pageSize int64, pageToken string) ([]*datamodel.ConnectorDefinition, string, int64, error)
+	ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
 	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector
 	CreateConnector(connector *datamodel.Connector) error
-	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, string, int64, error)
+	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUID(uuid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
@@ -42,7 +42,7 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorType, isBasicView bool, pageSize int64, pageToken string) (connectorDefinitions []*datamodel.ConnectorDefinition, nextPageToken string, totalSize int64, err error) {
+func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
 
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Order("create_time DESC, id DESC")
 
@@ -61,7 +61,7 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	if pageToken != "" {
 		createdAt, uuid, err := paginate.DecodeCursor(pageToken)
 		if err != nil {
-			return nil, "", 0, status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
+			return nil, 0, "", status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
 		}
 		queryBuilder = queryBuilder.Where("(create_time,id) < (?::timestamp, ?)", createdAt, uuid)
 	}
@@ -73,13 +73,13 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	var createTime time.Time // only using one for all loops, we only need the latest one in the end
 	rows, err := queryBuilder.Rows()
 	if err != nil {
-		return nil, "", 0, err
+		return nil, 0, "", err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var item datamodel.ConnectorDefinition
 		if err = r.db.ScanRows(rows, &item); err != nil {
-			return nil, "", 0, status.Errorf(codes.Internal, err.Error())
+			return nil, 0, "", status.Errorf(codes.Internal, err.Error())
 		}
 		createTime = item.CreateTime
 		connectorDefinitions = append(connectorDefinitions, &item)
@@ -88,10 +88,10 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	if len(connectorDefinitions) > 0 {
 		r.db.Model(&datamodel.ConnectorDefinition{}).Where("connector_type = ?", connectorType).Count(&totalSize)
 		nextPageToken := paginate.EncodeCursor(createTime, (connectorDefinitions)[len(connectorDefinitions)-1].UID.String())
-		return connectorDefinitions, nextPageToken, totalSize, nil
+		return connectorDefinitions, totalSize, nextPageToken, nil
 	}
 
-	return nil, "", 0, nil
+	return nil, 0, "", nil
 }
 
 func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
@@ -125,7 +125,7 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	return nil
 }
 
-func (r *repository) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, nextPageToken string, totalSize int64, err error) {
+func (r *repository) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, id DESC")
 
 	if connectorType != datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED) {
@@ -149,7 +149,7 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 	if pageToken != "" {
 		createdAt, uuid, err := paginate.DecodeCursor(pageToken)
 		if err != nil {
-			return nil, "", 0, status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
+			return nil, 0, "", status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
 
 		}
 		queryBuilder = queryBuilder.Where("(create_time,id) < (?::timestamp, ?)", createdAt, uuid)
@@ -158,13 +158,13 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 	var createTime time.Time // only using one for all loops, we only need the latest one in the end
 	rows, err := queryBuilder.Rows()
 	if err != nil {
-		return nil, "", 0, err
+		return nil, 0, "", err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var item datamodel.Connector
 		if err = r.db.ScanRows(rows, &item); err != nil {
-			return nil, "", 0, status.Errorf(codes.Internal, err.Error())
+			return nil, 0, "", status.Errorf(codes.Internal, err.Error())
 		}
 		createTime = item.CreateTime
 		connectors = append(connectors, &item)
@@ -173,10 +173,10 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 	if len(connectors) > 0 {
 		r.db.Model(&datamodel.Connector{}).Where("owner = ? AND connector_type = ?", owner, connectorType).Count(&totalSize)
 		nextPageToken := paginate.EncodeCursor(createTime, (connectors)[len(connectors)-1].UID.String())
-		return connectors, nextPageToken, totalSize, nil
+		return connectors, totalSize, nextPageToken, nil
 	}
 
-	return nil, "", 0, nil
+	return nil, 0, "", nil
 }
 
 func (r *repository) GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {

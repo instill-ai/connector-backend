@@ -14,13 +14,13 @@ import (
 // Service interface
 type Service interface {
 	// ConnectorDefinition
-	ListConnectorDefinition(connectorType datamodel.ConnectorType, isBasicView bool, pageSize int64, pageToken string) ([]*datamodel.ConnectorDefinition, string, int64, error)
+	ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
 	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, string, int64, error)
+	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUID(uid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
@@ -39,8 +39,8 @@ func NewService(r repository.Repository) Service {
 	}
 }
 
-func (s *service) ListConnectorDefinition(connectorType datamodel.ConnectorType, isBasicView bool, pageSize int64, pageToken string) ([]*datamodel.ConnectorDefinition, string, int64, error) {
-	return s.repository.ListConnectorDefinition(connectorType, isBasicView, pageSize, pageToken)
+func (s *service) ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
+	return s.repository.ListConnectorDefinition(connectorType, pageSize, pageToken, isBasicView)
 }
 
 func (s *service) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
@@ -84,7 +84,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 }
 
-func (s *service) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, string, int64, error) {
+func (s *service) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 	return s.repository.ListConnector(owner, connectorType, pageSize, pageToken, isBasicView)
 }
 

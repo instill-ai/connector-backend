@@ -215,7 +215,7 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 		return resp, err
 	}
 
-	dbConnectors, nextPageToken, totalSize, err := h.service.ListConnector(owner, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnector(owner, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}

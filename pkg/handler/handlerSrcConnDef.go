@@ -13,11 +13,11 @@ func (h *handler) ListSourceConnectorDefinition(ctx context.Context, req *connec
 
 	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
-	dbSrcDefs, nextPageToken, totalSize, err := h.service.ListConnectorDefinition(
+	dbSrcDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinition(
 		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
-		isBasicView,
 		req.GetPageSize(),
 		req.GetPageToken(),
+		isBasicView,
 	)
 
 	if err != nil {
@@ -33,8 +33,8 @@ func (h *handler) ListSourceConnectorDefinition(ctx context.Context, req *connec
 
 	resp := connectorPB.ListSourceConnectorDefinitionResponse{
 		SourceConnectorDefinitions: pbSrcDefs,
-		NextPageToken:              nextPageToken,
 		TotalSize:                  totalSize,
+		NextPageToken:              nextPageToken,
 	}
 
 	return &resp, nil
