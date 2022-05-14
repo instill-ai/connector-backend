@@ -24,8 +24,8 @@ export function CheckCreate() {
             "id": "grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
+                "description": randomString(50),
                 "configuration": JSON.stringify({
-                    "description": randomString(50),
                     "connection_specification": {}
                 })
             }
