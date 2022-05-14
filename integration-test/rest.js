@@ -7,7 +7,7 @@ import * as sourceConnector from './rest-source-connector.js';
 import * as destinationConnector from './rest-destination-connector.js';
 import * as constant from "./const.js";
 
-const connectorHost = "http://localhost:8080";
+const connectorHost = "http://localhost:8082";
 
 export let options = {
   setupTimeout: '300s',
