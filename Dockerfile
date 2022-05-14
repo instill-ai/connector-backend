@@ -22,5 +22,4 @@ COPY --from=build /connector-backend-init ./
 COPY --from=build /go/src/configs ./configs
 COPY --from=build /connector-backend ./
 
-EXPOSE 8080/tcp
 ENTRYPOINT ["./connector-backend"]
