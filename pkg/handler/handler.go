@@ -334,7 +334,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 
 	switch v := req.(type) {
 	case *connectorPB.UpdateSourceConnectorRequest:
-		resp = &connectorPB.UpdateDestinationConnectorResponse{}
+		resp = &connectorPB.UpdateSourceConnectorResponse{}
 		pbConnectorReq = v.GetSourceConnector()
 		pbUpdateMask := v.GetUpdateMask()
 		if !pbUpdateMask.IsValid(v.GetSourceConnector()) {
