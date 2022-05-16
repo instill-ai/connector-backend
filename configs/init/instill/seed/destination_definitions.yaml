@@ -1,10 +1,14 @@
 - name: HTTP
   uid: 909c3278-f7d1-461c-9352-87741bef11d3
-  documentation_url: https://docs.instill.tech/integrations/sources/http
+  dockerRepository: instill-ai/destination-http
+  dockerImageTag: directness
+  documentation_url: https://docs.instill.tech/connectors/definitions/destination-http-directness
   icon: http.svg
   connection_type: directness
 - name: gRPC
   uid: c0e4a82c-9620-4a72-abd1-18586f2acccd
-  documentation_url: https://docs.instill.tech/integrations/sources/grpc
+  dockerRepository: instill-ai/destination-grpc
+  dockerImageTag: directness
+  documentation_url: https://docs.instill.tech/connectors/definitions/destination-grpc-directness
   icon: grpc.svg
   connection_type: directness

@@ -1,0 +1,28 @@
+- dockerImage: instill-ai/destination-http:directness
+  spec:
+    documentationUrl: https://docs.instill.tech/connectors/definitions/destination-http-directness
+    connectionSpecification:
+      $schema: http://json-schema.org/draft-07/schema#
+      additional_properties: false
+      properties: {}
+      required: []
+      title: Directness HTTP Destination Connector Spec
+      type: object
+    supportsIncremental: false
+    supportsNormalization: false
+    supportsDBT: false
+    supported_destination_sync_modes: []
+- dockerImage: instill-ai/destination-grpc:directness
+  spec:
+    documentationUrl: https://docs.instill.tech/connectors/definitions/destination-grpc-directness
+    connectionSpecification:
+      $schema: http://json-schema.org/draft-07/schema#
+      additional_properties: false
+      properties: {}
+      required: []
+      title: Directness gRPC Destination Connector Spec
+      type: object
+    supportsIncremental: false
+    supportsNormalization: false
+    supportsDBT: false
+    supported_destination_sync_modes: []

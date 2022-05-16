@@ -10,7 +10,7 @@ export function CheckCreate() {
     group("Connector API: Create source connectors", () => {
 
         var dirHTTPSrcConnector = {
-            "id": "http",
+            "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -18,7 +18,7 @@ export function CheckCreate() {
         }
 
         var dirGRPCSrcConnector = {
-            "id": "grpc",
+            "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -83,7 +83,7 @@ export function CheckList() {
 
         var reqBodies = [];
         reqBodies[0] = {
-            "id": "http",
+            "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -91,7 +91,7 @@ export function CheckList() {
         }
 
         reqBodies[1] = {
-            "id": "grpc",
+            "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -169,7 +169,7 @@ export function CheckGet() {
     group("Connector API: Get source connectors by ID", () => {
 
         var dirHTTPSrcConnector = {
-            "id": "http",
+            "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -199,7 +199,7 @@ export function CheckUpdate() {
     group("Connector API: Update source connectors", () => {
 
         var dirGRPCSrcConnector = {
-            "id": "grpc",
+            "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -238,7 +238,7 @@ export function CheckLookUp() {
     group("Connector API: Look up source connectors by UID", () => {
 
         var dirHTTPSrcConnector = {
-            "id": "http",
+            "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -268,7 +268,7 @@ export function CheckRename() {
 
     group("Connector API: Rename source connectors", () => {
         var dirHTTPSrcConnector = {
-            "id": "http",
+            "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})

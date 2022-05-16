@@ -44,13 +44,13 @@ func main() {
 	}
 
 	for idx, def := range srcDefs {
-		spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs)
-		if err != nil {
+		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
 			logger.Fatal(err.Error())
-		}
-		// Create source definition record
-		if err := createSourceConnectorDefinition(db, srcConnDefs[idx], def, spec); err != nil {
-			logger.Fatal(err.Error())
+		} else {
+			// Create source definition record
+			if err := createSourceConnectorDefinition(db, srcConnDefs[idx], def, spec); err != nil {
+				logger.Fatal(err.Error())
+			}
 		}
 	}
 
@@ -58,6 +58,7 @@ func main() {
 		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
 			logger.Fatal(err.Error())
 		} else {
+			// Create destination definition record
 			if err := createDestinationConnectorDefinition(db, dstConnDefs[idx], def, spec); err != nil {
 				logger.Fatal(err.Error())
 			}

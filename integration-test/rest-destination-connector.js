@@ -10,7 +10,7 @@ export function CheckCreate() {
     group("Connector API: Create destination connectors", () => {
 
         var dirHTTPDstConnector = {
-            "id": "http",
+            "id": "destination-http",
             "destination_connector_definition": constant.httpDstDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
@@ -18,7 +18,7 @@ export function CheckCreate() {
         }
 
         var dirGRPCDstConnector = {
-            "id": "grpc",
+            "id": "destination-grpc",
             "destination_connector_definition": constant.gRPCDstDefRscName,
             "connector": {
                 "configuration": JSON.stringify({})
