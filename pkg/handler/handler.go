@@ -65,12 +65,12 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetSourceConnector(), outputOnlyFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetSourceConnector(), append(createRequiredFields, sourceImmutableFields...)); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connID = v.GetSourceConnector().GetId()
@@ -106,12 +106,12 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetDestinationConnector(), outputOnlyFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetDestinationConnector(), append(createRequiredFields, destinationImmutableFields...)); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connID = v.GetDestinationConnector().GetId()
@@ -144,7 +144,7 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 	// Return error if resource ID does not follow RFC-1034
 	if err := checkfield.CheckResourceID(connID); err != nil {
-		return resp, err
+		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	owner, err := getOwner(ctx)
@@ -343,7 +343,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 		getResp, err := h.GetSourceConnector(
 			ctx,
@@ -357,7 +357,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if IMMUTABLE fields are intentionally changed
 		if err := checkfield.CheckUpdateImmutableFields(v.GetSourceConnector(), getResp.GetSourceConnector(), sourceImmutableFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
@@ -399,7 +399,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		getResp, err := h.GetDestinationConnector(
@@ -414,7 +414,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if IMMUTABLE fields are intentionally changed
 		if err := checkfield.CheckUpdateImmutableFields(v.GetDestinationConnector(), getResp.GetDestinationConnector(), destinationImmutableFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
@@ -526,7 +526,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, lookUpRequiredFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
@@ -545,7 +545,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, lookUpRequiredFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
@@ -607,7 +607,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, renameSourceRequiredFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connID, err = getResourceNameID(v.GetName())
@@ -644,7 +644,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, renameDestinationRequiredFields); err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connID, err = getResourceNameID(v.GetName())
@@ -679,7 +679,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 	// Return error if resource ID does not follow RFC-1034
 	if err := checkfield.CheckResourceID(connNewID); err != nil {
-		return resp, err
+		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	owner, err := getOwner(ctx)
