@@ -13,10 +13,7 @@ export function CheckCreate() {
             "id": "http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -24,10 +21,7 @@ export function CheckCreate() {
             "id": "grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -83,10 +77,7 @@ export function CheckList() {
             "id": "http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -94,10 +85,7 @@ export function CheckList() {
             "id": "grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({
-                    "description": randomString(50),
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -175,10 +163,7 @@ export function CheckGet() {
             "id": "http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -203,7 +188,38 @@ export function CheckGet() {
 export function CheckUpdate() {
 
     group("Connector API: Update source connectors", () => {
-        // Nothing to test for now
+
+        var dirGRPCSrcConnector = {
+            "id": "grpc",
+            "source_connector_definition": constant.gRPCSrcDefRscName,
+            "connector": {
+                "configuration": JSON.stringify({})
+            }
+        }
+
+        check(http.request(
+            "POST",
+            `${connectorHost}/v1alpha/source-connectors`,
+            JSON.stringify(dirGRPCSrcConnector), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            "POST /v1alpha/source-connectors response status for creating directness gRPC source connector 201": (r) => r.status === 201,
+        });
+
+        dirGRPCSrcConnector.connector.description = randomString(20)
+        check(http.request(
+            "PATCH",
+            `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`,
+            JSON.stringify(dirGRPCSrcConnector), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating directness gRPC source connector 400`]: (r) => r.status === 400,
+        });
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`), {
+            [`DELETE /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status 204`]: (r) => r.status === 204,
+        });
+
     });
 
 }
@@ -216,10 +232,7 @@ export function CheckLookUp() {
             "id": "http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -249,10 +262,7 @@ export function CheckRename() {
             "id": "http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 

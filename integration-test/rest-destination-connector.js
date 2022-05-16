@@ -13,10 +13,7 @@ export function CheckCreate() {
             "id": "http",
             "destination_connector_definition": constant.httpDstDefRscName,
             "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 
@@ -24,9 +21,7 @@ export function CheckCreate() {
             "id": "grpc",
             "destination_connector_definition": constant.gRPCDstDefRscName,
             "connector": {
-                "configuration": JSON.stringify({
-                    "connection_specification": {}
-                })
+                "configuration": JSON.stringify({})
             }
         }
 

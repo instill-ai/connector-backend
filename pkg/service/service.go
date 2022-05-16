@@ -58,14 +58,22 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 		return nil, err
 	}
 
-	// Validation: Directness connector uniqueness
+	// Validation: Directness connector
 	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
 		if connector.ID != connDef.ID {
-			return nil, status.Errorf(codes.InvalidArgument, "Directness connector id must be %s", connDef.ID)
+			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector id must be %s", connectorPB.ConnectorType(connector.ConnectorType), connDef.ID)
+		}
+
+		if connector.Description.String != "" {
+			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector description must be empty", connectorPB.ConnectorType(connector.ConnectorType))
+		}
+
+		if connector.Configuration.String() != "{}" {
+			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector configuration must be an empty JSON {}", connectorPB.ConnectorType(connector.ConnectorType))
 		}
 
 		if existingConnector, _ := s.GetConnectorByID(connector.ID, connector.Owner, connector.ConnectorType, true); existingConnector != nil {
-			return nil, status.Errorf(codes.AlreadyExists, "Directness connector id \"%s\" with connector_type \"%s\" exists already", connector.ID, connectorPB.ConnectorType(connector.ConnectorType))
+			return nil, status.Errorf(codes.AlreadyExists, "[directness] connector_type %s connector id %s exists already", connectorPB.ConnectorType(connector.ConnectorType), connector.ID)
 		}
 	}
 
