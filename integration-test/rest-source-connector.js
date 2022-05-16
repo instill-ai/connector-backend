@@ -58,6 +58,15 @@ export function CheckCreate() {
             "POST /v1alpha/source-connectors response status for creating directness gRPC source connector 201": (r) => r.status === 201,
         });
 
+        check(http.request(
+            "POST",
+            `${connectorHost}/v1alpha/source-connectors`,
+            JSON.stringify({}), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            "POST /v1alpha/source-connectors response status for creating empty body 400": (r) => r.status === 400,
+        });
+
         // Delete test records
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resSrcHTTP.json().source_connector.id}`), {
             [`DELETE /v1alpha/source-connectors/${resSrcHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
