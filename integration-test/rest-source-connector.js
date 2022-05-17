@@ -117,10 +117,10 @@ export function CheckList() {
             [`GET /v1alpha/source-connectors response has total_size = ${reqBodies.length}`]: (r) => r.json().total_size == reqBodies.length,
         });
 
-        var allRes = http.request("GET", `${connectorHost}/v1alpha/source-connectors`)
+        var limitedRecords = http.request("GET", `${connectorHost}/v1alpha/source-connectors`)
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=0`), {
             "GET /v1alpha/source-connectors?page_size=0 response status is 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=0 response all records": (r) => r.json().source_connectors.length === allRes.json().source_connectors.length,
+            "GET /v1alpha/source-connectors?page_size=0 response all records": (r) => r.json().source_connectors.length === limitedRecords.json().source_connectors.length,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=1`), {
@@ -147,6 +147,11 @@ export function CheckList() {
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=1`), {
             "GET /v1alpha/source-connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/source-connectors?page_size=1 response source_connectors has no configuration": (r) => JSON.parse(r.json().source_connectors[0].connector.configuration) === null
+        });
+
+        check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=${limitedRecords.json().total_size}`), {
+            [`GET /v1alpha/source-connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connectors?page_size=${limitedRecords.json().total_size} response next_page_token empty`]: (r) => r.json().next_page_token === "",
         });
 
         // Delete the destination connectors

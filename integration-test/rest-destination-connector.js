@@ -115,10 +115,10 @@ export function CheckList() {
             [`GET /v1alpha/destination-connectors response has total_size = ${numConnectors}`]: (r) => r.json().total_size == numConnectors,
         });
 
-        var allRes = http.request("GET", `${connectorHost}/v1alpha/destination-connectors`)
+        var limitedRecords = http.request("GET", `${connectorHost}/v1alpha/destination-connectors`)
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=0`), {
             "GET /v1alpha/destination-connectors?page_size=0 response status is 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=0 response all records": (r) => r.json().destination_connectors.length === allRes.json().destination_connectors.length,
+            "GET /v1alpha/destination-connectors?page_size=0 response all records": (r) => r.json().destination_connectors.length === limitedRecords.json().destination_connectors.length,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
@@ -145,6 +145,11 @@ export function CheckList() {
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
             "GET /v1alpha/destination-connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors has no configuration": (r) => JSON.parse(r.json().destination_connectors[0].connector.configuration) === null,
+        });
+
+        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
+            [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response next_page_token empty`]: (r) => r.json().next_page_token === "",
         });
 
         // Delete the destination connectors

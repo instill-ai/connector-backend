@@ -13,10 +13,10 @@ export function CheckList() {
             "GET /v1alpha/destination-connector-definitions response total_size > 0": (r) => r.json().total_size > 0
         });
 
-        var allRes = http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions`)
+        var limitedRecords = http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions`)
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=0`), {
             "GET /v1alpha/source-connector-definitions?page_size=0 response status is 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connector-definitions?page_size=0 response all records": (r) => r.json().source_connector_definitions.length === allRes.json().source_connector_definitions.length,
+            "GET /v1alpha/source-connector-definitions?page_size=0 response all records": (r) => r.json().source_connector_definitions.length === limitedRecords.json().source_connector_definitions.length,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=1`), {
@@ -43,6 +43,11 @@ export function CheckList() {
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=1`), {
             "GET /v1alpha/source-connector-definitions?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/source-connector-definitions?page_size=1 response source_connector_definitions has no spec": (r) => r.json().source_connector_definitions[0].connector_definition.spec === null,
+        });
+
+        check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size}`), {
+            [`GET /v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size} response next_page_token empty`]: (r) => r.json().next_page_token === "",
         });
     });
 }
