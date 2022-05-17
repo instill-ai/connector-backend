@@ -34,6 +34,7 @@ export function CheckCreate() {
 
         check(resSrcHTTP, {
             "POST /v1alpha/source-connectors response status for creating directness HTTP source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/source-connectors response connector name": (r) => r.json().source_connector.name == `source-connectors/${dirHTTPSrcConnector.id}`,
             "POST /v1alpha/source-connectors response connector uid": (r) => helper.isUUID(r.json().source_connector.uid),
             "POST /v1alpha/source-connectors response connector source_connector_definition": (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName
         });

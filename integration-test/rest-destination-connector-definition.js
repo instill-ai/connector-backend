@@ -54,6 +54,8 @@ export function CheckGet() {
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connector-definitions/${def.id}`), {
             [`GET /v1alpha/destination-connector-definitions/${def.id} response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connector-definitions/${def.id} response has the exact record`]: (r) => deepEqual(r.json().destination_connector_definition, def),
+            [`GET /v1alpha/destination-connector-definitions/${def.id} response has the non-empty resource name ${def.name}`]: (r) => r.json().destination_connector_definition.name != "",
+            [`GET /v1alpha/destination-connector-definitions/${def.id} response has the resource name ${def.name}`]: (r) => r.json().destination_connector_definition.name === def.name,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connector-definitions/${def.id}?view=VIEW_BASIC`), {

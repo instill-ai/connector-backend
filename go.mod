@@ -13,8 +13,8 @@ require (
 	github.com/knadh/koanf v1.4.1
 	go.uber.org/zap v1.21.0
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
-	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4
-	google.golang.org/grpc v1.45.0
+	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
+	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.0
 	gorm.io/datatypes v1.0.6
 	gorm.io/driver/postgres v1.3.4
@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220513161122-ad182a20e3f9
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220517005010-6963c56ac4fc
 	github.com/instill-ai/x v0.1.0-alpha.0.20220516185949-c80ecc26af91
 	github.com/mennanov/fieldmask-utils v0.5.0
 )

@@ -74,12 +74,14 @@ func DBToPBConnectorDefinition(dbSrcDef *datamodel.ConnectorDefinition, connecto
 
 	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
 		return &connectorPB.SourceConnectorDefinition{
+			Name:                "source-connector-definitions/" + dbSrcDef.ID,
 			Uid:                 dbSrcDef.UID.String(),
 			Id:                  dbSrcDef.ID,
 			ConnectorDefinition: connDef,
 		}
 	} else if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
 		return &connectorPB.DestinationConnectorDefinition{
+			Name:                "destination-connector-definitions/" + dbSrcDef.ID,
 			Uid:                 dbSrcDef.UID.String(),
 			Id:                  dbSrcDef.ID,
 			ConnectorDefinition: connDef,

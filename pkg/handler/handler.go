@@ -48,6 +48,100 @@ func (h *handler) Readiness(ctx context.Context, in *connectorPB.ReadinessReques
 	}, nil
 }
 
+func (h *handler) listConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var pageSize int64
+	var pageToken string
+	var isBasicView bool
+
+	var connType datamodel.ConnectorType
+
+	switch v := req.(type) {
+	case *connectorPB.ListSourceConnectorDefinitionRequest:
+		resp = &connectorPB.ListSourceConnectorDefinitionResponse{}
+		pageSize = v.GetPageSize()
+		pageToken = v.GetPageToken()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+	case *connectorPB.ListDestinationConnectorDefinitionRequest:
+		resp = &connectorPB.ListDestinationConnectorDefinitionResponse{}
+		pageSize = v.GetPageSize()
+		pageToken = v.GetPageToken()
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+	}
+
+	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinition(connType, pageSize, pageToken, isBasicView)
+	if err != nil {
+		return resp, err
+	}
+
+	switch v := resp.(type) {
+	case *connectorPB.ListSourceConnectorDefinitionResponse:
+		for _, dbDef := range dbDefs {
+			v.SourceConnectorDefinitions = append(
+				v.SourceConnectorDefinitions,
+				DBToPBConnectorDefinition(
+					dbDef,
+					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)).(*connectorPB.SourceConnectorDefinition))
+		}
+		v.NextPageToken = nextPageToken
+		v.TotalSize = totalSize
+	case *connectorPB.ListDestinationConnectorDefinitionResponse:
+		for _, dbDef := range dbDefs {
+			v.DestinationConnectorDefinitions = append(
+				v.DestinationConnectorDefinitions,
+				DBToPBConnectorDefinition(
+					dbDef,
+					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)).(*connectorPB.DestinationConnectorDefinition))
+		}
+		v.NextPageToken = nextPageToken
+		v.TotalSize = totalSize
+	}
+
+	return resp, nil
+}
+
+func (h *handler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	var connID string
+	var isBasicView bool
+
+	var connType datamodel.ConnectorType
+
+	switch v := req.(type) {
+	case *connectorPB.GetSourceConnectorDefinitionRequest:
+		resp = &connectorPB.GetSourceConnectorDefinitionResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+	case *connectorPB.GetDestinationConnectorDefinitionRequest:
+		resp = &connectorPB.GetDestinationConnectorDefinitionResponse{}
+		if connID, err = getResourceNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+	}
+
+	dbDef, err := h.service.GetConnectorDefinitionByID(connID, connType, isBasicView)
+	if err != nil {
+		return resp, err
+	}
+
+	switch v := resp.(type) {
+	case *connectorPB.GetSourceConnectorDefinitionResponse:
+		v.SourceConnectorDefinition = DBToPBConnectorDefinition(dbDef, connType).(*connectorPB.SourceConnectorDefinition)
+	case *connectorPB.GetDestinationConnectorDefinitionResponse:
+		v.DestinationConnectorDefinition = DBToPBConnectorDefinition(dbDef, connType).(*connectorPB.DestinationConnectorDefinition)
+	}
+
+	return resp, nil
+
+}
+
 func (h *handler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var connID string
@@ -196,15 +290,15 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 	switch v := req.(type) {
 	case *connectorPB.ListSourceConnectorRequest:
 		resp = &connectorPB.ListSourceConnectorResponse{}
-		pageSize = v.PageSize
-		pageToken = v.PageToken
+		pageSize = v.GetPageSize()
+		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 		connDefColID = "source-connector-definitions"
 	case *connectorPB.ListDestinationConnectorRequest:
 		resp = &connectorPB.ListDestinationConnectorResponse{}
-		pageSize = v.PageSize
-		pageToken = v.PageToken
+		pageSize = v.GetPageSize()
+		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 		connDefColID = "destination-connector-definitions"
