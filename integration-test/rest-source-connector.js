@@ -82,6 +82,13 @@ export function CheckList() {
 
     group("Connector API: List source connectors", () => {
 
+        check(http.request("GET", `${connectorHost}/v1alpha/source-connectors`), {
+            [`GET /v1alpha/source-connectors response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connectors response has source_connectors array`]: (r) => Array.isArray(r.json().source_connectors),
+            [`GET /v1alpha/source-connectors response has total_size 0`]: (r) => r.json().total_size == 0,
+            [`GET /v1alpha/source-connectors response has empty next_page_token`]: (r) => r.json().next_page_token == "",
+        });
+
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",

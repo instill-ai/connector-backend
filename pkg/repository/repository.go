@@ -87,19 +87,19 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	if len(connectorDefinitions) < int(pageSize) {
 		return connectorDefinitions, totalSize, "", nil
 	}
-
-	lastUID := (connectorDefinitions)[len(connectorDefinitions)-1].UID
-	lastItem := &datamodel.ConnectorDefinition{}
-	if result := r.db.Model(&datamodel.ConnectorDefinition{}).
-		Where("connector_type = ?", connectorType).
-		Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
-	}
-
-	if lastItem.UID.String() == lastUID.String() {
-		nextPageToken = ""
-	} else {
-		nextPageToken = paginate.EncodeToken(createTime, lastUID.String())
+	if len(connectorDefinitions) > 0 {
+		lastUID := (connectorDefinitions)[len(connectorDefinitions)-1].UID
+		lastItem := &datamodel.ConnectorDefinition{}
+		if result := r.db.Model(&datamodel.ConnectorDefinition{}).
+			Where("connector_type = ?", connectorType).
+			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+			return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
+		}
+		if lastItem.UID.String() == lastUID.String() {
+			nextPageToken = ""
+		} else {
+			nextPageToken = paginate.EncodeToken(createTime, lastUID.String())
+		}
 	}
 
 	return connectorDefinitions, totalSize, nextPageToken, nil
@@ -178,18 +178,19 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 		connectors = append(connectors, &item)
 	}
 
-	lastUID := (connectors)[len(connectors)-1].UID
-	lastItem := &datamodel.Connector{}
-	if result := r.db.Model(&datamodel.Connector{}).
-		Where("owner = ? AND connector_type = ?", owner, connectorType).
-		Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
-	}
-
-	if lastItem.UID.String() == lastUID.String() {
-		nextPageToken = ""
-	} else {
-		nextPageToken = paginate.EncodeToken(createTime, lastUID.String())
+	if len(connectors) > 0 {
+		lastUID := (connectors)[len(connectors)-1].UID
+		lastItem := &datamodel.Connector{}
+		if result := r.db.Model(&datamodel.Connector{}).
+			Where("owner = ? AND connector_type = ?", owner, connectorType).
+			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+			return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
+		}
+		if lastItem.UID.String() == lastUID.String() {
+			nextPageToken = ""
+		} else {
+			nextPageToken = paginate.EncodeToken(createTime, lastUID.String())
+		}
 	}
 
 	return connectors, totalSize, nextPageToken, nil

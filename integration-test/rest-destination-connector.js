@@ -83,8 +83,14 @@ export function CheckList() {
 
     group("Connector API: List destination connectors", () => {
 
-        const numConnectors = 10
+        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors`), {
+            [`GET /v1alpha/destination-connectors response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/destination-connectors response has destination_connectors array`]: (r) => Array.isArray(r.json().destination_connectors),
+            [`GET /v1alpha/destination-connectors response has total_size 0`]: (r) => r.json().total_size == 0,
+            [`GET /v1alpha/destination-connectors response has empty next_page_token`]: (r) => r.json().next_page_token == "",
+        });
 
+        const numConnectors = 10
         var reqBodies = [];
         for (var i = 0; i < numConnectors; i++) {
             reqBodies[i] = {
