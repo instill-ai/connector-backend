@@ -1,6 +1,7 @@
 .DEFAULT_GOAL:=help
 
 DEVELOP_SERVICES := connector_backend
+INSTILL_SERVICES := mgmt_backend
 3RD_PARTY_SERVICES := pg_sql
 
 #============================================================================
@@ -29,7 +30,7 @@ all:							## Lunch all services
 
 .PHONY: dev
 dev:							## Lunch only dependant services for local development
-	@docker-compose up -d ${3RD_PARTY_SERVICES}
+	@docker-compose up -d ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
 	while [ "$$(docker inspect --format '{{ .State.Health.Status }}' pg-sql)" != "healthy" ]; do echo "Check if db is ready..." && sleep 1; done
 	go build -o ${DEV_DB_MIGRATION_BINARY} ./cmd/migration && ${DEV_DB_MIGRATION_BINARY} && rm -rf $(dirname ${DEV_DB_MIGRATION_BINARY})
 	go build -o ${DEV_DB_INIT_BINARY} ./cmd/init && ${DEV_DB_INIT_BINARY} && rm -rf $(dirname ${DEV_DB_INIT_BINARY})

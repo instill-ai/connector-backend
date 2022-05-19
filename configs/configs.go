@@ -18,8 +18,9 @@ var Config AppConfig
 
 // AppConfig defines
 type AppConfig struct {
-	Server   ServerConfig   `koanf:"server"`
-	Database DatabaseConfig `koanf:"database"`
+	Server      ServerConfig      `koanf:"server"`
+	Database    DatabaseConfig    `koanf:"database"`
+	MgmtBackend MgmtBackendConfig `koanf:"mgmtbackend"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -35,7 +36,7 @@ type ServerConfig struct {
 	}
 }
 
-// Configs related to database
+// DatabaseConfig related to database
 type DatabaseConfig struct {
 	Username string `koanf:"username"`
 	Password string `koanf:"password"`
@@ -48,6 +49,16 @@ type DatabaseConfig struct {
 		IdleConnections int           `koanf:"idleconnections"`
 		MaxConnections  int           `koanf:"maxconnections"`
 		ConnLifeTime    time.Duration `koanf:"connlifetime"`
+	}
+}
+
+// MgmtBackendConfig related to mgmt-backend
+type MgmtBackendConfig struct {
+	Host  string `koanf:"host"`
+	Port  int    `koanf:"port"`
+	HTTPS struct {
+		Cert string `koanf:"cert"`
+		Key  string `koanf:"key"`
 	}
 }
 

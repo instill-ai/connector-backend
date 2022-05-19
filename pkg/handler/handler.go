@@ -14,6 +14,7 @@ import (
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
 
+	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
@@ -114,14 +115,14 @@ func (h *handler) getConnectorDefinition(ctx context.Context, req interface{}) (
 	switch v := req.(type) {
 	case *connectorPB.GetSourceConnectorDefinitionRequest:
 		resp = &connectorPB.GetSourceConnectorDefinitionResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	case *connectorPB.GetDestinationConnectorDefinitionRequest:
 		resp = &connectorPB.GetDestinationConnectorDefinitionResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -279,7 +280,7 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -342,7 +343,7 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -403,7 +404,7 @@ func (h *handler) getConnector(ctx context.Context, req interface{}) (resp inter
 	switch v := req.(type) {
 	case *connectorPB.GetSourceConnectorRequest:
 		resp = &connectorPB.GetSourceConnectorResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -411,7 +412,7 @@ func (h *handler) getConnector(ctx context.Context, req interface{}) (resp inter
 		connDefColID = "source-connector-definitions"
 	case *connectorPB.GetDestinationConnectorRequest:
 		resp = &connectorPB.GetDestinationConnectorResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -419,7 +420,7 @@ func (h *handler) getConnector(ctx context.Context, req interface{}) (resp inter
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -508,7 +509,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connID = getResp.GetSourceConnector().GetId()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 
-		dbConnDefID, err := getResourceNameID(v.GetSourceConnector().GetSourceConnectorDefinition())
+		dbConnDefID, err := resource.GetNameID(v.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}
@@ -565,7 +566,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connID = getResp.GetDestinationConnector().GetId()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 
-		dbConnDefID, err := getResourceNameID(v.GetDestinationConnector().GetDestinationConnectorDefinition())
+		dbConnDefID, err := resource.GetNameID(v.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}
@@ -579,7 +580,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connDefUID = dbConnDef.UID
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -620,19 +621,19 @@ func (h *handler) deleteConnector(ctx context.Context, req interface{}) (resp in
 	switch v := req.(type) {
 	case *connectorPB.DeleteSourceConnectorRequest:
 		resp = &connectorPB.DeleteSourceConnectorResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 	case *connectorPB.DeleteDestinationConnectorRequest:
 		resp = &connectorPB.DeleteDestinationConnectorResponse{}
-		if connID, err = getResourceNameID(v.GetName()); err != nil {
+		if connID, err = resource.GetNameID(v.GetName()); err != nil {
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -661,7 +662,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
+		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
 		if err != nil {
 			return resp, err
 		}
@@ -680,7 +681,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		connUIDStr, err := getResourcePermalinkUID(v.GetPermalink())
+		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
 		if err != nil {
 			return resp, err
 		}
@@ -693,7 +694,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -742,7 +743,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		connID, err = getResourceNameID(v.GetName())
+		connID, err = resource.GetNameID(v.GetName())
 		if err != nil {
 			return resp, err
 		}
@@ -759,7 +760,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 			return resp, err
 		}
 
-		dbConnDefID, err := getResourceNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
+		dbConnDefID, err := resource.GetNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}
@@ -779,7 +780,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		connID, err = getResourceNameID(v.GetName())
+		connID, err = resource.GetNameID(v.GetName())
 		if err != nil {
 			return resp, err
 		}
@@ -796,7 +797,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 			return resp, err
 		}
 
-		dbConnDefID, err := getResourceNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
+		dbConnDefID, err := resource.GetNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}
@@ -814,7 +815,7 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	owner, err := getOwner(ctx)
+	owner, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}

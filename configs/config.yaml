@@ -19,3 +19,9 @@ database:
     idleconnections: 5
     maxconnections: 10
     connlifetime: 30 # In minutes
+mgmtbackend:
+  host: localhost
+  port: 8080
+  https:
+    cert:   # /ssl/tls.crt
+    key:    # /ssl/tls.key

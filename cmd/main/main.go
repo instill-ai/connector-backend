@@ -23,6 +23,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
 	"github.com/instill-ai/connector-backend/configs"
+	"github.com/instill-ai/connector-backend/internal/external"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/handler"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -105,7 +106,9 @@ func main() {
 		grpcS,
 		handler.NewHandler(
 			service.NewService(
-				repository.NewRepository(db))))
+				repository.NewRepository(db),
+				external.InitUserServiceClient(),
+			)))
 
 	gwS := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(httpResponseModifier),
