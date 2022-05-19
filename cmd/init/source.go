@@ -4,6 +4,9 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
@@ -23,13 +26,29 @@ func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.Source
 		return err
 	}
 
-	id := srcConnDef.GetId()
-	if id == "" {
-		id = connDef.GetDockerRepository()[strings.LastIndex(connDef.GetDockerRepository(), "/")+1:]
-		if id == "" {
-			// Only directness connector ends up this
-			id = strings.ToLower(connDef.GetTitle())
-		}
+	if srcConnDef.GetId() == "" {
+		srcConnDef.Id = connDef.GetDockerRepository()[strings.LastIndex(connDef.GetDockerRepository(), "/")+1:]
+	}
+
+	srcConnDef.ConnectorDefinition = connDef
+	srcConnDef.GetConnectorDefinition().CreateTime = &timestamppb.Timestamp{}
+	srcConnDef.GetConnectorDefinition().UpdateTime = &timestamppb.Timestamp{}
+	srcConnDef.GetConnectorDefinition().Tombstone = false
+	srcConnDef.GetConnectorDefinition().Public = true
+	srcConnDef.GetConnectorDefinition().Custom = false
+
+	srcConnDef.GetConnectorDefinition().Spec = &connectorPB.Spec{}
+	if err := protojson.Unmarshal(spec, srcConnDef.GetConnectorDefinition().Spec); err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	if srcConnDef.GetConnectorDefinition().GetResourceRequirements() == nil {
+		srcConnDef.GetConnectorDefinition().ResourceRequirements = &structpb.Struct{}
+	}
+
+	// Validate JSON Schema before inserting into db
+	if err := datamodel.ValidateJSONSchema(datamodel.SrcConnDefJSONSchema, srcConnDef, true); err != nil {
+		return err
 	}
 
 	releaseDate := func() *time.Time {
@@ -56,15 +75,15 @@ func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.Source
 	if err := createConnectorDefinitionRecord(
 		db,
 		uid,
-		id,
-		connDef.GetTitle(),
-		connDef.GetDockerRepository(),
-		connDef.GetDockerImageTag(),
-		connDef.GetDocumentationUrl(),
-		connDef.GetIcon(),
-		connDef.GetTombstone(),
-		true, //srcDef.GetPublic(),
-		connDef.GetCustom(),
+		srcConnDef.GetId(),
+		srcConnDef.GetConnectorDefinition().GetTitle(),
+		srcConnDef.GetConnectorDefinition().GetDockerRepository(),
+		srcConnDef.GetConnectorDefinition().GetDockerImageTag(),
+		srcConnDef.GetConnectorDefinition().GetDocumentationUrl(),
+		srcConnDef.GetConnectorDefinition().GetIcon(),
+		srcConnDef.GetConnectorDefinition().GetTombstone(),
+		srcConnDef.GetConnectorDefinition().GetPublic(),
+		srcConnDef.GetConnectorDefinition().GetCustom(),
 		releaseDate,
 		spec,
 		resourceRequirements,

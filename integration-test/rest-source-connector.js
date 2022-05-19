@@ -83,10 +83,10 @@ export function CheckList() {
     group("Connector API: List source connectors", () => {
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors`), {
-            [`GET /v1alpha/source-connectors response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors response has source_connectors array`]: (r) => Array.isArray(r.json().source_connectors),
-            [`GET /v1alpha/source-connectors response has total_size 0`]: (r) => r.json().total_size == 0,
-            [`GET /v1alpha/source-connectors response has empty next_page_token`]: (r) => r.json().next_page_token == "",
+            [`GET /v1alpha/source-connectors empty db response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connectors empty db response has source_connectors array`]: (r) => Array.isArray(r.json().source_connectors),
+            [`GET /v1alpha/source-connectors empty db response has total_size 0`]: (r) => r.json().total_size == 0,
+            [`GET /v1alpha/source-connectors empty db response has empty next_page_token`]: (r) => r.json().next_page_token == "",
         });
 
         var reqBodies = [];
@@ -163,14 +163,7 @@ export function CheckList() {
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request(
-                "DELETE",
-                `${connectorHost}/v1alpha/source-connectors/${reqBody.id}`,
-                JSON.stringify(reqBody), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }), {
+            check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${reqBody.id}`), {
                 [`DELETE /v1alpha/source-connectors x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
@@ -294,16 +287,17 @@ export function CheckRename() {
         })
 
         check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename`,
-        JSON.stringify({
-            "new_source_connector_id": "some-id-not-http"
-        }), {
+            JSON.stringify({
+                "new_source_connector_id": "some-id-not-http"
+            }), {
             headers: { "Content-Type": "application/json" }
-        }),{
+        }), {
             [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename response status 400`]: (r) => r.status === 400,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
-        });    });
+        });
+    });
 
 }

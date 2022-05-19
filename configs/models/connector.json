@@ -61,7 +61,7 @@
       "type": "string",
       "format": "date-time",
       "title": "Create time",
-      "description": "The date when the connector definiton is created in the format YYYY-MM-DDTHH:MM::SS",
+      "description": "The date when the connector definition is created in the format YYYY-MM-DDTHH:MM::SS",
       "examples": ["2022-04-29T00:20:06.703547Z"],
       "readOnly": true,
       "ui_order": 4,

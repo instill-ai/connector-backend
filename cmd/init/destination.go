@@ -4,10 +4,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-
-	"github.com/gofrs/uuid"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
@@ -23,17 +25,33 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstConnDef *connectorPB.D
 		return err
 	}
 
-	id := dstConnDef.GetId()
-	if id == "" {
-		id = connDef.GetDockerRepository()[strings.LastIndex(connDef.GetDockerRepository(), "/")+1:]
-		if id == "" {
-			// Only directness connector ends up this
-			id = strings.ToLower(connDef.GetTitle())
-		}
+	if dstConnDef.GetId() == "" {
+		dstConnDef.Id = connDef.GetDockerRepository()[strings.LastIndex(connDef.GetDockerRepository(), "/")+1:]
+	}
+
+	dstConnDef.ConnectorDefinition = connDef
+	dstConnDef.GetConnectorDefinition().CreateTime = &timestamppb.Timestamp{}
+	dstConnDef.GetConnectorDefinition().UpdateTime = &timestamppb.Timestamp{}
+	dstConnDef.GetConnectorDefinition().Tombstone = false
+	dstConnDef.GetConnectorDefinition().Public = true
+	dstConnDef.GetConnectorDefinition().Custom = false
+
+	dstConnDef.GetConnectorDefinition().Spec = &connectorPB.Spec{}
+	if err := protojson.Unmarshal(spec, dstConnDef.GetConnectorDefinition().Spec); err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	if dstConnDef.GetConnectorDefinition().GetResourceRequirements() == nil {
+		dstConnDef.GetConnectorDefinition().ResourceRequirements = &structpb.Struct{}
+	}
+
+	// Validate JSON Schema before inserting into db
+	if err := datamodel.ValidateJSONSchema(datamodel.DstConnDefJSONSchema, dstConnDef, true); err != nil {
+		return err
 	}
 
 	releaseDate := func() *time.Time {
-		releaseDate := connDef.GetReleaseDate()
+		releaseDate := dstConnDef.GetConnectorDefinition().GetReleaseDate()
 		if releaseDate != nil {
 			t := time.Date(int(releaseDate.Year), time.Month(releaseDate.Month), int(releaseDate.Day), 0, 0, 0, 0, time.UTC)
 			return &t
@@ -42,7 +60,7 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstConnDef *connectorPB.D
 	}()
 
 	resourceRequirements := func() datatypes.JSON {
-		s := connDef.GetResourceRequirements()
+		s := dstConnDef.GetConnectorDefinition().GetResourceRequirements()
 		if s != nil {
 			if b, err := s.MarshalJSON(); err != nil {
 				logger.Fatal(err.Error())
@@ -56,21 +74,21 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstConnDef *connectorPB.D
 	if err := createConnectorDefinitionRecord(
 		db,
 		uid,
-		id,
-		connDef.GetTitle(),
-		connDef.GetDockerRepository(),
-		connDef.GetDockerImageTag(),
-		connDef.GetDocumentationUrl(),
-		connDef.GetIcon(),
-		connDef.GetTombstone(),
-		true, //dstDef.GetPublic(),
-		connDef.GetCustom(),
+		dstConnDef.GetId(),
+		dstConnDef.GetConnectorDefinition().GetTitle(),
+		dstConnDef.GetConnectorDefinition().GetDockerRepository(),
+		dstConnDef.GetConnectorDefinition().GetDockerImageTag(),
+		dstConnDef.GetConnectorDefinition().GetDocumentationUrl(),
+		dstConnDef.GetConnectorDefinition().GetIcon(),
+		dstConnDef.GetConnectorDefinition().GetTombstone(),
+		dstConnDef.GetConnectorDefinition().GetPublic(),
+		dstConnDef.GetConnectorDefinition().GetCustom(),
 		releaseDate,
 		spec,
 		resourceRequirements,
 		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
-		datamodel.ConnectionType(connDef.GetConnectionType()),
-		datamodel.ReleaseStage(connDef.GetReleaseStage()),
+		datamodel.ConnectionType(dstConnDef.GetConnectorDefinition().GetConnectionType()),
+		datamodel.ReleaseStage(dstConnDef.GetConnectorDefinition().GetReleaseStage()),
 	); err != nil {
 		return err
 	}

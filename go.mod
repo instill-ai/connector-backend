@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220517005010-6963c56ac4fc
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220519185924-775d2feab526
 	github.com/instill-ai/x v0.1.0-alpha.0.20220517204940-5a70916ce425
 	github.com/mennanov/fieldmask-utils v0.5.0
 )
@@ -51,6 +51,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect

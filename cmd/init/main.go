@@ -5,6 +5,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/configs"
 	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	database "github.com/instill-ai/connector-backend/internal/db"
 	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
@@ -32,6 +33,8 @@ func main() {
 
 	db := database.GetConnection()
 	defer database.Close(db)
+
+	datamodel.InitJSONSchema()
 
 	srcConnDefs := []*connectorPB.SourceConnectorDefinition{}
 	srcDefs := []*connectorPB.ConnectorDefinition{}

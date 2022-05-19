@@ -1,9 +1,5 @@
 export const csvDstConfig = {
-  "supports_incremental": true,
-  "connection_specification": {
     "destination_path": "/local"
-  },
-  "supported_destination_sync_modes": [2, 1]
 };
 
 export const csvDstDefinitionRscName = "destination-connector-definitions/destination-csv"

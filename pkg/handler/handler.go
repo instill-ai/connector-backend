@@ -9,6 +9,7 @@ import (
 	"github.com/gogo/status"
 	"github.com/iancoleman/strcase"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/datatypes"
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
@@ -27,6 +28,7 @@ type handler struct {
 
 // NewHandler initiates a handler instance
 func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
+	datamodel.InitJSONSchema()
 	return &handler{
 		service: s,
 	}
@@ -157,6 +159,11 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		resp = &connectorPB.CreateSourceConnectorResponse{}
 
+		// Validate SourceConnector JSON Schema
+		if err := datamodel.ValidateJSONSchema(datamodel.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetSourceConnector(), outputOnlyFields); err != nil {
 			return resp, status.Error(codes.InvalidArgument, err.Error())
@@ -182,14 +189,26 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 			ctx,
 			&connectorPB.GetSourceConnectorDefinitionRequest{
 				Name: v.GetSourceConnector().GetSourceConnectorDefinition(),
+				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
 			return resp, err
 		}
 
+		// Validate SourceConnector configuration JSON Schema
+		connSpec := connDefResp.GetSourceConnectorDefinition().GetConnectorDefinition().GetSpec().GetConnectionSpecification()
+		b, err := protojson.Marshal(connSpec)
+		if err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetSourceConnector().GetConnector().GetConfiguration()); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		connDefUID, err = uuid.FromString(connDefResp.SourceConnectorDefinition.GetUid())
 		if err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", connDefResp.SourceConnectorDefinition.GetId())
@@ -197,6 +216,13 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 	case *connectorPB.CreateDestinationConnectorRequest:
 
 		resp = &connectorPB.CreateDestinationConnectorResponse{}
+
+		// Validate DestinationConnector JSON Schema
+		if err := datamodel.ValidateJSONSchema(datamodel.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		// Validate DestinationConnector configuration JSON Schema
 
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetDestinationConnector(), outputOnlyFields); err != nil {
@@ -223,14 +249,26 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 			ctx,
 			&connectorPB.GetDestinationConnectorDefinitionRequest{
 				Name: v.GetDestinationConnector().GetDestinationConnectorDefinition(),
+				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
 			return resp, err
 		}
 
+		// Validate SourceConnector configuration JSON Schema
+		connSpec := connDefResp.GetDestinationConnectorDefinition().GetConnectorDefinition().GetSpec().GetConnectionSpecification()
+		b, err := protojson.Marshal(connSpec)
+		if err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetDestinationConnector().GetConnector().GetConfiguration()); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		connDefUID, err = uuid.FromString(connDefResp.DestinationConnectorDefinition.GetUid())
 		if err != nil {
-			return resp, err
+			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", connDefResp.DestinationConnectorDefinition.GetId())

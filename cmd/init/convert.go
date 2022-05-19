@@ -39,17 +39,17 @@ func unmarshalConnectorPB(jsonSliceMap interface{}, pb interface{}) error {
 				}
 				*pb = append(*pb, &def)
 			case *[]*connectorPB.SourceConnectorDefinition:
-				srcDef := connectorPB.SourceConnectorDefinition{}
-				if err := pj.Unmarshal(b, &srcDef); err != nil {
+				srcConnDef := connectorPB.SourceConnectorDefinition{}
+				if err := pj.Unmarshal(b, &srcConnDef); err != nil {
 					return err
 				}
-				*pb = append(*pb, &srcDef)
+				*pb = append(*pb, &srcConnDef)
 			case *[]*connectorPB.DestinationConnectorDefinition:
-				dstDef := connectorPB.DestinationConnectorDefinition{}
-				if err := pj.Unmarshal(b, &dstDef); err != nil {
+				dstConnDef := connectorPB.DestinationConnectorDefinition{}
+				if err := pj.Unmarshal(b, &dstConnDef); err != nil {
 					return err
 				}
-				*pb = append(*pb, &dstDef)
+				*pb = append(*pb, &dstConnDef)
 			case *[]*connectorPB.DockerImageSpec:
 				dockerImgSpec := connectorPB.DockerImageSpec{}
 				if err := pj.Unmarshal(b, &dockerImgSpec); err != nil {

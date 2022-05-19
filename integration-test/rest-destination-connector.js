@@ -68,6 +68,21 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response status for creating empty body 400": (r) => r.status === 400,
         });
 
+        var jsonSchemaFailedBody = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": JSON.stringify({}) // required destination_path
+            }
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBody), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400": (r) => r.status === 400,
+        });
+
         // Delete test records
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
@@ -84,10 +99,10 @@ export function CheckList() {
     group("Connector API: List destination connectors", () => {
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors`), {
-            [`GET /v1alpha/destination-connectors response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/destination-connectors response has destination_connectors array`]: (r) => Array.isArray(r.json().destination_connectors),
-            [`GET /v1alpha/destination-connectors response has total_size 0`]: (r) => r.json().total_size == 0,
-            [`GET /v1alpha/destination-connectors response has empty next_page_token`]: (r) => r.json().next_page_token == "",
+            [`GET /v1alpha/destination-connectors empty db response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/destination-connectors empty db response has destination_connectors array`]: (r) => Array.isArray(r.json().destination_connectors),
+            [`GET /v1alpha/destination-connectors empty db response has total_size 0`]: (r) => r.json().total_size == 0,
+            [`GET /v1alpha/destination-connectors empty db response has empty next_page_token`]: (r) => r.json().next_page_token == "",
         });
 
         const numConnectors = 10
@@ -160,14 +175,7 @@ export function CheckList() {
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request(
-                "DELETE",
-                `${connectorHost}/v1alpha/destination-connectors/${reqBody.id}`,
-                JSON.stringify(reqBody), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }), {
+            check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${reqBody.id}`), {
                 [`DELETE /v1alpha/destination-connectors x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
@@ -217,9 +225,7 @@ export function CheckUpdate() {
             }
         }
 
-        var res = http.request(
-            "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+        var res = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -229,7 +235,7 @@ export function CheckUpdate() {
         });
 
         var configUpdate = constant.csvDstConfig
-        configUpdate.connection_specification.destination_path = "/tmp"
+        configUpdate.destination_path = "/tmp"
 
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
@@ -254,7 +260,7 @@ export function CheckUpdate() {
             [`PATCH /v1alpha/destination-connectors/${res.json().destination_connector.id} response connector connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefinitionRscName,
             [`PATCH /v1alpha/destination-connectors/${res.json().destination_connector.id} response connector description`]: (r) => r.json().destination_connector.connector.description === csvDstConnectorUpdate.connector.description,
             [`PATCH /v1alpha/destination-connectors/${res.json().destination_connector.id} response connector tombstone`]: (r) => r.json().destination_connector.connector.tombstone === false,
-            [`PATCH /v1alpha/destination-connectors/${res.json().destination_connector.id} response connector configuration`]: (r) => JSON.parse(r.json().destination_connector.connector.configuration).connection_specification.destination_path === JSON.parse(csvDstConnectorUpdate.connector.configuration).connection_specification.destination_path
+            [`PATCH /v1alpha/destination-connectors/${res.json().destination_connector.id} response connector configuration`]: (r) => JSON.parse(r.json().destination_connector.connector.configuration).destination_path === JSON.parse(csvDstConnectorUpdate.connector.configuration).destination_path
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${csvDstConnector.id}`), {
@@ -313,17 +319,17 @@ export function CheckRename() {
         })
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSV.json().destination_connector.id}:rename`,
-        JSON.stringify({
-            "new_destination_connector_id": `some-id-not-${csvDstConnector.id}`
-        }), {
+            JSON.stringify({
+                "new_destination_connector_id": `some-id-not-${csvDstConnector.id}`
+            }), {
             headers: { "Content-Type": "application/json" }
-        }),{
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSV.json().destination_connector.id}:rename response status 200`]: (r) => r.status === 200,
             [`POST /v1alpha/destination-connectors/${resCSV.json().destination_connector.id}:rename response id is some-id-not-${csvDstConnector.id}`]: (r) => r.json().destination_connector.id === `some-id-not-${csvDstConnector.id}`,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/some-id-not-${csvDstConnector.id}`), {
             [`DELETE /v1alpha/destination-connectors/some-id-not-${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
-        });    });
-
+        });
+    });
 }
