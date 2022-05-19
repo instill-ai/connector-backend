@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -10,6 +11,7 @@ import (
 	"github.com/gogo/status"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/x/paginate"
+	"github.com/jackc/pgconn"
 
 	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
 )
@@ -132,7 +134,12 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 
 func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	if result := r.db.Model(&datamodel.Connector{}).Create(connector); result.Error != nil {
-		return status.Errorf(codes.Internal, result.Error.Error())
+		var pgErr *pgconn.PgError
+		if errors.As(result.Error, &pgErr) {
+			if pgErr.Code == "23505" {
+				return status.Errorf(codes.AlreadyExists, pgErr.Message)
+			}
+		}
 	}
 	return nil
 }
