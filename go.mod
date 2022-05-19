@@ -22,7 +22,7 @@ require (
 )
 
 require (
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220513161122-ad182a20e3f9
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220517005010-6963c56ac4fc
 	github.com/instill-ai/x v0.1.0-alpha.0.20220517204940-5a70916ce425
 	github.com/mennanov/fieldmask-utils v0.5.0
 )
