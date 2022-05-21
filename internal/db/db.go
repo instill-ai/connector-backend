@@ -5,11 +5,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/instill-ai/connector-backend/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
-
-	configs "github.com/instill-ai/connector-backend/configs"
 )
 
 var db *gorm.DB
@@ -17,7 +16,7 @@ var once sync.Once
 
 func GetConnection() *gorm.DB {
 	once.Do(func() {
-		databaseConfig := configs.Config.Database
+		databaseConfig := config.Config.Database
 		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=%s",
 			databaseConfig.Host,
 			databaseConfig.Username,

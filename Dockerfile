@@ -19,7 +19,7 @@ COPY --from=build /connector-backend-migrate ./
 
 COPY --from=build /connector-backend-init ./
 
-COPY --from=build /go/src/configs ./configs
+COPY --from=build /go/src/config ./config
 COPY --from=build /connector-backend ./
 
 ENTRYPOINT ["./connector-backend"]

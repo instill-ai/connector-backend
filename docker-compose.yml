@@ -65,7 +65,7 @@ services:
       CFG_DATABASE_USERNAME: postgres
       CFG_DATABASE_PASSWORD: password
     volumes:
-      - ./configs:/connector-backend/configs
+      - ./config:/connector-backend/config
     entrypoint: ./connector-backend-migrate
     depends_on:
       pg_sql:
@@ -83,7 +83,7 @@ services:
       CFG_DATABASE_USERNAME: postgres
       CFG_DATABASE_PASSWORD: password
     volumes:
-      - ./configs:/connector-backend/configs
+      - ./config:/connector-backend/config
     entrypoint: ./connector-backend-init
     depends_on:
       - connector_backend_migrate
@@ -103,7 +103,7 @@ services:
     ports:
       - 8082:8082
     volumes:
-      - ./configs:/connector-backend/configs
+      - ./config:/connector-backend/config
     depends_on:
       - connector_backend_init
 
