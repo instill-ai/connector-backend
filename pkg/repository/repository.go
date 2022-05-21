@@ -115,7 +115,7 @@ func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamod
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type `%s` and id `%s` you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return &connectorDefinition, nil
 }
@@ -127,7 +127,7 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with uid `%s` you specified is not found", uid)
+		return nil, status.Errorf(codes.NotFound, "The connector with uid '%s' you specified is not found", uid)
 	}
 	return &connectorDefinition, nil
 }
@@ -214,7 +214,7 @@ func (r *repository) GetConnectorByID(id string, owner string, connectorType dat
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type `%s` and id `%s` you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return &connector, nil
 }
@@ -230,7 +230,7 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, owner string, connectorTyp
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type `%s` and uid `%s` you specified is not found", connectorPB.ConnectorType(connectorType), uid)
+		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and uid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
 	}
 	return &connector, nil
 }
@@ -255,7 +255,7 @@ func (r *repository) DeleteConnector(id string, owner string, connectorType data
 	}
 
 	if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "The connector with connector_type `%s` and id `%s` you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 
 	return nil

@@ -22,7 +22,7 @@ func ExtractFromMetadata(ctx context.Context, key string) ([]string, bool) {
 func GetCollectionID(name string) (string, error) {
 	colID := name[:strings.LastIndex(name, "/")]
 	if colID == "" {
-		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource collection id from resource name `%s`", name)
+		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource collection id from resource name '%s'", name)
 	}
 	if strings.LastIndex(colID, "/") != -1 {
 		colID = colID[strings.LastIndex(colID, "/")+1:]
@@ -34,7 +34,7 @@ func GetCollectionID(name string) (string, error) {
 func GetNameID(name string) (string, error) {
 	id := name[strings.LastIndex(name, "/")+1:]
 	if id == "" {
-		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource id from resource name `%s`", name)
+		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource id from resource name '%s'", name)
 	}
 	return id, nil
 }
@@ -43,7 +43,7 @@ func GetNameID(name string) (string, error) {
 func GetPermalinkUID(permalink string) (string, error) {
 	uid := permalink[strings.LastIndex(permalink, "/")+1:]
 	if uid == "" {
-		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource id from resource permalink `%s`", permalink)
+		return "", status.Errorf(codes.InvalidArgument, "Error when extract resource id from resource permalink '%s'", permalink)
 	}
 	return uid, nil
 }
@@ -53,9 +53,9 @@ func GetOwner(ctx context.Context) (string, error) {
 	metadatas, ok := ExtractFromMetadata(ctx, "owner")
 	if ok {
 		if len(metadatas) == 0 {
-			return "", status.Error(codes.InvalidArgument, "Cannot find `owner` in your request")
+			return "", status.Error(codes.InvalidArgument, "Cannot find 'owner' in your request")
 		}
 		return metadatas[0], nil
 	}
-	return "", status.Error(codes.InvalidArgument, "Error when extract `owner` metadata")
+	return "", status.Error(codes.InvalidArgument, "Error when extract 'owner' metadata")
 }
