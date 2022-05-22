@@ -24,7 +24,9 @@ require (
 require (
 	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220519185924-775d2feab526
 	github.com/instill-ai/x v0.1.0-alpha.0.20220517204940-5a70916ce425
+	github.com/jackc/pgconn v1.11.0
 	github.com/mennanov/fieldmask-utils v0.5.0
+	github.com/rs/cors v1.8.2
 )
 
 require (
@@ -37,7 +39,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.11.0
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.2.0 // indirect
