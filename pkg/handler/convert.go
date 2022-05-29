@@ -100,9 +100,10 @@ func PBToDBConnector(
 
 	logger, _ := logger.GetZapLogger()
 
-	var UUID uuid.UUID
-	var ID string
-	var Tombstone bool
+	var uid uuid.UUID
+	var id string
+	var state datamodel.ConnectorState
+	var tombstone bool
 	var description sql.NullString
 	var configuration string
 	var createTime time.Time
@@ -111,13 +112,14 @@ func PBToDBConnector(
 
 	switch v := pbConnector.(type) {
 	case *connectorPB.SourceConnector:
-		ID = v.GetId()
-		Tombstone = v.GetConnector().GetTombstone()
+		id = v.GetId()
+		state = datamodel.ConnectorState(v.GetConnector().GetState())
+		tombstone = v.GetConnector().GetTombstone()
 		configuration = v.GetConnector().GetConfiguration()
 		createTime = v.GetConnector().GetCreateTime().AsTime()
 		updateTime = v.GetConnector().GetUpdateTime().AsTime()
 
-		UUID, err = uuid.FromString(v.GetUid())
+		uid, err = uuid.FromString(v.GetUid())
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -127,13 +129,14 @@ func PBToDBConnector(
 			Valid:  len(v.GetConnector().GetDescription()) > 0,
 		}
 	case *connectorPB.DestinationConnector:
-		ID = v.GetId()
-		Tombstone = v.GetConnector().GetTombstone()
+		id = v.GetId()
+		state = datamodel.ConnectorState(v.GetConnector().GetState())
+		tombstone = v.GetConnector().GetTombstone()
 		configuration = v.GetConnector().GetConfiguration()
 		createTime = v.GetConnector().GetCreateTime().AsTime()
 		updateTime = v.GetConnector().GetUpdateTime().AsTime()
 
-		UUID, err = uuid.FromString(v.GetUid())
+		uid, err = uuid.FromString(v.GetUid())
 		if err != nil {
 			logger.Fatal(err.Error())
 		}
@@ -146,15 +149,16 @@ func PBToDBConnector(
 
 	return &datamodel.Connector{
 		Owner:                  owner,
-		ID:                     ID,
+		ID:                     id,
 		ConnectorType:          connectorType,
 		Description:            description,
-		Tombstone:              Tombstone,
+		State:                  state,
+		Tombstone:              tombstone,
 		ConnectorDefinitionUID: connectorDefinitionUID,
 		Configuration:          []byte(configuration),
 
 		BaseDynamic: datamodel.BaseDynamic{
-			UID:        UUID,
+			UID:        uid,
 			CreateTime: createTime,
 			UpdateTime: updateTime,
 		},
@@ -173,6 +177,7 @@ func DBToPBConnector(
 	connector := &connectorPB.Connector{
 
 		Description: &dbConnector.Description.String,
+		State:       connectorPB.Connector_State(dbConnector.State),
 		Tombstone:   dbConnector.Tombstone,
 		CreateTime:  timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:  timestamppb.New(dbConnector.UpdateTime),
@@ -208,7 +213,6 @@ func DBToPBConnector(
 			DestinationConnectorDefinition: connectorDefinition,
 			Connector:                      connector,
 		}
-
 		if strings.HasPrefix(owner, "users/") {
 			pbConnector.GetConnector().Owner = &connectorPB.Connector_User{User: owner}
 		} else if strings.HasPrefix(owner, "organizations/") {

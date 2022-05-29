@@ -68,6 +68,7 @@ type Connector struct {
 	Tombstone              bool
 	Configuration          datatypes.JSON `gorm:"type:jsonb"`
 	ConnectorType          ConnectorType  `sql:"type:valid_connector_type"`
+	State                  ConnectorState `sql:"type:valid_state_type"`
 }
 
 // ConnectorType is an alias type for Protobuf enum ConnectorType
@@ -110,4 +111,18 @@ func (r *ReleaseStage) Scan(value interface{}) error {
 // Value function for custom GORM type ReleaseStage
 func (r ReleaseStage) Value() (driver.Value, error) {
 	return connectorPB.ReleaseStage(r).String(), nil
+}
+
+// ConnectorState is an alias type for Protobuf enum ConnectorState
+type ConnectorState connectorPB.Connector_State
+
+// Scan function for custom GORM type ConnectorState
+func (r *ConnectorState) Scan(value interface{}) error {
+	*r = ConnectorState(connectorPB.Connector_State_value[value.(string)])
+	return nil
+}
+
+// Value function for custom GORM type ConnectorState
+func (r ConnectorState) Value() (driver.Value, error) {
+	return connectorPB.Connector_State(r).String(), nil
 }

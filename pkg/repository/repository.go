@@ -25,12 +25,13 @@ type Repository interface {
 
 	// Connector
 	CreateConnector(connector *datamodel.Connector) error
-	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uuid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
-	DeleteConnector(id string, owner string, connectorType datamodel.ConnectorType) error
-	UpdateConnectorID(id string, owner string, connectorType datamodel.ConnectorType, newID string) error
+	ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(uuid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
+	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
+	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
+	UpdateConnectorState(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
 }
 
 type repository struct {
@@ -144,11 +145,11 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	return nil
 }
 
-func (r *repository) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
-	r.db.Model(&datamodel.Connector{}).Where("owner = ? AND connector_type = ?", owner, connectorType).Count(&totalSize)
+	r.db.Model(&datamodel.Connector{}).Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType).Count(&totalSize)
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? AND connector_type = ?", owner, connectorType)
+	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType)
 
 	if pageSize == 0 {
 		pageSize = 10
@@ -189,7 +190,7 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 		lastUID := (connectors)[len(connectors)-1].UID
 		lastItem := &datamodel.Connector{}
 		if result := r.db.Model(&datamodel.Connector{}).
-			Where("owner = ? AND connector_type = ?", owner, connectorType).
+			Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType).
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 			return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
 		}
@@ -203,11 +204,11 @@ func (r *repository) ListConnector(owner string, connectorType datamodel.Connect
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND owner = ? AND connector_type = ?", id, owner, connectorType)
+		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType)
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -219,11 +220,11 @@ func (r *repository) GetConnectorByID(id string, owner string, connectorType dat
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUID(uid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("uid = ? AND owner = ? AND connector_type = ?", uid, owner, connectorType)
+		Where("uid = ? AND owner = ? AND connector_type = ?", uid, ownerPermalink, connectorType)
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -235,19 +236,19 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, owner string, connectorTyp
 	return &connector, nil
 }
 
-func (r *repository) UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
+func (r *repository) UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
 	if result := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND owner = ? AND connector_type = ?", id, owner, connectorType).
+		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Updates(connector); result.Error != nil {
 		return status.Errorf(codes.Internal, result.Error.Error())
 	}
 	return nil
 }
 
-func (r *repository) DeleteConnector(id string, owner string, connectorType datamodel.ConnectorType) error {
+func (r *repository) DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error {
 
 	result := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND owner = ? AND connector_type = ?", id, owner, connectorType).
+		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Delete(&datamodel.Connector{})
 
 	if result.Error != nil {
@@ -261,10 +262,19 @@ func (r *repository) DeleteConnector(id string, owner string, connectorType data
 	return nil
 }
 
-func (r *repository) UpdateConnectorID(id string, owner string, connectorType datamodel.ConnectorType, newID string) error {
+func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error {
 	if result := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND owner = ? AND connector_type = ?", id, owner, connectorType).
+		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Update("id", newID); result.Error != nil {
+		return status.Errorf(codes.Internal, result.Error.Error())
+	}
+	return nil
+}
+
+func (r *repository) UpdateConnectorState(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+	if result := r.db.Model(&datamodel.Connector{}).
+		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
+		Update("state", state); result.Error != nil {
 		return status.Errorf(codes.Internal, result.Error.Error())
 	}
 	return nil

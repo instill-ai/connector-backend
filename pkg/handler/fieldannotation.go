@@ -11,4 +11,4 @@ var destinationImmutableFields = []string{"id", "destination_connector_definitio
 var sourceImmutableFields = []string{"id", "source_connector_definition"}
 
 // *OutputOnlyFields are Protobuf message fields with OUTPUT_ONLY field_behavior annotation
-var outputOnlyFields = []string{"name", "uid", "connector.tombstone", "connector.owner", "connector.create_time", "connector.update_time"}
+var outputOnlyFields = []string{"name", "uid", "connector.state", "connector.tombstone", "connector.owner", "connector.create_time", "connector.update_time"}

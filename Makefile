@@ -1,8 +1,9 @@
 .DEFAULT_GOAL:=help
 
-DEVELOP_SERVICES := connector_backend
-INSTILL_SERVICES := mgmt_backend
-3RD_PARTY_SERVICES := pg_sql
+DEV := connector_backend
+DEP := mgmt_backend
+DB := pg_sql
+TEMPORAL := temporal temporal_admin_tools temporal_ui
 
 #============================================================================
 
@@ -26,11 +27,11 @@ K6BIN := $(if $(shell command -v k6 2> /dev/null),k6,$(shell mktemp -d)/k6)
 
 .PHONY: all
 all:							## Lunch all services
-	@docker-compose up -d ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose up -d
 
 .PHONY: dev
 dev:							## Lunch only dependant services for local development
-	@docker-compose up -d ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose up -d ${DEP} ${DB} ${TEMPORAL}
 	while [ "$$(docker inspect --format '{{ .State.Health.Status }}' pg-sql)" != "healthy" ]; do echo "Check if db is ready..." && sleep 1; done
 	go build -o ${DEV_DB_MIGRATION_BINARY} ./cmd/migration && ${DEV_DB_MIGRATION_BINARY} && rm -rf $(dirname ${DEV_DB_MIGRATION_BINARY})
 	go build -o ${DEV_DB_INIT_BINARY} ./cmd/init && ${DEV_DB_INIT_BINARY} && rm -rf $(dirname ${DEV_DB_INIT_BINARY})
@@ -41,23 +42,23 @@ logs:							## Tail all logs with -n 10
 
 .PHONY: pull
 pull:							## Pull all service images
-	@docker-compose pull ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose pull
 
 .PHONY: stop
 stop:							## Stop all components
-	@docker-compose stop ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose stop
 
 .PHONY: start
 start:							## Start all stopped services
-	@docker-compose start ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose start
 
 .PHONY: restart
 restart:						## Restart all services
-	@docker-compose restart ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose restart
 
 .PHONY: rm
 rm:								## Remove all stopped service containers
-	@docker-compose rm -f ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose rm -f
 
 .PHONY: down
 down:							## Stop all services and remove all service containers and volumes
@@ -65,15 +66,15 @@ down:							## Stop all services and remove all service containers and volumes
 
 .PHONY: images
 images:							## List all container images
-	@docker-compose images ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose images
 
 .PHONY: ps
 ps:								## List all service containers
-	@docker-compose ps ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose ps
 
 .PHONY: top
 top:							## Display all running service processes
-	@docker-compose top ${DEVELOP_SERVICES} ${INSTILL_SERVICES} ${3RD_PARTY_SERVICES}
+	@docker-compose top
 
 .PHONY: build
 build:							## Build local docker image

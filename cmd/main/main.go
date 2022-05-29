@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	temporalClient "go.temporal.io/sdk/client"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -69,9 +71,14 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
+	tc, err := temporalClient.NewClient(temporalClient.Options{})
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer tc.Close()
+
 	// Create tls based credential.
 	var creds credentials.TransportCredentials
-	var err error
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
 		creds, err = credentials.NewServerTLSFromFile(config.Config.Server.HTTPS.Cert, config.Config.Server.HTTPS.Key)
 		if err != nil {
@@ -116,6 +123,7 @@ func main() {
 			service.NewService(
 				repository.NewRepository(db),
 				external.InitUserServiceClient(),
+				tc,
 			)))
 
 	gwS := runtime.NewServeMux(

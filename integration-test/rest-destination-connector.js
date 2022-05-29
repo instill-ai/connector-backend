@@ -1,5 +1,5 @@
 import http from "k6/http";
-import { check, group } from "k6";
+import { check, group, sleep } from "k6";
 import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
 import * as constant from "./const.js"
@@ -83,12 +83,45 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400": (r) => r.status === 400,
         });
 
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": JSON.stringify(constant.csvDstConfig)
+            }
+        }
+
+        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(resCSVDst, {
+            "POST /v1alpha/destination-connectors response status 201": (r) => r.status === 201,
+        });
+
+        // Check connector state being updated in 30 secs
+        let currentTime = new Date().getTime();
+        const timeoutTime = new Date().getTime() + 30000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         // Delete test records
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstGRPC.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstGRPC.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 

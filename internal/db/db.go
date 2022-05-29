@@ -5,15 +5,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/instill-ai/connector-backend/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
+
+	"github.com/instill-ai/connector-backend/config"
 )
 
 var db *gorm.DB
 var once sync.Once
 
+// GetConnection returns a database instance
 func GetConnection() *gorm.DB {
 	once.Do(func() {
 		databaseConfig := config.Config.Database

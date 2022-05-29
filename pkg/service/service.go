@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/gofrs/uuid"
 	"github.com/gogo/status"
+	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc/codes"
 
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
@@ -21,24 +22,26 @@ type Service interface {
 
 	// Connector
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
-	DeleteConnector(id string, owner string, connectorType datamodel.ConnectorType) error
-	UpdateConnectorID(id string, owner string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
+	ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
+	UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
+	DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error
 }
 
 type service struct {
 	repository        repository.Repository
 	userServiceClient mgmtPB.UserServiceClient
+	temporalClient    client.Client
 }
 
 // NewService initiates a service instance
-func NewService(r repository.Repository, u mgmtPB.UserServiceClient) Service {
+func NewService(r repository.Repository, u mgmtPB.UserServiceClient, t client.Client) Service {
 	return &service{
 		repository:        r,
 		userServiceClient: u,
+		temporalClient:    t,
 	}
 }
 
@@ -56,10 +59,14 @@ func (s *service) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (
 
 func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error) {
 
+	var ownerPermalink string
 	ownerRscName := connector.Owner
-	if err := s.ownerNameToPermalink(&connector.Owner); err != nil {
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
+
+	connector.Owner = ownerPermalink
 
 	connDef, err := s.repository.GetConnectorDefinitionByUID(connector.ConnectorDefinitionUID, true)
 	if err != nil {
@@ -89,8 +96,22 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 		return nil, err
 	}
 
-	// TODO: Use repository function directly
-	dbConnector, err := s.GetConnectorByID(connector.ID, ownerRscName, connector.ConnectorType, false)
+	// Check connector state
+	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
+		if err := s.repository.UpdateConnectorState(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+			return nil, err
+		}
+	} else {
+		def, err := s.repository.GetConnectorDefinitionByUID(connector.ConnectorDefinitionUID, true)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, connector.ID, connector.ConnectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+			return nil, err
+		}
+	}
+
+	dbConnector, err := s.repository.GetConnectorByID(connector.ID, ownerPermalink, connector.ConnectorType, false)
 	if err != nil {
 		return nil, err
 	}
@@ -99,78 +120,79 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 }
 
-func (s *service) ListConnector(owner string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
-	if err := s.ownerNameToPermalink(&owner); err != nil {
-		return nil, 0, "", status.Errorf(codes.InvalidArgument, err.Error())
+func (s *service) ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
+		return nil, 0, "", err
 	}
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnector(owner, connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnector(ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
 	}
 
 	for _, dbConnector := range dbConnectors {
-		if err := s.ownerPermalinkToName(&dbConnector.Owner); err != nil {
-			return nil, 0, "", status.Errorf(codes.Internal, err.Error())
-		}
+		dbConnector.Owner = ownerRscName
 	}
 
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) GetConnectorByID(id string, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
-	if err := s.ownerNameToPermalink(&owner); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
+func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	dbConnector, err := s.repository.GetConnectorByID(id, owner, connectorType, isBasicView)
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.ownerPermalinkToName(&dbConnector.Owner); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-
-	return dbConnector, nil
-}
-
-func (s *service) GetConnectorByUID(uid uuid.UUID, owner string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
-
-	if err := s.ownerNameToPermalink(&owner); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-
-	dbConnector, err := s.repository.GetConnectorByUID(uid, owner, connectorType, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, isBasicView)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.ownerPermalinkToName(&dbConnector.Owner); err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
+	dbConnector.Owner = ownerRscName
 
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnector(id string, owner string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	ownerRscName := owner
-	if err := s.ownerNameToPermalink(&owner); err != nil {
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := s.ownerNameToPermalink(&updatedConnector.Owner); err != nil {
+	dbConnector, err := s.repository.GetConnectorByUID(uid, ownerPermalink, connectorType, isBasicView)
+	if err != nil {
 		return nil, err
 	}
+
+	dbConnector.Owner = ownerRscName
+
+	return dbConnector, nil
+}
+
+func (s *service) UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedConnector.Owner = ownerPermalink
 
 	// Validation: Directness connectors cannot be updated
-	existingConnector, _ := s.repository.GetConnectorByID(id, owner, connectorType, true)
-	if existingConnector == nil {
-		return nil, status.Errorf(codes.NotFound, "Connector id '%s' with connector_type '%s' is not found", updatedConnector.ID, connectorPB.ConnectorType(updatedConnector.ConnectorType))
+	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	if err != nil {
+		return nil, err
 	}
 
-	def, err := s.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.repository.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -179,40 +201,49 @@ func (s *service) UpdateConnector(id string, owner string, connectorType datamod
 		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be updated")
 	}
 
-	if err := s.repository.UpdateConnector(id, owner, connectorType, updatedConnector); err != nil {
+	if err := s.repository.UpdateConnector(id, ownerPermalink, connectorType, updatedConnector); err != nil {
 		return nil, err
 	}
 
-	// TODO: Use repository function directly
-	dbConnector, err := s.GetConnectorByID(updatedConnector.ID, ownerRscName, updatedConnector.ConnectorType, false)
+	// Check connector state
+	if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, updatedConnector.ID, updatedConnector.ConnectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+		return nil, err
+	}
+
+	dbConnector, err := s.repository.GetConnectorByID(updatedConnector.ID, ownerPermalink, updatedConnector.ConnectorType, false)
 	if err != nil {
 		return nil, err
 	}
 
+	dbConnector.Owner = ownerRscName
+
 	return dbConnector, nil
 }
 
-func (s *service) DeleteConnector(id string, owner string, connectorType datamodel.ConnectorType) error {
-	if err := s.ownerNameToPermalink(&owner); err != nil {
+func (s *service) DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error {
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
 		return err
 	}
-	return s.repository.DeleteConnector(id, owner, connectorType)
+	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 
-func (s *service) UpdateConnectorID(id string, owner string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
 
-	ownerRscName := owner
-	if err := s.ownerNameToPermalink(&owner); err != nil {
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
 		return nil, err
 	}
 
 	// Validation: Directness connectors cannot be updated
-	existingConnector, _ := s.repository.GetConnectorByID(id, owner, connectorType, true)
-	if existingConnector == nil {
-		return nil, status.Errorf(codes.NotFound, "Connector id '%s' with connector_type '%s' is not found", id, connectorPB.ConnectorType(connectorType))
+	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	if err != nil {
+		return nil, err
 	}
 
-	def, err := s.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.repository.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -221,12 +252,11 @@ func (s *service) UpdateConnectorID(id string, owner string, connectorType datam
 		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be updated")
 	}
 
-	if err := s.repository.UpdateConnectorID(id, owner, connectorType, newID); err != nil {
+	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {
 		return nil, err
 	}
 
-	// TODO: Use repository function directly
-	dbConnector, err := s.GetConnectorByID(newID, ownerRscName, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(newID, ownerPermalink, connectorType, false)
 	if err != nil {
 		return nil, err
 	}

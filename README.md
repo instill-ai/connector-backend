@@ -6,7 +6,7 @@ connector-backend manages all connector resources and communicates with [Visual 
 
 Pre-requirements:
 
-- Go v1.17 or later installed on your development machine
+- Go v1.18 or later installed on your development machine
 
 ### Binary build
 
