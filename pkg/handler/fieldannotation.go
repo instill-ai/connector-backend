@@ -3,6 +3,10 @@ package handler
 // *RequiredFields are Protobuf message fields with REQUIRED field_behavior annotation
 var createRequiredFields = []string{"connector", "connector.configuration"}
 var lookUpRequiredFields = []string{"permalink"}
+var connectSourceRequiredFields = []string{"name"}
+var disconnectSourceRequiredFields = []string{"name"}
+var connectDestinationRequiredFields = []string{"name"}
+var disconnectDestinationRequiredFields = []string{"name"}
 var renameSourceRequiredFields = []string{"name", "new_source_connector_id"}
 var renameDestinationRequiredFields = []string{"name", "new_destination_connector_id"}
 

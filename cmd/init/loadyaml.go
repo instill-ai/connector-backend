@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 const (

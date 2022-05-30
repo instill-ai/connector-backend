@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func (h *handler) ListDestinationConnectorDefinition(ctx context.Context, req *connectorPB.ListDestinationConnectorDefinitionRequest) (*connectorPB.ListDestinationConnectorDefinitionResponse, error) {

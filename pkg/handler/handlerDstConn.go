@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func (h *handler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
@@ -45,6 +45,16 @@ func (h *handler) DeleteDestinationConnector(ctx context.Context, req *connector
 func (h *handler) LookUpDestinationConnector(ctx context.Context, req *connectorPB.LookUpDestinationConnectorRequest) (*connectorPB.LookUpDestinationConnectorResponse, error) {
 	resp, err := h.lookUpConnector(ctx, req)
 	return resp.(*connectorPB.LookUpDestinationConnectorResponse), err
+}
+
+func (h *handler) ConnectDestinationConnector(ctx context.Context, req *connectorPB.ConnectDestinationConnectorRequest) (*connectorPB.ConnectDestinationConnectorResponse, error) {
+	resp, err := h.connectConnector(ctx, req)
+	return resp.(*connectorPB.ConnectDestinationConnectorResponse), err
+}
+
+func (h *handler) DisconnectDestinationConnector(ctx context.Context, req *connectorPB.DisconnectDestinationConnectorRequest) (*connectorPB.DisconnectDestinationConnectorResponse, error) {
+	resp, err := h.disconnectConnector(ctx, req)
+	return resp.(*connectorPB.DisconnectDestinationConnectorResponse), err
 }
 
 func (h *handler) RenameDestinationConnector(ctx context.Context, req *connectorPB.RenameDestinationConnectorRequest) (*connectorPB.RenameDestinationConnectorResponse, error) {

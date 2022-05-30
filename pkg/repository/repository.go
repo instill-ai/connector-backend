@@ -8,12 +8,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/gofrs/uuid"
-	"github.com/gogo/status"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/x/paginate"
 	"github.com/jackc/pgconn"
+	"google.golang.org/grpc/status"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // Repository interface
@@ -30,8 +30,8 @@ type Repository interface {
 	GetConnectorByUID(uuid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
 	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
-	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
 	UpdateConnectorState(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
+	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
 }
 
 type repository struct {

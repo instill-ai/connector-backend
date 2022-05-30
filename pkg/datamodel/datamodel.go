@@ -9,7 +9,7 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // BaseStatic contains common columns for all tables with static UUID as primary key

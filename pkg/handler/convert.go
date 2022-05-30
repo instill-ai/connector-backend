@@ -16,7 +16,7 @@ import (
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // DBToPBConnectorDefinition converts db data model to protobuf data model
@@ -95,7 +95,7 @@ func DBToPBConnectorDefinition(dbSrcDef *datamodel.ConnectorDefinition, connecto
 func PBToDBConnector(
 	pbConnector interface{},
 	connectorType datamodel.ConnectorType,
-	owner string,
+	ownerRscName string,
 	connectorDefinitionUID uuid.UUID) *datamodel.Connector {
 
 	logger, _ := logger.GetZapLogger()
@@ -148,7 +148,7 @@ func PBToDBConnector(
 	}
 
 	return &datamodel.Connector{
-		Owner:                  owner,
+		Owner:                  ownerRscName,
 		ID:                     id,
 		ConnectorType:          connectorType,
 		Description:            description,

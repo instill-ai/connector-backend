@@ -334,6 +334,90 @@ export function CheckLookUp() {
 
 }
 
+export function CheckState() {
+
+    group("Connector API: Change state destination connectors", () => {
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": JSON.stringify(constant.csvDstConfig)
+            }
+        }
+
+        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response at UNSPECIFIED state status 400`]: (r) => r.status === 400,
+        });
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response at UNSPECIFIED state status 400`]: (r) => r.status === 400,
+        });
+
+        // Check connector state being updated in 60 secs
+        let currentTime = new Date().getTime();
+        let timeoutTime = new Date().getTime() + 60000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response status 400 (with STATE_CONNECTED)`]: (r) => r.status === 400,
+        });
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response status 200 (with STATE_CONNECTED)`]: (r) => r.status === 200,
+        });
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response status 400 (with STATE_DISCONNECTED)`]: (r) => r.status === 400,
+        });
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response status 200 (with STATE_DISCONNECTED)`]: (r) => r.status === 200,
+        });
+
+        // Check connector state being updated in 60 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 60000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+    });
+
+}
+
 export function CheckRename() {
 
     group("Connector API: Rename destination connectors", () => {

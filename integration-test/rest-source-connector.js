@@ -270,6 +270,41 @@ export function CheckLookUp() {
 
 }
 
+export function CheckState() {
+
+    group("Connector API: Change state source connectors", () => {
+        var dirHTTPSrcConnector = {
+            "id": "source-http",
+            "source_connector_definition": constant.httpSrcDefRscName,
+            "connector": {
+                "configuration": JSON.stringify({})
+            }
+        }
+
+        var resHTTP = http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
+            JSON.stringify(dirHTTPSrcConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect response status 400`]: (r) => r.status === 400,
+        });
+
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect`, null, {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect response status 400`]: (r) => r.status === 400,
+        });
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
+            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+    });
+
+}
+
 export function CheckRename() {
 
     group("Connector API: Rename source connectors", () => {

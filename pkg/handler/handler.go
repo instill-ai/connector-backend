@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/gofrs/uuid"
-	"github.com/gogo/status"
 	"github.com/iancoleman/strcase"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/datatypes"
 
@@ -19,7 +19,8 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
 
 type handler struct {
@@ -37,16 +38,16 @@ func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
 
 func (h *handler) Liveness(ctx context.Context, in *connectorPB.LivenessRequest) (*connectorPB.LivenessResponse, error) {
 	return &connectorPB.LivenessResponse{
-		HealthCheckResponse: &connectorPB.HealthCheckResponse{
-			Status: connectorPB.HealthCheckResponse_SERVING_STATUS_SERVING,
+		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
 		},
 	}, nil
 }
 
 func (h *handler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
 	return &connectorPB.ReadinessResponse{
-		HealthCheckResponse: &connectorPB.HealthCheckResponse{
-			Status: connectorPB.HealthCheckResponse_SERVING_STATUS_SERVING,
+		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
 		},
 	}, nil
 }
@@ -280,14 +281,14 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
 	dbConnector := &datamodel.Connector{
 		ID:                     connID,
-		Owner:                  owner,
+		Owner:                  ownerRscName,
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
@@ -303,7 +304,7 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		owner,
+		ownerRscName,
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -343,12 +344,12 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnector(owner, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnector(ownerRscName, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -420,12 +421,12 @@ func (h *handler) getConnector(ctx context.Context, req interface{}) (resp inter
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByID(connID, ownerRscName, connType, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -580,7 +581,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connDefUID = dbConnDef.UID
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
@@ -591,7 +592,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnector(connID, owner, connType, PBToDBConnector(pbConnectorToUpdate, connType, owner, connDefUID))
+	dbConnector, err := h.service.UpdateConnector(connID, ownerRscName, connType, PBToDBConnector(pbConnectorToUpdate, connType, ownerRscName, connDefUID))
 	if err != nil {
 		return resp, err
 	}
@@ -599,7 +600,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		owner,
+		ownerRscName,
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -633,12 +634,12 @@ func (h *handler) deleteConnector(ctx context.Context, req interface{}) (resp in
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(connID, owner, connType); err != nil {
+	if err := h.service.DeleteConnector(connID, ownerRscName, connType); err != nil {
 		return resp, err
 	}
 
@@ -694,12 +695,12 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 		connDefColID = "destination-connector-definitions"
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUID(connUID, owner, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUID(connUID, ownerRscName, connType, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -720,6 +721,220 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 	case *connectorPB.LookUpSourceConnectorResponse:
 		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
 	case *connectorPB.LookUpDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
+}
+
+func (h *handler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var connID string
+	var connType datamodel.ConnectorType
+
+	var connDefRscName string
+
+	switch v := req.(type) {
+	case *connectorPB.ConnectSourceConnectorRequest:
+		resp = &connectorPB.ConnectSourceConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFields(v, connectSourceRequiredFields); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		connID, err = resource.GetNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+
+		getResp, err := h.GetSourceConnector(
+			ctx,
+			&connectorPB.GetSourceConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := resource.GetNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+
+	case *connectorPB.ConnectDestinationConnectorRequest:
+		resp = &connectorPB.ConnectDestinationConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFields(v, connectDestinationRequiredFields); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		connID, err = resource.GetNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+
+		getResp, err := h.GetDestinationConnector(
+			ctx,
+			&connectorPB.GetDestinationConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := resource.GetNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+	}
+
+	ownerRscName, err := resource.GetOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
+	if err != nil {
+		return resp, err
+	}
+
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		dbConnector.Owner,
+		connDefRscName,
+	)
+
+	switch v := resp.(type) {
+	case *connectorPB.ConnectSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.ConnectDestinationConnectorResponse:
+		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
+	}
+
+	return resp, nil
+}
+
+func (h *handler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var connID string
+	var connType datamodel.ConnectorType
+
+	var connDefRscName string
+
+	switch v := req.(type) {
+	case *connectorPB.DisconnectSourceConnectorRequest:
+		resp = &connectorPB.DisconnectSourceConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFields(v, disconnectSourceRequiredFields); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		connID, err = resource.GetNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+
+		getResp, err := h.GetSourceConnector(
+			ctx,
+			&connectorPB.GetSourceConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := resource.GetNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+
+	case *connectorPB.DisconnectDestinationConnectorRequest:
+		resp = &connectorPB.DisconnectDestinationConnectorResponse{}
+
+		// Return error if REQUIRED fields are not provided in the requested payload
+		if err := checkfield.CheckRequiredFields(v, disconnectDestinationRequiredFields); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		connID, err = resource.GetNameID(v.GetName())
+		if err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+
+		getResp, err := h.GetDestinationConnector(
+			ctx,
+			&connectorPB.GetDestinationConnectorRequest{
+				Name: v.GetName(),
+				View: connectorPB.View_VIEW_BASIC.Enum(),
+			})
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDefID, err := resource.GetNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
+		if err != nil {
+			return resp, err
+		}
+
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		if err != nil {
+			return resp, err
+		}
+
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+	}
+
+	ownerRscName, err := resource.GetOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+	if err != nil {
+		return resp, err
+	}
+
+	pbConnector := DBToPBConnector(
+		dbConnector,
+		connType,
+		dbConnector.Owner,
+		connDefRscName,
+	)
+
+	switch v := resp.(type) {
+	case *connectorPB.DisconnectSourceConnectorResponse:
+		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
+	case *connectorPB.DisconnectDestinationConnectorResponse:
 		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
 	}
 
@@ -815,12 +1030,12 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 		return resp, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	owner, err := resource.GetOwner(ctx)
+	ownerRscName, err := resource.GetOwner(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorID(connID, owner, connType, connNewID)
+	dbConnector, err := h.service.UpdateConnectorID(connID, ownerRscName, connType, connNewID)
 	if err != nil {
 		return resp, err
 	}

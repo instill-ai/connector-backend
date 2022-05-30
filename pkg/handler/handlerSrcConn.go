@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func (h *handler) CreateSourceConnector(ctx context.Context, req *connectorPB.CreateSourceConnectorRequest) (*connectorPB.CreateSourceConnectorResponse, error) {
@@ -45,6 +45,16 @@ func (h *handler) DeleteSourceConnector(ctx context.Context, req *connectorPB.De
 func (h *handler) LookUpSourceConnector(ctx context.Context, req *connectorPB.LookUpSourceConnectorRequest) (*connectorPB.LookUpSourceConnectorResponse, error) {
 	resp, err := h.lookUpConnector(ctx, req)
 	return resp.(*connectorPB.LookUpSourceConnectorResponse), err
+}
+
+func (h *handler) ConnectSourceConnector(ctx context.Context, req *connectorPB.ConnectSourceConnectorRequest) (*connectorPB.ConnectSourceConnectorResponse, error) {
+	resp, err := h.connectConnector(ctx, req)
+	return resp.(*connectorPB.ConnectSourceConnectorResponse), err
+}
+
+func (h *handler) DisconnectSourceConnector(ctx context.Context, req *connectorPB.DisconnectSourceConnectorRequest) (*connectorPB.DisconnectSourceConnectorResponse, error) {
+	resp, err := h.disconnectConnector(ctx, req)
+	return resp.(*connectorPB.DisconnectSourceConnectorResponse), err
 }
 
 func (h *handler) RenameSourceConnector(ctx context.Context, req *connectorPB.RenameSourceConnectorRequest) (*connectorPB.RenameSourceConnectorResponse, error) {

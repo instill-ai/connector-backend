@@ -46,6 +46,7 @@ export default function (data) {
   sourceConnector.CheckGet()
   sourceConnector.CheckUpdate()
   sourceConnector.CheckLookUp()
+  sourceConnector.CheckState()
   sourceConnector.CheckRename()
 
   // Destination connectors
@@ -54,6 +55,7 @@ export default function (data) {
   destinationConnector.CheckGet()
   destinationConnector.CheckUpdate()
   destinationConnector.CheckLookUp()
+  destinationConnector.CheckState()
   destinationConnector.CheckRename()
 
 }

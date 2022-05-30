@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	mgmtPB "github.com/instill-ai/protogen-go/mgmt/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 )
 
 func (s *service) ownerRscNameToPermalink(ownerRscName string) (ownerPermalink string, err error) {

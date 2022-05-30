@@ -19,7 +19,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // CheckStateWorkflowParam represents the parameters for ConnectorCheckStateWorkflow

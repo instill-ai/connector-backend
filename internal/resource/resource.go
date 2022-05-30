@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/gogo/status"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // ExtractFromMetadata extracts context metadata given a key

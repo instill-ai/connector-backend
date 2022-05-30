@@ -5,12 +5,11 @@ go 1.18
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gofrs/uuid v4.2.0+incompatible
-	github.com/gogo/status v1.1.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220529165505-1030118a2044
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220530153944-e1c33d5f7d13
 	github.com/instill-ai/x v0.1.0-alpha.0.20220517204940-5a70916ce425
 	github.com/jackc/pgconn v1.12.1
 	github.com/knadh/koanf v1.4.1
@@ -38,6 +37,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/gogo/status v1.1.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect

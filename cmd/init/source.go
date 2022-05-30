@@ -15,7 +15,7 @@ import (
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.SourceConnectorDefinition, connDef *connectorPB.ConnectorDefinition, spec datatypes.JSON) error {

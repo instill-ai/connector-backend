@@ -2,15 +2,15 @@ package service
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/gogo/status"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
-	mgmtPB "github.com/instill-ai/protogen-go/mgmt/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 )
 
 // Service interface
@@ -27,6 +27,7 @@ type Service interface {
 	GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
 	UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
+	UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
 	DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error
 }
 
@@ -98,6 +99,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 	// Check connector state
 	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
+		// Directness connector is always with STATE_CONNECTED
 		if err := s.repository.UpdateConnectorState(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
@@ -227,6 +229,56 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		return err
 	}
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
+}
+
+func (s *service) UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
+	var ownerPermalink string
+	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Validation: Directness connectors cannot be updated
+	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	if err != nil {
+		return nil, err
+	}
+
+	def, err := s.repository.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
+	if err != nil {
+		return nil, err
+	}
+
+	if connectorPB.ConnectionType(def.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
+		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be changed for state due to being always connected")
+	}
+
+	if state == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) && existingConnector.State != datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
+		return nil, status.Errorf(codes.InvalidArgument, "Connector id %s and connector_type %s is not in the disconnected state", id, connectorPB.ConnectorType(connectorType))
+	} else if state == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) && existingConnector.State != datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
+		return nil, status.Errorf(codes.InvalidArgument, "Connector id %s and connector_type %s is not in the connected state", id, connectorPB.ConnectorType(connectorType))
+	}
+
+	if state == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
+		// Check connector configuration every time when it is set to STATE_CONNECTED from STATE_DISCONNECTED
+		if err := s.repository.UpdateConnectorState(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
+			return nil, err
+		}
+		if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, id, connectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+			return nil, err
+		}
+	} else if state == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
+		if err := s.repository.UpdateConnectorState(id, ownerPermalink, connectorType, state); err != nil {
+			return nil, err
+		}
+	}
+
+	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbConnector, nil
 }
 
 func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {

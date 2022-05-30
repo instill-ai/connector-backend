@@ -33,7 +33,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/service"
 
 	database "github.com/instill-ai/connector-backend/internal/db"
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler, CORSOrigins []string) http.Handler {

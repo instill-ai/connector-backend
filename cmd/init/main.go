@@ -8,7 +8,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	database "github.com/instill-ai/connector-backend/internal/db"
-	connectorPB "github.com/instill-ai/protogen-go/connector/v1alpha"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 var enumRegistry = map[string]map[string]int32{

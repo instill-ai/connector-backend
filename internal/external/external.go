@@ -10,7 +10,7 @@ import (
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/logger"
 
-	mgmtPB "github.com/instill-ai/protogen-go/mgmt/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 )
 
 // InitUserServiceClient initialises a UserServiceClient instance
