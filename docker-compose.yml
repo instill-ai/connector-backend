@@ -99,11 +99,13 @@ services:
       CFG_DATABASE_PORT: 5432
       CFG_DATABASE_USERNAME: postgres
       CFG_DATABASE_PASSWORD: password
+      CFG_TEMPORAL_CLIENTOPTIONS_HOSTPORT: temporal:7233
     volumes:
       - ./config:/connector-backend/config
     entrypoint: ./connector-backend-worker
     depends_on:
       - connector_backend_init
+      - temporal
 
   connector_backend:
     container_name: connector-backend
@@ -117,12 +119,15 @@ services:
       CFG_DATABASE_PORT: 5432
       CFG_DATABASE_USERNAME: postgres
       CFG_DATABASE_PASSWORD: password
+      CFG_MGMTBACKEND_HOST: mgmt_backend
+      CFG_MGMTBACKEND_PORT: 8080
+      CFG_TEMPORAL_CLIENTOPTIONS_HOSTPORT: temporal:7233
     ports:
       - 8082:8082
     volumes:
       - ./config:/connector-backend/config
     depends_on:
-      - connector_backend_init
+      - connector_backend_worker
 
   pg_sql:
     container_name: pg-sql

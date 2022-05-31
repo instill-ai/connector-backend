@@ -10,6 +10,7 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
+	"go.temporal.io/sdk/client"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 )
@@ -21,6 +22,7 @@ var Config AppConfig
 type AppConfig struct {
 	Server      ServerConfig      `koanf:"server"`
 	Database    DatabaseConfig    `koanf:"database"`
+	Temporal    TemporalConfig    `koanf:"temporal"`
 	MgmtBackend MgmtBackendConfig `koanf:"mgmtbackend"`
 }
 
@@ -51,6 +53,11 @@ type DatabaseConfig struct {
 		MaxConnections  int           `koanf:"maxconnections"`
 		ConnLifeTime    time.Duration `koanf:"connlifetime"`
 	}
+}
+
+// TemporalConfig related to Temporal
+type TemporalConfig struct {
+	ClientOptions client.Options `koanf:"clientoptions"`
 }
 
 // MgmtBackendConfig related to mgmt-backend

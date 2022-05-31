@@ -19,6 +19,9 @@ database:
     idleconnections: 5
     maxconnections: 10
     connlifetime: 30 # In minutes
+temporal:
+  clientoptions:
+    hostport: localhost:7233
 mgmtbackend:
   host: localhost
   port: 8080

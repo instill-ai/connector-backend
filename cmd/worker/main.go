@@ -36,7 +36,8 @@ func main() {
 	c, err := client.NewClient(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
-		Logger: zapadapter.NewZapAdapter(logger),
+		Logger:   zapadapter.NewZapAdapter(logger),
+		HostPort: config.Config.Temporal.ClientOptions.HostPort,
 	})
 
 	if err != nil {
