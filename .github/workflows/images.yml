@@ -25,13 +25,13 @@ jobs:
         id: set_version
         with:
           script: |
-            const tag = context.ref
+            const tag = ${{ github.ref_name }}
             const no_v_tag = tag.replace('v', '')
             core.setOutput('tag', tag)
             core.setOutput('no_v_tag', no_v_tag)
 
       - name: Build and push (latest)
-        if: github.event_name == 'push'
+        if: github.event_name != 'release'
         uses: docker/build-push-action@v3
         with:
           push: true
