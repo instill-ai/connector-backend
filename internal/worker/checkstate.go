@@ -98,7 +98,7 @@ func (w *worker) ConnectorCheckStateActivity(ctx context.Context, param *CheckSt
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file
-	configFilePath := fmt.Sprintf("/tmp/connector-data/config/%s.json", param.ContainerName)
+	configFilePath := fmt.Sprintf("/connector-config/%s.json", param.ContainerName)
 	if _, err := os.Stat(configFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 			logger.Error(fmt.Sprintf("Unable to create folders for filepath %s", configFilePath))
@@ -160,8 +160,8 @@ func runContainer(cli *client.Client, imageName string, containerName string, co
 		},
 		Mounts: []mount.Mount{
 			{
-				Type:   mount.TypeBind,
-				Source: filepath.Dir(configFilePath),
+				Type:   mount.TypeVolume,
+				Source: "connector-config",
 				Target: "/config",
 			},
 		},

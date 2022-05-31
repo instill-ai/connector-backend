@@ -4,6 +4,10 @@ networks:
   default:
     name: instill-network
 
+volumes:
+  conenctor_config:
+    name: connector-config
+
 services:
   mgmt_backend_migrate:
     container_name: mgmt-backend-migrate
@@ -101,6 +105,8 @@ services:
       CFG_DATABASE_PASSWORD: password
       CFG_TEMPORAL_CLIENTOPTIONS_HOSTPORT: temporal:7233
     volumes:
+      - conenctor_config:/connector-config
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./config:/connector-backend/config
     entrypoint: ./connector-backend-worker
     depends_on:
