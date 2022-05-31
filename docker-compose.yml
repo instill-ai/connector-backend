@@ -134,6 +134,7 @@ services:
       - ./config:/connector-backend/config
     depends_on:
       - connector_backend_worker
+      - mgmt_backend
 
   pg_sql:
     container_name: pg-sql
