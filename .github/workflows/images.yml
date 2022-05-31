@@ -20,24 +20,24 @@ jobs:
           username: dropletbot
           password: ${{ secrets.botDockerHubPassword }}
 
-      - name: Set Versions
-        uses: actions/github-script@v6
-        id: set_version
-        with:
-          script: |
-            const tag = context.ref
-            const no_v_tag = tag.replace('v', '')
-            core.setOutput('tag', tag)
-            core.setOutput('no_v_tag', no_v_tag)
-
       - name: Build and push (latest)
-        if: github.event_name == 'push'
         uses: docker/build-push-action@v3
         with:
           push: true
           tags: instill/connector-backend:latest
           cache-from: type=registry,ref=instill/connector-backend:buildcache
           cache-to: type=registry,ref=instill/connector-backend:buildcache,mode=max
+
+      - name: Set Versions
+        if: github.event_name == 'release'
+        uses: actions/github-script@v6
+        id: set_version
+        with:
+          script: |
+            const tag = '${{ github.ref_name }}'
+            const no_v_tag = tag.replace('v', '')
+            core.setOutput('tag', tag)
+            core.setOutput('no_v_tag', no_v_tag)
 
       - name: Build and push (release)
         if: github.event_name == 'release'
