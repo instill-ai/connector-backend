@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.2.0-alpha...v0.3.0-alpha) (2022-05-31)
+
+
+### Features
+
+* add check state using workflow ([0848f05](https://github.com/instill-ai/connector-backend/commit/0848f054551296afda9a96be2245614b08000852))
+* add connect/disconnect custom rpc method ([fd67fa5](https://github.com/instill-ai/connector-backend/commit/fd67fa5b80d8f69a98e80f4d1fec757b31baba4b))
+* add cors support ([5ac2a53](https://github.com/instill-ai/connector-backend/commit/5ac2a535161445bba987958e13ab82d20330faf7))
+
+
+### Bug Fixes
+
+* fix backend network config in docker-compose ([9697b65](https://github.com/instill-ai/connector-backend/commit/9697b6546e9361cad4e9205de6ab082afb138097))
+* fix docker in docker volume mount issue ([0c404cd](https://github.com/instill-ai/connector-backend/commit/0c404cd05d4b4a58d2ad0e8bd9dac4d9226b86d7))
+
 ## [0.2.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.1.0-alpha...v0.2.0-alpha) (2022-05-21)
 
 
