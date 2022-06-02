@@ -31,39 +31,39 @@ func InitJSONSchema() {
 
 	compiler := jsonschema.NewCompiler()
 
-	if r, err := os.Open("config/models/connector_definition.json"); err != nil {
+	if r, err := os.Open("config/model/connector_definition.json"); err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	} else {
-		if err := compiler.AddResource("https://github.com/instill-ai/connector-backend/blob/main/config/models/connector_definition.json", r); err != nil {
+		if err := compiler.AddResource("https://github.com/instill-ai/connector-backend/blob/main/config/model/connector_definition.json", r); err != nil {
 			logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 		}
 	}
 
-	if r, err := os.Open("config/models/connector.json"); err != nil {
+	if r, err := os.Open("config/model/connector.json"); err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	} else {
-		if err := compiler.AddResource("https://github.com/instill-ai/connector-backend/blob/main/config/models/connector.json", r); err != nil {
+		if err := compiler.AddResource("https://github.com/instill-ai/connector-backend/blob/main/config/model/connector.json", r); err != nil {
 			logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 		}
 	}
 
 	var err error
-	SrcConnDefJSONSchema, err = compiler.Compile("config/models/source_connector_definition.json")
+	SrcConnDefJSONSchema, err = compiler.Compile("config/model/source_connector_definition.json")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
 
-	DstConnDefJSONSchema, err = compiler.Compile("config/models/destination_connector_definition.json")
+	DstConnDefJSONSchema, err = compiler.Compile("config/model/destination_connector_definition.json")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
 
-	SrcConnJSONSchema, err = compiler.Compile("config/models/source_connector.json")
+	SrcConnJSONSchema, err = compiler.Compile("config/model/source_connector.json")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
 
-	DstConnJSONSchema, err = compiler.Compile("config/models/destination_connector.json")
+	DstConnJSONSchema, err = compiler.Compile("config/model/destination_connector.json")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
