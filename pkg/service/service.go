@@ -60,7 +60,6 @@ func (s *service) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (
 
 func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error) {
 
-	var ownerPermalink string
 	ownerRscName := connector.Owner
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -118,13 +117,14 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 		return nil, err
 	}
 
+	dbConnector.Owner = ownerRscName
+
 	return dbConnector, nil
 
 }
 
 func (s *service) ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, 0, "", err
@@ -144,7 +144,6 @@ func (s *service) ListConnector(ownerRscName string, connectorType datamodel.Con
 
 func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -162,7 +161,6 @@ func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType
 
 func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -180,7 +178,6 @@ func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, connecto
 
 func (s *service) UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
 
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -223,7 +220,6 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 }
 
 func (s *service) DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error {
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return err
@@ -232,7 +228,7 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 }
 
 func (s *service) UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
-	var ownerPermalink string
+
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -278,12 +274,13 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 		return nil, err
 	}
 
+	dbConnector.Owner = ownerRscName
+
 	return dbConnector, nil
 }
 
 func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
 
-	var ownerPermalink string
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -312,6 +309,8 @@ func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorTyp
 	if err != nil {
 		return nil, err
 	}
+
+	dbConnector.Owner = ownerRscName
 
 	return dbConnector, nil
 }

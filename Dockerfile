@@ -15,8 +15,8 @@ FROM gcr.io/distroless/base AS runtime
 ENV GIN_MODE=release
 WORKDIR /connector-backend
 
-COPY --from=build /go/src/internal/db/migration ./internal/db/migration
 COPY --from=build /go/src/config ./config
+COPY --from=build /go/src/internal/db/migration ./internal/db/migration
 
 COPY --from=build /connector-backend-migrate ./
 COPY --from=build /connector-backend-init ./
