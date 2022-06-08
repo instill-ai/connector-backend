@@ -7,6 +7,9 @@ server:
     - http://localhost
     - https://instill-inc.tech
     - https://instill.tech
+  edition: local-ce:dev
+  disableusage: false
+  debug: false
 database:
   username: postgres
   password: password
@@ -28,3 +31,10 @@ mgmtbackend:
   https:
     cert:   # /ssl/tls.crt
     key:    # /ssl/tls.key
+usagebackend:
+  host: localhost
+  port: 8084
+  https:
+    cert:  # /ssl/tls.crt
+    key:  # /ssl/tls.crt
+

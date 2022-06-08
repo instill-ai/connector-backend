@@ -7,33 +7,39 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220530153944-e1c33d5f7d13
-	github.com/instill-ai/x v0.1.0-alpha.0.20220517204940-5a70916ce425
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220607142330-56342f37e864
+	github.com/instill-ai/usage-client v0.0.0-20220607201439-d646c37f5b02
+	github.com/instill-ai/x v0.1.0-alpha.0.20220604235252-39fcffc82edb
 	github.com/jackc/pgconn v1.12.1
 	github.com/knadh/koanf v1.4.1
 	github.com/mennanov/fieldmask-utils v0.5.0
 	github.com/rs/cors v1.8.2
+	go.temporal.io/sdk v1.15.0
 	go.uber.org/zap v1.21.0
-	golang.org/x/net v0.0.0-20220526153639-5463443f8c37
-	google.golang.org/genproto v0.0.0-20220526192754-51939a95c655
-	google.golang.org/grpc v1.46.2
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
+	google.golang.org/genproto v0.0.0-20220602131408-e326c6e8e9c8
+	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gorm.io/datatypes v1.0.6
-	gorm.io/driver/postgres v1.3.6
+	gorm.io/driver/postgres v1.3.7
 	gorm.io/gorm v1.23.5
 )
 
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
+	github.com/catalinc/hashcash v0.0.0-20161205220751-e6bc29ff4de9 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v20.10.16+incompatible
+	github.com/docker/docker v20.10.17+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/go-redis/redis/v9 v9.0.0-beta.1
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -65,9 +71,8 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
-	github.com/stretchr/testify v1.7.1 // indirect
-	go.temporal.io/api v1.7.1-0.20220223032354-6e6fe738916a // indirect
-	go.temporal.io/sdk v1.14.0
+	github.com/stretchr/testify v1.7.2 // indirect
+	go.temporal.io/api v1.8.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
@@ -75,6 +80,6 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0 // indirect
-	gorm.io/driver/mysql v1.3.3 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gorm.io/driver/mysql v1.3.4 // indirect
 )

@@ -16,6 +16,7 @@ ENV GIN_MODE=release
 WORKDIR /connector-backend
 
 COPY --from=build /go/src/config ./config
+COPY --from=build /go/src/release-please ./release-please
 COPY --from=build /go/src/internal/db/migration ./internal/db/migration
 
 COPY --from=build /connector-backend-migrate ./

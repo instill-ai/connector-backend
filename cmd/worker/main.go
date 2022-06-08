@@ -18,15 +18,15 @@ import (
 
 func main() {
 
+	if err := config.Init(); err != nil {
+		log.Fatal(err.Error())
+	}
+
 	logger, _ := logger.GetZapLogger()
 	defer func() {
 		// can't handle the error due to https://github.com/uber-go/zap/issues/880
 		_ = logger.Sync()
 	}()
-
-	if err := config.Init(); err != nil {
-		logger.Fatal(err.Error())
-	}
 
 	db := database.GetConnection()
 	defer database.Close(db)

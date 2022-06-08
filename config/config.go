@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -11,8 +12,6 @@ import (
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
 	"go.temporal.io/sdk/client"
-
-	"github.com/instill-ai/connector-backend/internal/logger"
 )
 
 // Config - Global variable to export
@@ -20,10 +19,11 @@ var Config AppConfig
 
 // AppConfig defines
 type AppConfig struct {
-	Server      ServerConfig      `koanf:"server"`
-	Database    DatabaseConfig    `koanf:"database"`
-	Temporal    TemporalConfig    `koanf:"temporal"`
-	MgmtBackend MgmtBackendConfig `koanf:"mgmtbackend"`
+	Server       ServerConfig       `koanf:"server"`
+	Database     DatabaseConfig     `koanf:"database"`
+	Temporal     TemporalConfig     `koanf:"temporal"`
+	MgmtBackend  MgmtBackendConfig  `koanf:"mgmtbackend"`
+	UsageBackend UsageBackendConfig `koanf:"usagebackend"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -33,10 +33,10 @@ type ServerConfig struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}
-	CORSOrigins []string `koanf:"corsorigins"`
-	Paginate    struct {
-		Salt string `koanf:"salt"`
-	}
+	CORSOrigins  []string `koanf:"corsorigins"`
+	Edition      string   `koanf:"edition"`
+	DisableUsage bool     `koanf:"disableusage"`
+	Debug        bool     `koanf:"debug"`
 }
 
 // DatabaseConfig related to database
@@ -70,9 +70,18 @@ type MgmtBackendConfig struct {
 	}
 }
 
+// UsageBackendConfig related to usage-backend
+type UsageBackendConfig struct {
+	Host  string `koanf:"host"`
+	Port  int    `koanf:"port"`
+	HTTPS struct {
+		Cert string `koanf:"cert"`
+		Key  string `koanf:"key"`
+	}
+}
+
 // Init - Assign global config to decoded config struct
 func Init() error {
-	logger, _ := logger.GetZapLogger()
 
 	k := koanf.New(".")
 	parser := yaml.Parser()
@@ -82,7 +91,7 @@ func Init() error {
 	flag.Parse()
 
 	if err := k.Load(file.Provider(*fileRelativePath), parser); err != nil {
-		logger.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	if err := k.Load(env.ProviderWithValue("CFG_", ".", func(s string, v string) (string, interface{}) {
@@ -92,11 +101,11 @@ func Init() error {
 		}
 		return key, v
 	}), nil); err != nil {
-		logger.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	if err := k.Unmarshal("", &Config); err != nil {
-		logger.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	return ValidateConfig(&Config)

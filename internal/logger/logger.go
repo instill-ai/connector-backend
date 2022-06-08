@@ -3,6 +3,7 @@ package logger
 import (
 	"sync"
 
+	"github.com/instill-ai/connector-backend/config"
 	"go.uber.org/zap"
 )
 
@@ -13,8 +14,11 @@ var once sync.Once
 func GetZapLogger() (*zap.Logger, error) {
 	var err error
 	once.Do(func() {
-		logger, err = zap.NewDevelopment()
-		// logger, err = zap.NewProduction()
+		if config.Config.Server.Debug {
+			logger, err = zap.NewDevelopment()
+		} else {
+			logger, err = zap.NewProduction()
+		}
 	})
 
 	return logger, err

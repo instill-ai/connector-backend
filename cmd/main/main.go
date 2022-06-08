@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/instill-ai/x/zapadapter"
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -31,9 +32,15 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/handler"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
+	"github.com/instill-ai/connector-backend/pkg/usage"
+	"github.com/instill-ai/x/repo"
+	"github.com/instill-ai/x/zapadapter"
 
 	database "github.com/instill-ai/connector-backend/internal/db"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
+	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
+	usageclient "github.com/instill-ai/usage-client/client"
 )
 
 func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler, CORSOrigins []string) http.Handler {
@@ -55,7 +62,34 @@ func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler, CORSOrigin
 	)
 }
 
+func startReporter(ctx context.Context, usageServiceClient usagePB.UsageServiceClient, r repository.Repository, mu mgmtPB.UserServiceClient) {
+	if config.Config.Server.DisableUsage {
+		return
+	}
+
+	logger, _ := logger.GetZapLogger()
+
+	version, err := repo.ReadReleaseManifest("release-please/manifest.json")
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	go func() {
+		time.Sleep(5 * time.Second)
+
+		usg := usage.NewUsage(r, mu)
+		err = usageclient.StartReporter(ctx, usageServiceClient, usagePB.Session_SERVICE_CONNECTOR, config.Config.Server.Edition, version, usg.RetrieveUsageData)
+		if err != nil {
+			logger.Error(fmt.Sprintf("unable to start reporter: %v\n", err))
+		}
+	}()
+}
+
 func main() {
+
+	if err := config.Init(); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	logger, _ := logger.GetZapLogger()
 	defer func() {
@@ -63,10 +97,6 @@ func main() {
 		_ = logger.Sync()
 	}()
 	grpc_zap.ReplaceGrpcLoggerV2(logger)
-
-	if err := config.Init(); err != nil {
-		logger.Fatal(err.Error())
-	}
 
 	db := database.GetConnection()
 	defer database.Close(db)
@@ -121,13 +151,21 @@ func main() {
 		grpcServerOpts = append(grpcServerOpts, grpc.Creds(creds))
 	}
 
+	userServiceClient, userServiceClientConn := external.InitUserServiceClient()
+	defer userServiceClientConn.Close()
+
+	usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
+	defer usageServiceClientConn.Close()
+
+	repository := repository.NewRepository(db)
+
 	grpcS := grpc.NewServer(grpcServerOpts...)
 	connectorPB.RegisterConnectorServiceServer(
 		grpcS,
 		handler.NewHandler(
 			service.NewService(
-				repository.NewRepository(db),
-				external.InitUserServiceClient(),
+				repository,
+				userServiceClient,
 				tc,
 			)))
 
@@ -146,15 +184,18 @@ func main() {
 		}),
 	)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start usage reporter
+	startReporter(ctx, usageServiceClient, repository, userServiceClient)
+
 	var dialOpts []grpc.DialOption
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
 		dialOpts = []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 	} else {
 		dialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	if err := connectorPB.RegisterConnectorServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
 		logger.Fatal(err.Error())

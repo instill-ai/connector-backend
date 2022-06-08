@@ -4,10 +4,6 @@ networks:
   default:
     name: instill-network
 
-volumes:
-  conenctor_config:
-    name: connector-config
-
 services:
   mgmt_backend_migrate:
     container_name: mgmt-backend-migrate
@@ -52,6 +48,8 @@ services:
       CFG_DATABASE_PORT: 5432
       CFG_DATABASE_USERNAME: postgres
       CFG_DATABASE_PASSWORD: password
+      CFG_USAGEBACKEND_HOST: usage_backend_cloud
+      CFG_USAGEBACKEND_PORT: 8084
     ports:
       - 8080:8080
     depends_on:
@@ -105,7 +103,7 @@ services:
       CFG_DATABASE_PASSWORD: password
       CFG_TEMPORAL_CLIENTOPTIONS_HOSTPORT: temporal:7233
     volumes:
-      - conenctor_config:/connector-config
+      - /tmp/vdp-data/connector-config:/tmp/vdp-data/connector-config
       - /var/run/docker.sock:/var/run/docker.sock
       - ./config:/connector-backend/config
     entrypoint: ./connector-backend-worker
@@ -127,6 +125,8 @@ services:
       CFG_DATABASE_PASSWORD: password
       CFG_MGMTBACKEND_HOST: mgmt_backend
       CFG_MGMTBACKEND_PORT: 8080
+      CFG_USAGEBACKEND_HOST: usage_backend_cloud
+      CFG_USAGEBACKEND_PORT: 8084
       CFG_TEMPORAL_CLIENTOPTIONS_HOSTPORT: temporal:7233
     ports:
       - 8082:8082
