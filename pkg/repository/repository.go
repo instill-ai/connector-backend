@@ -4,17 +4,23 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gofrs/uuid"
+	"github.com/jackc/pgconn"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
-	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/x/paginate"
-	"github.com/jackc/pgconn"
-	"google.golang.org/grpc/status"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
+
+// DefaultPageSize is the default pagination page size when page size is not assigned
+const DefaultPageSize = 10
+
+// MaxPageSize is the maximum pagination page size if the assigned value is over this number
+const MaxPageSize = 100
 
 // Repository interface
 type Repository interface {
@@ -27,11 +33,12 @@ type Repository interface {
 	CreateConnector(connector *datamodel.Connector) error
 	ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uuid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
 	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
-	UpdateConnectorState(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
 	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
+	UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
+	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
 }
 
 type repository struct {
@@ -52,9 +59,9 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Order("create_time DESC, uid DESC").Where("connector_type = ?", connectorType)
 
 	if pageSize == 0 {
-		pageSize = 10
-	} else if pageSize > 100 {
-		pageSize = 100
+		pageSize = DefaultPageSize
+	} else if pageSize > MaxPageSize {
+		pageSize = MaxPageSize
 	}
 
 	queryBuilder = queryBuilder.Limit(int(pageSize))
@@ -116,7 +123,7 @@ func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamod
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return nil, status.Errorf(codes.NotFound, "[GetConnectorDefinitionByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return &connectorDefinition, nil
 }
@@ -128,7 +135,7 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with uid '%s' you specified is not found", uid)
+		return nil, status.Errorf(codes.NotFound, "[GetConnectorDefinitionByUID] The connector with uid '%s' you specified is not found", uid)
 	}
 	return &connectorDefinition, nil
 }
@@ -152,9 +159,9 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType)
 
 	if pageSize == 0 {
-		pageSize = 10
-	} else if pageSize > 100 {
-		pageSize = 100
+		pageSize = DefaultPageSize
+	} else if pageSize > MaxPageSize {
+		pageSize = MaxPageSize
 	}
 
 	queryBuilder = queryBuilder.Limit(int(pageSize))
@@ -215,7 +222,7 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return nil, status.Errorf(codes.NotFound, "[GetConnectorByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return &connector, nil
 }
@@ -231,7 +238,7 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, con
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "The connector with connector_type '%s' and uid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
+		return nil, status.Errorf(codes.NotFound, "[GetConnectorByUID] The connector with connector_type '%s' and uid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
 	}
 	return &connector, nil
 }
@@ -241,6 +248,8 @@ func (r *repository) UpdateConnector(id string, ownerPermalink string, connector
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Updates(connector); result.Error != nil {
 		return status.Errorf(codes.Internal, result.Error.Error())
+	} else if result.RowsAffected == 0 {
+		return status.Errorf(codes.NotFound, "[UpdateConnector] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return nil
 }
@@ -256,7 +265,7 @@ func (r *repository) DeleteConnector(id string, ownerPermalink string, connector
 	}
 
 	if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		return status.Errorf(codes.NotFound, "[DeleteConnector] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 
 	return nil
@@ -267,15 +276,30 @@ func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connect
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Update("id", newID); result.Error != nil {
 		return status.Errorf(codes.Internal, result.Error.Error())
+	} else if result.RowsAffected == 0 {
+		return status.Errorf(codes.NotFound, "[UpdateConnectorID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
 	}
 	return nil
 }
 
-func (r *repository) UpdateConnectorState(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Update("state", state); result.Error != nil {
 		return status.Errorf(codes.Internal, result.Error.Error())
+	} else if result.RowsAffected == 0 {
+		return status.Errorf(codes.NotFound, "[UpdateConnectorStateByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+	}
+	return nil
+}
+
+func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+	if result := r.db.Model(&datamodel.Connector{}).
+		Where("uid = ? AND owner = ? AND connector_type = ?", uid, ownerPermalink, connectorType).
+		Update("state", state); result.Error != nil {
+		return status.Errorf(codes.Internal, result.Error.Error())
+	} else if result.RowsAffected == 0 {
+		return status.Errorf(codes.NotFound, "[UpdateConnectorStateByUID] The connector with connector_type '%s' and uuid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
 	}
 	return nil
 }

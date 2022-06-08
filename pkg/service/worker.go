@@ -6,19 +6,23 @@ import (
 	"strings"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/worker"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 )
 
-func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink string, connID string, connType datamodel.ConnectorType, dockerRepo string, dockerImgTag string) error {
+func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, connType datamodel.ConnectorType, dockerRepo string, dockerImgTag string) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        fmt.Sprintf("%s.%s.%s:%s", ownerRscName, connID, dockerRepo, dockerImgTag),
+		ID:        strings.ReplaceAll(fmt.Sprintf("%s.%s", ownerRscName, connRscName), "/", "."),
 		TaskQueue: worker.TaskQueue,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
 	}
 
 	we, err := s.temporalClient.ExecuteWorkflow(
@@ -26,18 +30,18 @@ func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink st
 		workflowOptions,
 		"ConnectorCheckStateWorkflow",
 		&worker.CheckStateWorkflowParam{
-			ID:             connID,
-			ImageName:      fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:  fmt.Sprintf("%s.%s", strings.ReplaceAll(ownerRscName, "/", "."), connID),
-			ConnectorType:  connType,
-			OwnerPermalink: ownerPermalink,
+			OwnerPermalink:     ownerPermalink,
+			ConnectorPermalink: connPermalink,
+			ConnectorType:      connType,
+			ImageName:          fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
+			ContainerName:      strings.ReplaceAll(fmt.Sprintf("%s.%s", ownerRscName, connRscName), "/", "."),
 		})
 	if err != nil {
-		logger.Error(fmt.Sprintf("Unable to execute workflow: %s", err.Error()))
+		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
 		return err
 	}
 
-	logger.Info(fmt.Sprintf("Started workflow with WorkflowID %s and RunID %s", we.GetID(), we.GetRunID()))
+	logger.Info(fmt.Sprintf("started workflow with WorkflowID %s and RunID %s", we.GetID(), we.GetRunID()))
 
 	return nil
 }

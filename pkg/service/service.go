@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/grpc/codes"
@@ -99,7 +101,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 	// Check connector state
 	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
 		// Directness connector is always with STATE_CONNECTED
-		if err := s.repository.UpdateConnectorState(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 	} else {
@@ -107,7 +109,18 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 		if err != nil {
 			return nil, err
 		}
-		if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, connector.ID, connector.ConnectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+
+		var connCollectionID string
+		if connector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
+			connCollectionID = "source-connectors"
+		} else if connector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
+			connCollectionID = "destination-connectors"
+		}
+
+		if err := s.startCheckStateWorkflow(
+			ownerRscName, ownerPermalink,
+			fmt.Sprintf("%s/%s", connCollectionID, connector.ID), fmt.Sprintf("%s/%s", connCollectionID, connector.UID), connector.ConnectorType,
+			def.DockerRepository, def.DockerImageTag); err != nil {
 			return nil, err
 		}
 	}
@@ -205,7 +218,17 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 	}
 
 	// Check connector state
-	if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, updatedConnector.ID, updatedConnector.ConnectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+	var connCollectionID string
+	if existingConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
+		connCollectionID = "source-connectors"
+	} else if existingConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
+		connCollectionID = "destination-connectors"
+	}
+
+	if err := s.startCheckStateWorkflow(
+		ownerRscName, ownerPermalink,
+		fmt.Sprintf("%s/%s", connCollectionID, existingConnector.ID), fmt.Sprintf("%s/%s", connCollectionID, existingConnector.UID), existingConnector.ConnectorType,
+		def.DockerRepository, def.DockerImageTag); err != nil {
 		return nil, err
 	}
 
@@ -256,15 +279,26 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 	}
 
 	if state == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
-		// Check connector configuration every time when it is set to STATE_CONNECTED from STATE_DISCONNECTED
-		if err := s.repository.UpdateConnectorState(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
+		// Set connector state to STATE_UNSPECIFIED when it is set to STATE_CONNECTED from STATE_DISCONNECTED
+		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
 			return nil, err
 		}
-		if err := s.startCheckStateWorkflow(ownerRscName, ownerPermalink, id, connectorType, def.DockerRepository, def.DockerImageTag); err != nil {
+
+		var connCollectionID string
+		if existingConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
+			connCollectionID = "source-connectors"
+		} else if existingConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
+			connCollectionID = "destination-connectors"
+		}
+
+		if err := s.startCheckStateWorkflow(
+			ownerRscName, ownerPermalink,
+			fmt.Sprintf("%s/%s", connCollectionID, existingConnector.ID), fmt.Sprintf("%s/%s", connCollectionID, existingConnector.UID), existingConnector.ConnectorType,
+			def.DockerRepository, def.DockerImageTag); err != nil {
 			return nil, err
 		}
 	} else if state == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
-		if err := s.repository.UpdateConnectorState(id, ownerPermalink, connectorType, state); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
 	}

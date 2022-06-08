@@ -10,6 +10,9 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/repository"
 )
 
+// TaskQueue is the task queue name for connector-backend
+const TaskQueue = "connector-backend"
+
 // Worker interface
 type Worker interface {
 	ConnectorCheckStateWorkflow(ctx workflow.Context, param *CheckStateWorkflowParam) error

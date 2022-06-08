@@ -14,9 +14,12 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
+	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -24,11 +27,11 @@ import (
 
 // CheckStateWorkflowParam represents the parameters for ConnectorCheckStateWorkflow
 type CheckStateWorkflowParam struct {
-	ID             string
-	ImageName      string
-	ContainerName  string
-	ConnectorType  datamodel.ConnectorType
-	OwnerPermalink string
+	OwnerPermalink     string
+	ConnectorPermalink string
+	ImageName          string
+	ContainerName      string
+	ConnectorType      datamodel.ConnectorType
 }
 
 // CheckStateActivityParam represents the parameters for ConnectorCheckStateActivity
@@ -49,18 +52,30 @@ const (
 // ConnectorCheckStateWorkflow is a check-state workflow definition.
 func (w *worker) ConnectorCheckStateWorkflow(ctx workflow.Context, param *CheckStateWorkflowParam) error {
 
-	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 60 * time.Second,
-	}
-	ctx = workflow.WithActivityOptions(ctx, ao)
-
 	logger := workflow.GetLogger(ctx)
 	logger.Info("ConnectorCheckStateWorkflow started")
 
-	dbConnector, err := w.repository.GetConnectorByID(param.ID, param.OwnerPermalink, param.ConnectorType, false)
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 120 * time.Second,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
+	}
+	ctx = workflow.WithActivityOptions(ctx, ao)
+
+	connUIDStr, err := resource.GetPermalinkUID(param.ConnectorPermalink)
 	if err != nil {
-		logger.Error(err.Error())
-		return err
+		return temporal.NewNonRetryableApplicationError("unable to get the connector UUID", "ParsingError", err)
+	}
+
+	connUID, err := uuid.FromString(connUIDStr)
+	if err != nil {
+		return temporal.NewNonRetryableApplicationError("unable to get the connector UUID", "ParsingError", err)
+	}
+
+	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, param.ConnectorType, false)
+	if err != nil {
+		return temporal.NewNonRetryableApplicationError("cannot get the connector", "RepositoryError", err)
 	}
 
 	var result exitCode
@@ -69,21 +84,20 @@ func (w *worker) ConnectorCheckStateWorkflow(ctx workflow.Context, param *CheckS
 		ContainerName: param.ContainerName,
 		Config:        dbConnector.Configuration,
 	}).Get(ctx, &result); err != nil {
-		logger.Error("Activity failed.", "Error", err)
 		if err := stopAndRemoveContainer(w.dockerClient, param.ContainerName); err != nil {
-			return err
+			return temporal.NewNonRetryableApplicationError("unable to stop container", "DockerError", err)
 		}
-		return err
+		return temporal.NewNonRetryableApplicationError("activity failed", "ActivityError", err)
 	}
 
 	switch result {
 	case exitCodeOK:
-		if err := w.repository.UpdateConnectorState(param.ID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
-			return err
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
 	case exitCodeError:
-		if err := w.repository.UpdateConnectorState(param.ID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
-			return err
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
+			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
 	}
 
@@ -94,43 +108,38 @@ func (w *worker) ConnectorCheckStateWorkflow(ctx workflow.Context, param *CheckS
 
 // ConnectorCheckStateActivity is a check-state activity definition.
 func (w *worker) ConnectorCheckStateActivity(ctx context.Context, param *CheckStateActivityParam) (exitCode, error) {
+
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file
-	configFilePath := fmt.Sprintf("/connector-config/%s.json", param.ContainerName)
+	configFilePath := fmt.Sprintf("/tmp/vdp-data/connector-config/%s.json", param.ContainerName)
 	if _, err := os.Stat(configFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
-			logger.Error(fmt.Sprintf("Unable to create folders for filepath %s", configFilePath))
-			return exitCodeUnknown, err
+			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "ConfigFilePreconditionError", err)
 		}
 		if err := ioutil.WriteFile(configFilePath, param.Config, 0644); err != nil {
-			logger.Error(fmt.Sprintf("Unable to write connector config file %s", configFilePath))
-			return exitCodeUnknown, err
+			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "ConfigFilePreconditionError", err)
 		}
 	}
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		logger.Error("Unable to create docker client")
-		return exitCodeUnknown, err
+		return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to create docker client", "DockerError", err)
 	}
 
 	// Run the container
 	exitCode, err := runContainer(cli, param.ImageName, param.ContainerName, configFilePath)
 	if err != nil {
-		logger.Error(err.Error())
 		if err := stopAndRemoveContainer(cli, param.ContainerName); err != nil {
-			logger.Error(err.Error())
-			return exitCodeUnknown, err
+			return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to stop container", "DockerError", err)
 		}
-		return exitCodeUnknown, err
+		return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to run container", "DockerError", err)
 	}
 
 	// Stops and removes the container
 	if err := stopAndRemoveContainer(cli, param.ContainerName); err != nil {
-		logger.Error(err.Error())
-		return exitCodeUnknown, err
+		return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to remove container", "DockerError", err)
 	}
 
 	return exitCode, nil
@@ -160,8 +169,8 @@ func runContainer(cli *client.Client, imageName string, containerName string, co
 		},
 		Mounts: []mount.Mount{
 			{
-				Type:   mount.TypeVolume,
-				Source: "connector-config",
+				Type:   mount.TypeBind,
+				Source: "/tmp/vdp-data/connector-config",
 				Target: "/config",
 			},
 		},
@@ -233,7 +242,7 @@ func runContainer(cli *client.Client, imageName string, containerName string, co
 func stopAndRemoveContainer(client *client.Client, containerName string) error {
 
 	if err := client.ContainerStop(context.Background(), containerName, nil); err != nil {
-		return fmt.Errorf("Unable to stop container %s: %s", containerName, err)
+		return fmt.Errorf("unable to stop container %s: %s", containerName, err)
 	}
 
 	removeOptions := types.ContainerRemoveOptions{

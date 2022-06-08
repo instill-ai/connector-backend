@@ -14,6 +14,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
+	"go.temporal.io/sdk/client"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
@@ -24,7 +25,6 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	temporalClient "go.temporal.io/sdk/client"
 
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/external"
@@ -101,7 +101,7 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	tc, err := temporalClient.NewClient(temporalClient.Options{
+	tc, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
 		Logger:   zapadapter.NewZapAdapter(logger),
