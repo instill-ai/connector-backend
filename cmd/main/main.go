@@ -63,9 +63,6 @@ func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler, CORSOrigin
 }
 
 func startReporter(ctx context.Context, usageServiceClient usagePB.UsageServiceClient, r repository.Repository, mu mgmtPB.UserServiceClient) {
-	if config.Config.Server.DisableUsage {
-		return
-	}
 
 	logger, _ := logger.GetZapLogger()
 
@@ -76,7 +73,6 @@ func startReporter(ctx context.Context, usageServiceClient usagePB.UsageServiceC
 
 	go func() {
 		time.Sleep(5 * time.Second)
-
 		usg := usage.NewUsage(r, mu)
 		err = usageclient.StartReporter(ctx, usageServiceClient, usagePB.Session_SERVICE_CONNECTOR, config.Config.Server.Edition, version, usg.RetrieveUsageData)
 		if err != nil {
@@ -154,9 +150,6 @@ func main() {
 	userServiceClient, userServiceClientConn := external.InitUserServiceClient()
 	defer userServiceClientConn.Close()
 
-	usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
-	defer usageServiceClientConn.Close()
-
 	repository := repository.NewRepository(db)
 
 	grpcS := grpc.NewServer(grpcServerOpts...)
@@ -188,7 +181,11 @@ func main() {
 	defer cancel()
 
 	// Start usage reporter
-	startReporter(ctx, usageServiceClient, repository, userServiceClient)
+	if !config.Config.Server.DisableUsage {
+		usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
+		defer usageServiceClientConn.Close()
+		startReporter(ctx, usageServiceClient, repository, userServiceClient)
+	}
 
 	var dialOpts []grpc.DialOption
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
