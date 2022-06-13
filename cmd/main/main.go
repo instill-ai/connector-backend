@@ -97,7 +97,7 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	tc, err := client.Dial(client.Options{
+	temporalClient, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
 		Logger:   zapadapter.NewZapAdapter(logger),
@@ -106,7 +106,7 @@ func main() {
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
-	defer tc.Close()
+	defer temporalClient.Close()
 
 	// Create tls based credential.
 	var creds credentials.TransportCredentials
@@ -159,7 +159,7 @@ func main() {
 			service.NewService(
 				repository,
 				userServiceClient,
-				tc,
+				temporalClient,
 			)))
 
 	gwS := runtime.NewServeMux(

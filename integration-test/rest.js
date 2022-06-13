@@ -5,7 +5,6 @@ import * as sourceConnectorDefinition from './rest-source-connector-definition.j
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
 import * as sourceConnector from './rest-source-connector.js';
 import * as destinationConnector from './rest-destination-connector.js';
-import * as constant from "./const.js";
 
 const connectorHost = "http://localhost:8082";
 
@@ -57,6 +56,7 @@ export default function (data) {
   destinationConnector.CheckLookUp()
   destinationConnector.CheckState()
   destinationConnector.CheckRename()
+  destinationConnector.CheckWrite()
 
 }
 

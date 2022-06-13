@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 

@@ -12,16 +12,16 @@ import (
 	"github.com/instill-ai/connector-backend/internal/logger"
 )
 
-// SrcConnDefJSONSchema represents the ConnectorDefinition JSON Schema for validating the payload
+// SrcConnDefJSONSchema represents the SourceConnectorDefinition JSON Schema
 var SrcConnDefJSONSchema *jsonschema.Schema
 
-// DstConnDefJSONSchema represents the ConnectorDefinition JSON Schema for validating the payload
+// DstConnDefJSONSchema represents the DestinationConnectorDefinition JSON Schema
 var DstConnDefJSONSchema *jsonschema.Schema
 
-// SrcConnJSONSchema represents the Connector JSON Schema for validating the payload
+// SrcConnJSONSchema represents the SourceConnector JSON Schema
 var SrcConnJSONSchema *jsonschema.Schema
 
-// DstConnJSONSchema represents the Connector JSON Schema for validating the payload
+// DstConnJSONSchema represents the DestinationConnector JSON Schema
 var DstConnJSONSchema *jsonschema.Schema
 
 // InitJSONSchema initialise JSON Schema instances with the given files
@@ -71,21 +71,31 @@ func InitJSONSchema() {
 }
 
 //ValidateJSONSchema validates the Protobuf message data
-func ValidateJSONSchema(schema *jsonschema.Schema, msg interface{}, emitUnpopulated bool) error {
+func ValidateJSONSchema(schema *jsonschema.Schema, msg proto.Message, emitUnpopulated bool) error {
 
-	data, err := protojson.MarshalOptions{UseProtoNames: true, EmitUnpopulated: emitUnpopulated}.Marshal(msg.(proto.Message))
+	b, err := protojson.MarshalOptions{UseProtoNames: true, EmitUnpopulated: emitUnpopulated}.Marshal(msg)
 	if err != nil {
 		return err
 	}
 
 	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
 
 	if err := schema.Validate(v); err != nil {
-		b, _ := json.MarshalIndent(err.(*jsonschema.ValidationError).DetailedOutput(), "", "  ")
-		return fmt.Errorf(string(b))
+		switch e := err.(type) {
+		case *jsonschema.ValidationError:
+			b, err := json.MarshalIndent(e.DetailedOutput(), "", "  ")
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf(string(b))
+		case jsonschema.InvalidJSONTypeError:
+			return e
+		default:
+			return e
+		}
 	}
 
 	return nil
@@ -105,7 +115,18 @@ func ValidateJSONSchemaString(schema string, data string) error {
 	}
 
 	if err = sch.Validate(v); err != nil {
-		return err
+		switch e := err.(type) {
+		case *jsonschema.ValidationError:
+			b, err := json.MarshalIndent(e.DetailedOutput(), "", "  ")
+			if err != nil {
+				return err
+			}
+			return fmt.Errorf(string(b))
+		case jsonschema.InvalidJSONTypeError:
+			return e
+		default:
+			return e
+		}
 	}
 
 	return nil

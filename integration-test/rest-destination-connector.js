@@ -451,3 +451,51 @@ export function CheckRename() {
         });
     });
 }
+
+export function CheckWrite() {
+
+    group("Connector API: Write destination connectors", () => {
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": JSON.stringify(constant.csvDstConfig)
+            }
+        }
+
+        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "task": "TASK_DETECTION",
+                "data": constant.detModelOutput
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200`]: (r) => r.status === 200,
+        });
+
+        sleep(6)
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+    });
+}

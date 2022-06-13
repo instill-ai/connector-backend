@@ -31,6 +31,7 @@ type handler struct {
 // NewHandler initiates a handler instance
 func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
 	datamodel.InitJSONSchema()
+	datamodel.InitTaskAirbyteCatalog()
 	return &handler{
 		service: s,
 	}
@@ -161,11 +162,6 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		resp = &connectorPB.CreateSourceConnectorResponse{}
 
-		// Validate SourceConnector JSON Schema
-		if err := datamodel.ValidateJSONSchema(datamodel.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
-		}
-
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetSourceConnector(), outputOnlyFields); err != nil {
 			return resp, status.Error(codes.InvalidArgument, err.Error())
@@ -173,6 +169,11 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetSourceConnector(), append(createRequiredFields, sourceImmutableFields...)); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		// Validate SourceConnector JSON Schema
+		if err := datamodel.ValidateJSONSchema(datamodel.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 
@@ -219,11 +220,6 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		resp = &connectorPB.CreateDestinationConnectorResponse{}
 
-		// Validate DestinationConnector JSON Schema
-		if err := datamodel.ValidateJSONSchema(datamodel.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
-		}
-
 		// Validate DestinationConnector configuration JSON Schema
 
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
@@ -233,6 +229,11 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetDestinationConnector(), append(createRequiredFields, destinationImmutableFields...)); err != nil {
+			return resp, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		// Validate DestinationConnector JSON Schema
+		if err := datamodel.ValidateJSONSchema(datamodel.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
 			return resp, status.Error(codes.InvalidArgument, err.Error())
 		}
 

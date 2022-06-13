@@ -28,13 +28,47 @@ func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink st
 	we, err := s.temporalClient.ExecuteWorkflow(
 		context.Background(),
 		workflowOptions,
-		"ConnectorCheckStateWorkflow",
+		"CheckStateWorkflow",
 		&worker.CheckStateWorkflowParam{
 			OwnerPermalink:     ownerPermalink,
 			ConnectorPermalink: connPermalink,
 			ConnectorType:      connType,
 			ImageName:          fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:      strings.ReplaceAll(fmt.Sprintf("%s.%s", ownerRscName, connRscName), "/", "."),
+			ContainerName:      strings.ReplaceAll(fmt.Sprintf("%s.%s.check", ownerRscName, connRscName), "/", "."),
+		})
+	if err != nil {
+		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
+		return err
+	}
+
+	logger.Info(fmt.Sprintf("started workflow with WorkflowID %s and RunID %s", we.GetID(), we.GetRunID()))
+
+	return nil
+}
+
+func (s *service) startWriteDestinationWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
+
+	logger, _ := logger.GetZapLogger()
+
+	workflowOptions := client.StartWorkflowOptions{
+		ID:        strings.ReplaceAll(fmt.Sprintf("%s.%s", ownerRscName, connRscName), "/", "."),
+		TaskQueue: worker.TaskQueue,
+		RetryPolicy: &temporal.RetryPolicy{
+			MaximumAttempts: 1,
+		},
+	}
+
+	we, err := s.temporalClient.ExecuteWorkflow(
+		context.Background(),
+		workflowOptions,
+		"WriteDestinationWorkflow",
+		&worker.WriteDestinationWorkflowParam{
+			OwnerPermalink:           ownerPermalink,
+			ConnectorPermalink:       connPermalink,
+			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
+			ContainerName:            strings.ReplaceAll(fmt.Sprintf("%s.%s.write", ownerRscName, connRscName), "/", "."),
+			ConfiguredAirbyteCatalog: cfgAbCatalog,
+			AirbyteMessages:          abMsgs,
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))

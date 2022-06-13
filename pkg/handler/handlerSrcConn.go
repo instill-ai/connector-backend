@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gogo/status"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -60,4 +62,8 @@ func (h *handler) DisconnectSourceConnector(ctx context.Context, req *connectorP
 func (h *handler) RenameSourceConnector(ctx context.Context, req *connectorPB.RenameSourceConnectorRequest) (*connectorPB.RenameSourceConnectorResponse, error) {
 	resp, err := h.renameConnector(ctx, req)
 	return resp.(*connectorPB.RenameSourceConnectorResponse), err
+}
+
+func (h *handler) ReadSourceConnector(context.Context, *connectorPB.ReadSourceConnectorRequest) (*connectorPB.ReadSourceConnectorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadSourceConnector not implemented")
 }

@@ -2,13 +2,21 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/gogo/status"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/instill-ai/connector-backend/internal/resource"
+	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/x/checkfield"
+
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
 )
 
 func (h *handler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
@@ -60,4 +68,52 @@ func (h *handler) DisconnectDestinationConnector(ctx context.Context, req *conne
 func (h *handler) RenameDestinationConnector(ctx context.Context, req *connectorPB.RenameDestinationConnectorRequest) (*connectorPB.RenameDestinationConnectorResponse, error) {
 	resp, err := h.renameConnector(ctx, req)
 	return resp.(*connectorPB.RenameDestinationConnectorResponse), err
+}
+
+func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
+
+	resp := &connectorPB.WriteDestinationConnectorResponse{}
+
+	// Return error if REQUIRED fields are not provided in the requested payload
+	if err := checkfield.CheckRequiredFields(req, writeDestinationRequiredFields); err != nil {
+		return resp, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	dstConnID, err := resource.GetRscNameID(req.GetName())
+	if err != nil {
+		return resp, err
+	}
+
+	ownerRscName, err := resource.GetOwner(ctx)
+	if err != nil {
+		return resp, err
+	}
+
+	var rootFieldName string
+	switch req.Task {
+	case modelPB.ModelInstance_TASK_UNSPECIFIED:
+		rootFieldName = "unspecified_outputs"
+	case modelPB.ModelInstance_TASK_CLASSIFICATION:
+		rootFieldName = "classification_outputs"
+	case modelPB.ModelInstance_TASK_DETECTION:
+		rootFieldName = "detection_outputs"
+	case modelPB.ModelInstance_TASK_KEYPOINT:
+		rootFieldName = "keypoint_outputs"
+	}
+
+	batch, ok := req.Data.Fields[rootFieldName]
+	if !ok {
+		return resp, fmt.Errorf("Task input array is not found in the payload")
+	}
+
+	// Validate TaskAirbyteCatalog's JSON schema
+	if err := datamodel.ValidateTaskAirbyteCatalog(req.Task, batch); err != nil {
+		return resp, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, batch); err != nil {
+		return resp, err
+	}
+
+	return resp, nil
 }

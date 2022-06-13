@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220607142330-56342f37e864
+	github.com/instill-ai/protogen-go v0.1.5-alpha.0.20220609234725-18e0c1c28851
 	github.com/instill-ai/usage-client v0.0.0-20220607201439-d646c37f5b02
 	github.com/instill-ai/x v0.1.0-alpha.0.20220604235252-39fcffc82edb
 	github.com/jackc/pgconn v1.12.1
@@ -40,7 +40,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/gogo/status v1.1.0 // indirect
+	github.com/gogo/status v1.1.0
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.2 // indirect
+	github.com/opencontainers/image-spec v1.0.2
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
