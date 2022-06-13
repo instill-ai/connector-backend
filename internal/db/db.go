@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -49,11 +48,12 @@ func GetConnection() *gorm.DB {
 		// SetMaxOpenConns sets the maximum number of open connections to the database.
 		sqlDB.SetMaxOpenConns(databaseConfig.Pool.MaxConnections)
 		// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-		sqlDB.SetConnMaxLifetime(time.Minute * databaseConfig.Pool.ConnLifeTime)
+		sqlDB.SetConnMaxLifetime(databaseConfig.Pool.ConnLifeTime)
 	})
 	return db
 }
 
+// Close closes the db connection
 func Close(db *gorm.DB) {
 	// https://github.com/go-gorm/gorm/issues/3216
 	//
@@ -61,7 +61,6 @@ func Close(db *gorm.DB) {
 	// it does not close everything since DB.DB() only returns the master connection.
 	if db != nil {
 		sqlDB, _ := db.DB()
-
 		sqlDB.Close()
 	}
 }
