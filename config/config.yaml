@@ -8,12 +8,12 @@ server:
     - https://instill-inc.tech
     - https://instill.tech
   edition: local-ce:dev
-  disableusage: true
-  debug: false
+  disableusage: false
+  debug: true
 database:
   username: postgres
   password: password
-  host: localhost
+  host: pg-sql
   port: 5432
   name: connector
   version: 1
@@ -24,9 +24,9 @@ database:
     connlifetime: 30m # In minutes, e.g., '60m'
 temporal:
   clientoptions:
-    hostport: localhost:7233
+    hostport: temporal:7233
 mgmtbackend:
-  host: localhost
+  host: mgmt-backend
   port: 8080
   https:
     cert:   # /ssl/tls.crt
