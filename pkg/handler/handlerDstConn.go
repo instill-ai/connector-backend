@@ -21,10 +21,15 @@ import (
 
 func (h *handler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
 	resp, err := h.createConnector(ctx, req)
+	if err != nil {
+		return resp.(*connectorPB.CreateDestinationConnectorResponse), err
+	}
+
 	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusCreated))); err != nil {
 		return resp.(*connectorPB.CreateDestinationConnectorResponse), err
 	}
-	return resp.(*connectorPB.CreateDestinationConnectorResponse), err
+
+	return resp.(*connectorPB.CreateDestinationConnectorResponse), nil
 }
 
 func (h *handler) ListDestinationConnector(ctx context.Context, req *connectorPB.ListDestinationConnectorRequest) (*connectorPB.ListDestinationConnectorResponse, error) {
@@ -44,10 +49,28 @@ func (h *handler) UpdateDestinationConnector(ctx context.Context, req *connector
 
 func (h *handler) DeleteDestinationConnector(ctx context.Context, req *connectorPB.DeleteDestinationConnectorRequest) (*connectorPB.DeleteDestinationConnectorResponse, error) {
 	resp, err := h.deleteConnector(ctx, req)
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
-		return &connectorPB.DeleteDestinationConnectorResponse{}, err
+
+	// If there is error
+	if err != nil {
+		if s, ok := status.FromError(err); ok {
+			switch {
+			case s.Code() == codes.FailedPrecondition:
+				if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusUnprocessableEntity))); err != nil {
+					return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
+				}
+				return resp.(*connectorPB.DeleteDestinationConnectorResponse), nil
+			default:
+				return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
+			}
+		}
 	}
-	return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
+
+	// If there is no error
+	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
+		return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
+	}
+
+	return resp.(*connectorPB.DeleteDestinationConnectorResponse), nil
 }
 
 func (h *handler) LookUpDestinationConnector(ctx context.Context, req *connectorPB.LookUpDestinationConnectorRequest) (*connectorPB.LookUpDestinationConnectorResponse, error) {

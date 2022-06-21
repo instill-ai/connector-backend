@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -18,6 +20,7 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
+	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
 
 // Service interface
@@ -45,17 +48,19 @@ type Service interface {
 }
 
 type service struct {
-	repository        repository.Repository
-	userServiceClient mgmtPB.UserServiceClient
-	temporalClient    client.Client
+	repository            repository.Repository
+	userServiceClient     mgmtPB.UserServiceClient
+	pipelineServiceClient pipelinePB.PipelineServiceClient
+	temporalClient        client.Client
 }
 
 // NewService initiates a service instance
-func NewService(r repository.Repository, u mgmtPB.UserServiceClient, t client.Client) Service {
+func NewService(r repository.Repository, u mgmtPB.UserServiceClient, p pipelinePB.PipelineServiceClient, t client.Client) Service {
 	return &service{
-		repository:        r,
-		userServiceClient: u,
-		temporalClient:    t,
+		repository:            r,
+		userServiceClient:     u,
+		pipelineServiceClient: p,
+		temporalClient:        t,
 	}
 }
 
@@ -250,10 +255,40 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 }
 
 func (s *service) DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error {
+
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return err
 	}
+
+	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, false)
+	if err != nil {
+		return err
+	}
+
+	var filter string
+	switch {
+	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE):
+		filter = fmt.Sprintf("recipe.source:\"%s\"", dbConnector.UID)
+	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION):
+		filter = fmt.Sprintf("recipe.destination:\"%s\"", dbConnector.UID)
+	}
+
+	pipeResp, err := s.pipelineServiceClient.ListPipeline(context.Background(), &pipelinePB.ListPipelineRequest{
+		Filter: &filter,
+	})
+	if err != nil {
+		return err
+	}
+
+	if len(pipeResp.Pipelines) > 0 {
+		var pipeIDs []string
+		for _, pipe := range pipeResp.Pipelines {
+			pipeIDs = append(pipeIDs, pipe.GetId())
+		}
+		return status.Errorf(codes.FailedPrecondition, "The connector with connector_type %s and id %s is still in use by pipeline: %s ", connectorPB.ConnectorType(connectorType), id, strings.Join(pipeIDs, " "))
+	}
+
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 

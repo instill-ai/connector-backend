@@ -31,6 +31,12 @@ mgmtbackend:
   https:
     cert:   # /ssl/tls.crt
     key:    # /ssl/tls.key
+pipelinebackend:
+  host: pipeline-backend
+  port: 8081
+  https:
+    cert:   # /ssl/tls.crt
+    key:    # /ssl/tls.key
 usagebackend:
   tlsenabled: true
   host: usage.instill.tech

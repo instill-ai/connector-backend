@@ -6,7 +6,9 @@ import * as destinationConnectorDefinition from './rest-destination-connector-de
 import * as sourceConnector from './rest-source-connector.js';
 import * as destinationConnector from './rest-destination-connector.js';
 
-const connectorHost = "http://localhost:8082";
+const pipelineHost = "http://pipeline-backend:8081"
+const connectorHost = "http://connector-backend:8082";
+const modelHost = "http://model-backend:8083"
 
 export let options = {
   setupTimeout: '300s',
@@ -16,7 +18,7 @@ export let options = {
   },
 };
 
-export function setup() {}
+export function setup() { }
 
 export default function (data) {
 
@@ -44,6 +46,7 @@ export default function (data) {
   sourceConnector.CheckList()
   sourceConnector.CheckGet()
   sourceConnector.CheckUpdate()
+  sourceConnector.CheckDelete()
   sourceConnector.CheckLookUp()
   sourceConnector.CheckState()
   sourceConnector.CheckRename()
@@ -60,4 +63,4 @@ export default function (data) {
 
 }
 
-export function teardown(data) {}
+export function teardown(data) { }

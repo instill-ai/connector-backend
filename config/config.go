@@ -19,11 +19,12 @@ var Config AppConfig
 
 // AppConfig defines
 type AppConfig struct {
-	Server       ServerConfig       `koanf:"server"`
-	Database     DatabaseConfig     `koanf:"database"`
-	Temporal     TemporalConfig     `koanf:"temporal"`
-	MgmtBackend  MgmtBackendConfig  `koanf:"mgmtbackend"`
-	UsageBackend UsageBackendConfig `koanf:"usagebackend"`
+	Server          ServerConfig          `koanf:"server"`
+	Database        DatabaseConfig        `koanf:"database"`
+	Temporal        TemporalConfig        `koanf:"temporal"`
+	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
+	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
+	UsageBackend    UsageBackendConfig    `koanf:"usagebackend"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -62,6 +63,16 @@ type TemporalConfig struct {
 
 // MgmtBackendConfig related to mgmt-backend
 type MgmtBackendConfig struct {
+	Host  string `koanf:"host"`
+	Port  int    `koanf:"port"`
+	HTTPS struct {
+		Cert string `koanf:"cert"`
+		Key  string `koanf:"key"`
+	}
+}
+
+// PipelineBackendConfig related to pipeline-backend
+type PipelineBackendConfig struct {
 	Host  string `koanf:"host"`
 	Port  int    `koanf:"port"`
 	HTTPS struct {

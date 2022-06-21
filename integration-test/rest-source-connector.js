@@ -239,6 +239,97 @@ export function CheckUpdate() {
 
 }
 
+export function CheckDelete() {
+
+    group("Connector API: Delete source connectors", () => {
+
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
+            JSON.stringify({
+                "id": "source-http",
+                "source_connector_definition": "source-connector-definitions/source-http",
+                "connector": {
+                    "configuration": JSON.stringify({})
+                }
+            }), { headers: { "Content-Type": "application/json" } }), {
+            "POST /v1alpha/source-connectors response status for creating directness HTTP source connector 201": (r) => r.status === 201,
+        })
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify({
+                "id": "destination-http",
+                "destination_connector_definition": "destination-connector-definitions/destination-http",
+                "connector": {
+                    "configuration": JSON.stringify({})
+                }
+            }), { headers: { "Content-Type": "application/json" } }), {
+            "POST /v1alpha/destination-connectors response status for creating directness HTTP destination connector 201": (r) => r.status === 201,
+        })
+
+        check(http.request("POST", `${modelHost}/v1alpha/models`, JSON.stringify({
+            "id": "dummy-cls",
+            "model_definition": "model-definitions/github",
+            "configuration": JSON.stringify({
+                "repository": "instill-ai/model-dummy-cls"
+            }),
+        }), { headers: { "Content-Type": "application/json" } }), {
+            "POST /v1alpha/models:multipart task cls response status": (r) => r.status === 201,
+        })
+
+        const detSyncRecipe = {
+            recipe: {
+                source: "source-connectors/source-http",
+                model_instances: [`models/dummy-cls/instances/v1.0`],
+                destination: "destination-connectors/destination-http"
+            },
+        };
+
+        // Create a pipeline
+        const pipelineID = randomString(5)
+        check(http.request("POST", `${pipelineHost}/v1alpha/pipelines`,
+            JSON.stringify(Object.assign({
+                id: pipelineID,
+                description: randomString(10),
+            },
+                detSyncRecipe
+            )), {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }), {
+            "POST /v1alpha/pipelines response status is 201": (r) => r.status === 201,
+        })
+
+        // Cannot delete source connector due to pipeline occupancy
+        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/source-http`), {
+            [`DELETE /v1alpha/source-connectors/source-http response status 422`]: (r) => r.status === 422,
+        });
+
+        // Cannot delete destination connector due to pipeline occupancy
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/destination-http`), {
+            [`DELETE /v1alpha/destination-connectors/destination-http response status 422`]: (r) => r.status === 422,
+        });
+
+        check(http.request("DELETE", `${modelHost}/v1alpha/models/dummy-cls`), {
+            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 204,
+        });
+
+        check(http.request("DELETE", `${pipelineHost}/v1alpha/pipelines/${pipelineID}`), {
+            [`DELETE /v1alpha/pipelines/${pipelineID} response status is 204`]: (r) => r.status === 204,
+        });
+
+        // Can delete source connector now
+        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/source-http`), {
+            [`DELETE /v1alpha/source-connectors/source-http response status 204`]: (r) => r.status === 204,
+        });
+
+        // Can delete destination connector now
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/destination-http`), {
+            [`DELETE /v1alpha/destination-connectors/destination-http response status 204`]: (r) => r.status === 204,
+        });
+
+    });
+}
+
 export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID", () => {
@@ -267,7 +358,6 @@ export function CheckLookUp() {
         });
 
     });
-
 }
 
 export function CheckState() {

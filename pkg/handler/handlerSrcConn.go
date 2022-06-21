@@ -15,10 +15,15 @@ import (
 
 func (h *handler) CreateSourceConnector(ctx context.Context, req *connectorPB.CreateSourceConnectorRequest) (*connectorPB.CreateSourceConnectorResponse, error) {
 	resp, err := h.createConnector(ctx, req)
+	if err != nil {
+		return resp.(*connectorPB.CreateSourceConnectorResponse), err
+	}
+
 	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusCreated))); err != nil {
 		return resp.(*connectorPB.CreateSourceConnectorResponse), err
 	}
-	return resp.(*connectorPB.CreateSourceConnectorResponse), err
+
+	return resp.(*connectorPB.CreateSourceConnectorResponse), nil
 }
 
 func (h *handler) ListSourceConnector(ctx context.Context, req *connectorPB.ListSourceConnectorRequest) (*connectorPB.ListSourceConnectorResponse, error) {
@@ -38,10 +43,28 @@ func (h *handler) UpdateSourceConnector(ctx context.Context, req *connectorPB.Up
 
 func (h *handler) DeleteSourceConnector(ctx context.Context, req *connectorPB.DeleteSourceConnectorRequest) (*connectorPB.DeleteSourceConnectorResponse, error) {
 	resp, err := h.deleteConnector(ctx, req)
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
-		return &connectorPB.DeleteSourceConnectorResponse{}, err
+
+	// If there is error
+	if err != nil {
+		if s, ok := status.FromError(err); ok {
+			switch {
+			case s.Code() == codes.FailedPrecondition:
+				if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusUnprocessableEntity))); err != nil {
+					return resp.(*connectorPB.DeleteSourceConnectorResponse), err
+				}
+				return resp.(*connectorPB.DeleteSourceConnectorResponse), nil
+			default:
+				return resp.(*connectorPB.DeleteSourceConnectorResponse), err
+			}
+		}
 	}
-	return resp.(*connectorPB.DeleteSourceConnectorResponse), err
+
+	// If there is no error
+	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
+		return resp.(*connectorPB.DeleteSourceConnectorResponse), err
+	}
+
+	return resp.(*connectorPB.DeleteSourceConnectorResponse), nil
 }
 
 func (h *handler) LookUpSourceConnector(ctx context.Context, req *connectorPB.LookUpSourceConnectorRequest) (*connectorPB.LookUpSourceConnectorResponse, error) {

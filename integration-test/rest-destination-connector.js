@@ -331,7 +331,6 @@ export function CheckLookUp() {
         });
 
     });
-
 }
 
 export function CheckState() {

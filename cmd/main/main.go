@@ -150,6 +150,9 @@ func main() {
 	userServiceClient, userServiceClientConn := external.InitUserServiceClient()
 	defer userServiceClientConn.Close()
 
+	pipelineServiceClient, pipelineServiceClientConn := external.InitPipelineServiceClient()
+	defer pipelineServiceClientConn.Close()
+
 	repository := repository.NewRepository(db)
 
 	grpcS := grpc.NewServer(grpcServerOpts...)
@@ -159,6 +162,7 @@ func main() {
 			service.NewService(
 				repository,
 				userServiceClient,
+				pipelineServiceClient,
 				temporalClient,
 			)))
 
