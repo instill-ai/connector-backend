@@ -55,12 +55,14 @@ func NewWorker(r repository.Repository) Worker {
 
 	var mountType mount.Type
 	var mountSource, mountTarget, mountSourceAirbyte string
-	if config.Config.Server.Debug {
+
+	switch {
+	case config.Config.Server.Debug:
 		mountType = mount.TypeBind
 		mountSource = fmt.Sprintf("%s/vdp", os.TempDir())
 		mountTarget = fmt.Sprintf("%s/vdp", os.TempDir())
 		mountSourceAirbyte = fmt.Sprintf("%s/vdp/airbyte", os.TempDir())
-	} else {
+	default:
 		mountType = mount.TypeVolume
 		mountSource = "vdp"
 		mountTarget = "/vdp"

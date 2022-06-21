@@ -20,8 +20,6 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
-
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
@@ -187,10 +185,7 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		config,
 		hostConfig,
 		nil,
-		&specs.Platform{
-			Architecture: "amd64",
-			OS:           "linux",
-		},
+		nil,
 		param.ContainerName,
 	)
 	if err != nil {

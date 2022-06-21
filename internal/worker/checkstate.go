@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gofrs/uuid"
-	specs "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -170,10 +169,7 @@ func (w *worker) CheckStateActivity(ctx context.Context, param *CheckStateActivi
 		config,
 		hostConfig,
 		nil,
-		&specs.Platform{
-			Architecture: "amd64",
-			OS:           "linux",
-		},
+		nil,
 		param.ContainerName,
 	)
 
