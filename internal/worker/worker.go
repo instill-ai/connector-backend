@@ -3,14 +3,12 @@ package worker
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 )
@@ -56,18 +54,10 @@ func NewWorker(r repository.Repository) Worker {
 	var mountType mount.Type
 	var mountSource, mountTarget, mountSourceAirbyte string
 
-	switch {
-	case config.Config.Server.Debug:
-		mountType = mount.TypeBind
-		mountSource = fmt.Sprintf("%s/vdp", os.TempDir())
-		mountTarget = fmt.Sprintf("%s/vdp", os.TempDir())
-		mountSourceAirbyte = fmt.Sprintf("%s/vdp/airbyte", os.TempDir())
-	default:
-		mountType = mount.TypeVolume
-		mountSource = "vdp"
-		mountTarget = "/vdp"
-		mountSourceAirbyte = "airbyte"
-	}
+	mountType = mount.TypeVolume
+	mountSource = "vdp"
+	mountTarget = "/vdp"
+	mountSourceAirbyte = "airbyte"
 
 	return &worker{
 		repository:         r,
