@@ -38,12 +38,6 @@
                   "type": "object",
                   "title": "Bounding box",
                   "description": "Bounding box data in (top, left, width, and height) format",
-                  "required": [
-                    "top",
-                    "left",
-                    "width",
-                    "height"
-                  ],
                   "properties": {
                     "top": {
                       "type": "number",
