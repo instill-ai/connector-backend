@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.3.1-alpha...v0.4.0-alpha) (2022-06-26)
+
+
+### Features
+
+* add delete guardian ([355922a](https://github.com/instill-ai/connector-backend/commit/355922a77d2fb0aca898c547a0946a1107a50812))
+* add usage collection ([c06e98a](https://github.com/instill-ai/connector-backend/commit/c06e98a47e3b97b59bbc70877b895b7db006f2ab))
+* add write destination connector ([5995260](https://github.com/instill-ai/connector-backend/commit/5995260a98b6264dcbece6c9dddc2a4bb8f20878))
+
+
+### Bug Fixes
+
+* fix det jsonschema for empty case ([cd4f102](https://github.com/instill-ai/connector-backend/commit/cd4f1028142c604d9123e314907878168883a9e0))
+* fix duration configuration bug ([4a4111c](https://github.com/instill-ai/connector-backend/commit/4a4111c0a06cec777b29f48626ce653a3b6a25e0))
+* fix usage collection ([c19cf9b](https://github.com/instill-ai/connector-backend/commit/c19cf9bda1dcbdf3ce18520d2b460c3868b6c60a))
+* fix usage disbale logic ([664660d](https://github.com/instill-ai/connector-backend/commit/664660d6dfb656074a8c7822a1088a5540b55d16))
+* fix usage-backend non-tls dial ([457a74d](https://github.com/instill-ai/connector-backend/commit/457a74d039d6c6adef7d182dfba8906a5240a5a6))
+* remove worker debug volume ([acaa01c](https://github.com/instill-ai/connector-backend/commit/acaa01c9689628b770fca657482412fd99cf9878))
+
 ### [0.3.1-alpha](https://github.com/instill-ai/connector-backend/compare/v0.3.0-alpha...v0.3.1-alpha) (2022-05-31)
 
 
