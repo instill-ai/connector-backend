@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/client"
 	"go.temporal.io/sdk/workflow"
 
+	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 )
@@ -37,9 +38,10 @@ type worker struct {
 	repository         repository.Repository
 	dockerClient       *client.Client
 	mountType          mount.Type
-	mountSource        string
-	mountTarget        string
+	mountSourceVDP     string
+	mountTargetVDP     string
 	mountSourceAirbyte string
+	mountTargetAirbyte string
 }
 
 // NewWorker initiates a temporal worker for workflow and activity definition
@@ -51,21 +53,14 @@ func NewWorker(r repository.Repository) Worker {
 		logger.Error("Unable to create docker client")
 	}
 
-	var mountType mount.Type
-	var mountSource, mountTarget, mountSourceAirbyte string
-
-	mountType = mount.TypeVolume
-	mountSource = "vdp"
-	mountTarget = "/vdp"
-	mountSourceAirbyte = "airbyte"
-
 	return &worker{
 		repository:         r,
 		dockerClient:       cli,
-		mountType:          mountType,
-		mountSource:        mountSource,
-		mountTarget:        mountTarget,
-		mountSourceAirbyte: mountSourceAirbyte,
+		mountType:          mount.TypeVolume,
+		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
+		mountTargetVDP:     "/vdp",
+		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,
+		mountTargetAirbyte: "/local",
 	}
 }
 

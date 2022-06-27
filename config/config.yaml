@@ -10,6 +10,10 @@ server:
   edition: local-ce:dev
   disableusage: false
   debug: true
+worker:
+  mountsource:
+    vdp: vdp # vdp volume name
+    airbyte: airbyte # airbyte volume name
 database:
   username: postgres
   password: password

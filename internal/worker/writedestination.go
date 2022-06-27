@@ -109,7 +109,7 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTarget, strings.ReplaceAll(param.ContainerName, ".write", ""))
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
 	if _, err := os.Stat(configFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
@@ -120,7 +120,7 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 	}
 
 	// Write catalog into a container local file
-	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTarget, strings.ReplaceAll(param.ContainerName, ".write", ""))
+	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
 	if _, err := os.Stat(catalogFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
 			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
@@ -153,13 +153,13 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		Mounts: []mount.Mount{
 			{
 				Type:   w.mountType,
-				Source: w.mountSource,
-				Target: w.mountTarget,
+				Source: w.mountSourceVDP,
+				Target: w.mountTargetVDP,
 			},
 			{
 				Type:   w.mountType,
 				Source: w.mountSourceAirbyte,
-				Target: "/local",
+				Target: w.mountTargetAirbyte,
 			},
 		},
 	}
@@ -174,8 +174,8 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		OpenStdin:    true,
 		Cmd: []string{
 			"write",
-			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTarget, filepath.Base(configFilePath)),
-			"--catalog", fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTarget, filepath.Base(catalogFilePath)),
+			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
+			"--catalog", fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTargetVDP, filepath.Base(catalogFilePath)),
 		},
 	}
 

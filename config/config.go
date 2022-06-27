@@ -20,6 +20,7 @@ var Config AppConfig
 // AppConfig defines
 type AppConfig struct {
 	Server          ServerConfig          `koanf:"server"`
+	Worker          WorkerConfig          `koanf:"worker"`
 	Database        DatabaseConfig        `koanf:"database"`
 	Temporal        TemporalConfig        `koanf:"temporal"`
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
@@ -38,6 +39,14 @@ type ServerConfig struct {
 	Edition      string   `koanf:"edition"`
 	DisableUsage bool     `koanf:"disableusage"`
 	Debug        bool     `koanf:"debug"`
+}
+
+// WorkerConfig defines the Temporal Worker configurations
+type WorkerConfig struct {
+	MountSource struct {
+		VDP     string `koanf:"vdp"`
+		Airbyte string `koanf:"airbyte"`
+	}
 }
 
 // DatabaseConfig related to database

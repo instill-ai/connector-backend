@@ -111,7 +111,7 @@ func (w *worker) CheckStateActivity(ctx context.Context, param *CheckStateActivi
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTarget, strings.ReplaceAll(param.ContainerName, ".check", ""))
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".check", ""))
 	if _, err := os.Stat(configFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
@@ -144,8 +144,8 @@ func (w *worker) CheckStateActivity(ctx context.Context, param *CheckStateActivi
 		Mounts: []mount.Mount{
 			{
 				Type:   w.mountType,
-				Source: w.mountSource,
-				Target: w.mountTarget,
+				Source: w.mountSourceVDP,
+				Target: w.mountTargetVDP,
 			},
 		},
 	}
@@ -160,7 +160,7 @@ func (w *worker) CheckStateActivity(ctx context.Context, param *CheckStateActivi
 		AttachStderr: true,
 		Cmd: []string{
 			"check",
-			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTarget, filepath.Base(configFilePath))},
+			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath))},
 	}
 
 	// Creating the actual container. This is "nil,nil,nil" in every example.
