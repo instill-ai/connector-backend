@@ -286,7 +286,7 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		for _, pipe := range pipeResp.Pipelines {
 			pipeIDs = append(pipeIDs, pipe.GetId())
 		}
-		return status.Errorf(codes.FailedPrecondition, "The connector with connector_type %s and id %s is still in use by pipeline: %s ", connectorPB.ConnectorType(connectorType), id, strings.Join(pipeIDs, " "))
+		return status.Errorf(codes.FailedPrecondition, "[DELETE] The connector with connector_type %s and id %s is still used by pipeline: %s ", connectorPB.ConnectorType(connectorType), id, strings.Join(pipeIDs, " "))
 	}
 
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)

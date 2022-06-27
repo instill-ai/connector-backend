@@ -43,27 +43,13 @@ func (h *handler) UpdateSourceConnector(ctx context.Context, req *connectorPB.Up
 
 func (h *handler) DeleteSourceConnector(ctx context.Context, req *connectorPB.DeleteSourceConnectorRequest) (*connectorPB.DeleteSourceConnectorResponse, error) {
 	resp, err := h.deleteConnector(ctx, req)
-
-	// If there is error
 	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			switch {
-			case s.Code() == codes.FailedPrecondition:
-				if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusUnprocessableEntity))); err != nil {
-					return resp.(*connectorPB.DeleteSourceConnectorResponse), err
-				}
-				return resp.(*connectorPB.DeleteSourceConnectorResponse), nil
-			default:
-				return resp.(*connectorPB.DeleteSourceConnectorResponse), err
-			}
-		}
-	}
-
-	// If there is no error
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
 		return resp.(*connectorPB.DeleteSourceConnectorResponse), err
 	}
 
+	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
+		return resp.(*connectorPB.DeleteSourceConnectorResponse), err
+	}
 	return resp.(*connectorPB.DeleteSourceConnectorResponse), nil
 }
 

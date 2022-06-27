@@ -49,27 +49,13 @@ func (h *handler) UpdateDestinationConnector(ctx context.Context, req *connector
 
 func (h *handler) DeleteDestinationConnector(ctx context.Context, req *connectorPB.DeleteDestinationConnectorRequest) (*connectorPB.DeleteDestinationConnectorResponse, error) {
 	resp, err := h.deleteConnector(ctx, req)
-
-	// If there is error
 	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			switch {
-			case s.Code() == codes.FailedPrecondition:
-				if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusUnprocessableEntity))); err != nil {
-					return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
-				}
-				return resp.(*connectorPB.DeleteDestinationConnectorResponse), nil
-			default:
-				return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
-			}
-		}
-	}
-
-	// If there is no error
-	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
 		return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
 	}
 
+	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
+		return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
+	}
 	return resp.(*connectorPB.DeleteDestinationConnectorResponse), nil
 }
 

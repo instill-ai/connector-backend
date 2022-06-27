@@ -302,11 +302,13 @@ export function CheckDelete() {
         // Cannot delete source connector due to pipeline occupancy
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/source-http`), {
             [`DELETE /v1alpha/source-connectors/source-http response status 422`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/source-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
         });
 
         // Cannot delete destination connector due to pipeline occupancy
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/destination-http`), {
             [`DELETE /v1alpha/destination-connectors/destination-http response status 422`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/destination-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
         });
 
         check(http.request("DELETE", `${modelHost}/v1alpha/models/dummy-cls`), {
