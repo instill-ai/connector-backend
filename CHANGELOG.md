@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.1-alpha...v0.4.2-alpha) (2022-06-27)
+
+
+### Bug Fixes
+
+* return 422 delete error msg ([5498494](https://github.com/instill-ai/connector-backend/commit/54984945cf8c8d2914ba014d882da651c9b43bdc))
+
 ## [0.4.1-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.0-alpha...v0.4.1-alpha) (2022-06-27)
 
 
