@@ -29,15 +29,15 @@ database:
 temporal:
   clientoptions:
     hostport: temporal:7233
-mgmtbackend:
-  host: mgmt-backend
-  port: 8080
-  https:
-    cert:   # /ssl/tls.crt
-    key:    # /ssl/tls.key
 pipelinebackend:
   host: pipeline-backend
   port: 8081
+  https:
+    cert:   # /ssl/tls.crt
+    key:    # /ssl/tls.key
+mgmtbackend:
+  host: mgmt-backend
+  port: 8084
   https:
     cert:   # /ssl/tls.crt
     key:    # /ssl/tls.key
