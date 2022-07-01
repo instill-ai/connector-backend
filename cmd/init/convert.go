@@ -104,7 +104,7 @@ func findDockerImageSpec(dockerRepositoryImageTag string, specs *[]*connectorPB.
 	return []byte("{}"), nil
 }
 
-// ConvertAllJSONKeySnakeCase traverses a JSON object to replace all keys to snake_case.
+// ConvertAllJSONKeySnakeCase traverses a JSON object to replace all keys to snake_case except for the JSON Schema object.
 func ConvertAllJSONKeySnakeCase(i interface{}) {
 	switch v := i.(type) {
 	case map[string]interface{}:
@@ -114,7 +114,16 @@ func ConvertAllJSONKeySnakeCase(i interface{}) {
 				v[sc] = v[k]
 				delete(v, k)
 			}
-			ConvertAllJSONKeySnakeCase(vv)
+
+			switch sc {
+			case "connection_specification":
+			case "complete_oauth_output_specification":
+			case "complete_oauth_server_input_specification":
+			case "complete_oauth_server_output_specification":
+			case "oauth_user_input_from_connector_config_specification":
+			default:
+				ConvertAllJSONKeySnakeCase(vv)
+			}
 		}
 	case []map[string]interface{}:
 		for _, vv := range v {

@@ -56,7 +56,7 @@ func TestConvertJSONKeySnakeCase(t *testing.T) {
 						},
 						"connection_specification": {
 							"$schema": "http://json-schema.org/draft-07/schema#",
-							"additional_properties": true,
+							"additionalProperties": true,
 							"title": "Snowflake Destination Spec"
 						},
 						"documentation_url": "https://docs.airbyte.io/integrations/destinations/snowflake",
