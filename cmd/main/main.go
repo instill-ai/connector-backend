@@ -171,7 +171,7 @@ func main() {
 
 	gwS := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(httpResponseModifier),
-		runtime.WithErrorHandler(handleError),
+		runtime.WithErrorHandler(errorHandler),
 		runtime.WithIncomingHeaderMatcher(customMatcher),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
