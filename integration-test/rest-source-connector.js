@@ -228,7 +228,7 @@ export function CheckUpdate() {
             JSON.stringify(dirGRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating directness gRPC source connector 400`]: (r) => r.status === 400,
+            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating directness gRPC source connector 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`), {
@@ -381,18 +381,19 @@ export function CheckState() {
         check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect response status 400`]: (r) => r.status === 400,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect response status 200`]: (r) => r.status === 200,
         });
 
         check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect response status 400`]: (r) => r.status === 400,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect response status 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
         });
+
     });
 
 }
@@ -419,7 +420,7 @@ export function CheckRename() {
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename response status 400`]: (r) => r.status === 400,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename response status 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {

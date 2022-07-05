@@ -7,17 +7,19 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/iancoleman/strcase"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/datatypes"
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
 
+	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
+	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
@@ -149,6 +151,8 @@ func (h *handler) getConnectorDefinition(ctx context.Context, req interface{}) (
 
 func (h *handler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	var connID string
 	var connDesc sql.NullString
 	var connType datamodel.ConnectorType
@@ -164,17 +168,53 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetSourceConnector(), outputOnlyFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "OUTPUT_ONLY fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetSourceConnector(), append(createRequiredFields, sourceImmutableFields...)); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		// Validate SourceConnector JSON Schema
 		if err := datamodel.ValidateJSONSchema(datamodel.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "source_connector",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID = v.GetSourceConnector().GetId()
@@ -202,16 +242,50 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 		connSpec := connDefResp.GetSourceConnectorDefinition().GetConnectorDefinition().GetSpec().GetConnectionSpecification()
 		b, err := protojson.Marshal(connSpec)
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[handler] create connector error",
+				"destination-connector-definitions",
+				fmt.Sprintf("uid %s", connDefResp.SourceConnectorDefinition.GetUid()),
+				"",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetSourceConnector().GetConnector().GetConfiguration()); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "source_connector.connector.configuration",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connDefUID, err = uuid.FromString(connDefResp.SourceConnectorDefinition.GetUid())
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[handler] create connector error",
+				"source-connector-definitions",
+				fmt.Sprintf("uid %s", connDefResp.SourceConnectorDefinition.GetUid()),
+				"",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", connDefResp.SourceConnectorDefinition.GetId())
@@ -220,21 +294,55 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		resp = &connectorPB.CreateDestinationConnectorResponse{}
 
-		// Validate DestinationConnector configuration JSON Schema
-
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		if err := checkfield.CheckCreateOutputOnlyFields(v.GetDestinationConnector(), outputOnlyFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "OUTPUT_ONLY fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v.GetDestinationConnector(), append(createRequiredFields, destinationImmutableFields...)); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		// Validate DestinationConnector JSON Schema
 		if err := datamodel.ValidateJSONSchema(datamodel.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "destination_connector",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID = v.GetDestinationConnector().GetId()
@@ -258,20 +366,54 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 			return resp, err
 		}
 
-		// Validate SourceConnector configuration JSON Schema
+		// Validate DestinationConnector configuration JSON Schema
 		connSpec := connDefResp.GetDestinationConnectorDefinition().GetConnectorDefinition().GetSpec().GetConnectionSpecification()
 		b, err := protojson.Marshal(connSpec)
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[handler] create connector error",
+				"destination-connector-definitions",
+				fmt.Sprintf("uid %s", connDefResp.DestinationConnectorDefinition.GetUid()),
+				"",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetDestinationConnector().GetConnector().GetConfiguration()); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] create connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "destination_connector.connector.configuration",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connDefUID, err = uuid.FromString(connDefResp.DestinationConnectorDefinition.GetUid())
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[handler] create connector error",
+				"destination-connector-definitions",
+				fmt.Sprintf("uid %s", connDefResp.DestinationConnectorDefinition.GetUid()),
+				"",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", connDefResp.DestinationConnectorDefinition.GetId())
@@ -279,7 +421,19 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 	// Return error if resource ID does not follow RFC-1034
 	if err := checkfield.CheckResourceID(connID); err != nil {
-		return resp, status.Error(codes.InvalidArgument, err.Error())
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] create connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "id",
+					Description: err.Error(),
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return resp, st.Err()
 	}
 
 	ownerRscName, err := resource.GetOwner(ctx)
@@ -456,6 +610,8 @@ func (h *handler) getConnector(ctx context.Context, req interface{}) (resp inter
 
 func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	var pbConnectorReq interface{}
 	var pbConnectorToUpdate interface{}
 
@@ -473,12 +629,36 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		pbConnectorReq = v.GetSourceConnector()
 		pbUpdateMask := v.GetUpdateMask()
 		if !pbUpdateMask.IsValid(v.GetSourceConnector()) {
-			return resp, status.Error(codes.InvalidArgument, "The update_mask is invalid")
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "update_mask",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "OUTPUT_ONLY fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 		getResp, err := h.GetSourceConnector(
 			ctx,
@@ -492,12 +672,36 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if IMMUTABLE fields are intentionally changed
 		if err := checkfield.CheckUpdateImmutableFields(v.GetSourceConnector(), getResp.GetSourceConnector(), sourceImmutableFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "IMMUTABLE fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "update_mask",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		if mask.IsEmpty() {
@@ -529,12 +733,36 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		pbConnectorReq = v.GetDestinationConnector()
 		pbUpdateMask := v.GetUpdateMask()
 		if !pbUpdateMask.IsValid(v.GetDestinationConnector()) {
-			return resp, status.Error(codes.InvalidArgument, "The update_mask is invalid")
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "update_mask",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "OUTPUT_ONLY fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		getResp, err := h.GetDestinationConnector(
@@ -549,12 +777,36 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if IMMUTABLE fields are intentionally changed
 		if err := checkfield.CheckUpdateImmutableFields(v.GetDestinationConnector(), getResp.GetDestinationConnector(), destinationImmutableFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "IMMUTABLE fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		mask, err = fieldmask_utils.MaskFromProtoFieldMask(pbUpdateMask, strcase.ToCamel)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] update connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "update_mask",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		if mask.IsEmpty() {
@@ -648,6 +900,9 @@ func (h *handler) deleteConnector(ctx context.Context, req interface{}) (resp in
 }
 
 func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var isBasicView bool
 
 	var connUID uuid.UUID
@@ -661,7 +916,19 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, lookUpRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] lookup connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
@@ -680,7 +947,19 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, lookUpRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] lookup connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
@@ -729,6 +1008,9 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 }
 
 func (h *handler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -740,7 +1022,19 @@ func (h *handler) connectConnector(ctx context.Context, req interface{}) (resp i
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, connectSourceRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] connect connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -776,7 +1070,19 @@ func (h *handler) connectConnector(ctx context.Context, req interface{}) (resp i
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, connectDestinationRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] connect connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -836,6 +1142,9 @@ func (h *handler) connectConnector(ctx context.Context, req interface{}) (resp i
 }
 
 func (h *handler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -847,7 +1156,19 @@ func (h *handler) disconnectConnector(ctx context.Context, req interface{}) (res
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, disconnectSourceRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] disconnect connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -883,7 +1204,19 @@ func (h *handler) disconnectConnector(ctx context.Context, req interface{}) (res
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, disconnectDestinationRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] disconnect connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -944,6 +1277,8 @@ func (h *handler) disconnectConnector(ctx context.Context, req interface{}) (res
 
 func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	var connID string
 	var connNewID string
 	var connType datamodel.ConnectorType
@@ -956,7 +1291,19 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, renameSourceRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] rename connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -993,7 +1340,19 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 		// Return error if REQUIRED fields are not provided in the requested payload
 		if err := checkfield.CheckRequiredFields(v, renameDestinationRequiredFields); err != nil {
-			return resp, status.Error(codes.InvalidArgument, err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] rename connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "REQUIRED fields",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
@@ -1028,7 +1387,19 @@ func (h *handler) renameConnector(ctx context.Context, req interface{}) (resp in
 
 	// Return error if resource ID does not follow RFC-1034
 	if err := checkfield.CheckResourceID(connNewID); err != nil {
-		return resp, status.Error(codes.InvalidArgument, err.Error())
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] rename connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "id",
+					Description: err.Error(),
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return resp, st.Err()
 	}
 
 	ownerRscName, err := resource.GetOwner(ctx)

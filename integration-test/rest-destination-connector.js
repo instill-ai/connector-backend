@@ -353,13 +353,13 @@ export function CheckState() {
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response at UNSPECIFIED state status 400`]: (r) => r.status === 400,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
         });
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response at UNSPECIFIED state status 400`]: (r) => r.status === 400,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
         });
 
         // Check connector state being updated in 120 secs
@@ -377,7 +377,7 @@ export function CheckState() {
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response status 400 (with STATE_CONNECTED)`]: (r) => r.status === 400,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect response status 200 (with STATE_CONNECTED)`]: (r) => r.status === 200,
         });
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
@@ -389,7 +389,7 @@ export function CheckState() {
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response status 400 (with STATE_DISCONNECTED)`]: (r) => r.status === 400,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:disconnect response status 200 (with STATE_DISCONNECTED)`]: (r) => r.status === 200,
         });
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:connect`, null, {
@@ -413,6 +413,7 @@ export function CheckState() {
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
+
     });
 
 }

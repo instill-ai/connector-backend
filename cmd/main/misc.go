@@ -11,6 +11,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/instill-ai/connector-backend/internal/logger"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -63,17 +64,17 @@ func errorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.
 
 	buf, err := marshaler.Marshal(pb)
 	if err != nil {
-		logger.Info(fmt.Sprintf("Failed to marshal error message %q: %v", s, err))
+		logger.Error(fmt.Sprintf("Failed to marshal error message %q: %v", s, err))
 		w.WriteHeader(http.StatusInternalServerError)
 		if _, err := io.WriteString(w, fallback); err != nil {
-			logger.Info(fmt.Sprintf("Failed to write response: %v", err))
+			logger.Error(fmt.Sprintf("Failed to write response: %v", err))
 		}
 		return
 	}
 
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
-		logger.Info("Failed to extract ServerMetadata from context")
+		logger.Error("Failed to extract ServerMetadata from context")
 	}
 
 	for k, vs := range md.HeaderMD {
@@ -101,17 +102,25 @@ func errorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.
 		w.Header().Set("Transfer-Encoding", "chunked")
 	}
 
-	var st int
+	var httpStatus int
 	switch {
-	case s.Code() == codes.FailedPrecondition && strings.Contains(s.Message(), "[DELETE]"):
-		st = http.StatusUnprocessableEntity
+	case s.Code() == codes.FailedPrecondition:
+		if len(s.Details()) > 0 {
+			switch v := s.Details()[0].(type) {
+			case *errdetails.PreconditionFailure:
+				switch v.Violations[0].Type {
+				case "UPDATE", "DELETE", "STATE", "RENAME":
+					httpStatus = http.StatusUnprocessableEntity
+				}
+			}
+		}
 	default:
-		st = runtime.HTTPStatusFromCode(s.Code())
+		httpStatus = runtime.HTTPStatusFromCode(s.Code())
 	}
 
-	w.WriteHeader(st)
+	w.WriteHeader(httpStatus)
 	if _, err := w.Write(buf); err != nil {
-		logger.Info(fmt.Sprintf("Failed to write response: %v", err))
+		logger.Error(fmt.Sprintf("Failed to write response: %v", err))
 	}
 
 	if doForwardTrailers {

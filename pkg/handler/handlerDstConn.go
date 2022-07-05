@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"strconv"
 
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
+	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/x/checkfield"
+	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
@@ -81,11 +82,25 @@ func (h *handler) RenameDestinationConnector(ctx context.Context, req *connector
 
 func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	resp := &connectorPB.WriteDestinationConnectorResponse{}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, writeDestinationRequiredFields); err != nil {
-		return resp, status.Error(codes.InvalidArgument, err.Error())
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] write destination connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "required fields",
+					Description: err.Error(),
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return resp, st.Err()
 	}
 
 	dstConnID, err := resource.GetRscNameID(req.GetName())
@@ -117,7 +132,19 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 
 	// Validate TaskAirbyteCatalog's JSON schema
 	if err := datamodel.ValidateTaskAirbyteCatalog(req.Task, batch); err != nil {
-		return resp, status.Error(codes.InvalidArgument, err.Error())
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] write destination connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "data",
+					Description: err.Error(),
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return resp, st.Err()
 	}
 
 	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, batch); err != nil {

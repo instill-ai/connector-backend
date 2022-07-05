@@ -9,13 +9,15 @@ import (
 
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/client"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
@@ -78,10 +80,12 @@ func (s *service) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (
 
 func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	ownerRscName := connector.Owner
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	connector.Owner = ownerPermalink
@@ -94,19 +98,66 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 	// Validation: Directness connector
 	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
 		if connector.ID != connDef.ID {
-			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector id must be %s", connectorPB.ConnectorType(connector.ConnectorType), connDef.ID)
+			st, err := sterr.CreateErrorBadRequest(
+				"[service] create connector",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "id",
+						Description: fmt.Sprintf("Directness connector with connector_type %s id must be %s", connectorPB.ConnectorType(connector.ConnectorType), connDef.ID),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
 		}
 
 		if connector.Description.String != "" {
-			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector description must be empty", connectorPB.ConnectorType(connector.ConnectorType))
+			st, err := sterr.CreateErrorBadRequest(
+				"[service] create connector",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "connector.description",
+						Description: fmt.Sprintf("Directness connector with connector_type %s description must be an empty", connectorPB.ConnectorType(connector.ConnectorType)),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
 		}
 
 		if connector.Configuration.String() != "{}" {
-			return nil, status.Errorf(codes.InvalidArgument, "[directness] connector_type %s connector configuration must be an empty JSON {}", connectorPB.ConnectorType(connector.ConnectorType))
+			st, err := sterr.CreateErrorBadRequest(
+				"[service] create connector",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "connector.configuration",
+						Description: fmt.Sprintf("Directness connector with connector_type %s configuration must be an empty JSON {}", connectorPB.ConnectorType(connector.ConnectorType)),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
 		}
 
 		if existingConnector, _ := s.GetConnectorByID(connector.ID, connector.Owner, connector.ConnectorType, true); existingConnector != nil {
-			return nil, status.Errorf(codes.AlreadyExists, "[directness] connector_type %s connector id %s exists already", connectorPB.ConnectorType(connector.ConnectorType), connector.ID)
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.AlreadyExists,
+				"[service] create connector",
+				"connectors",
+				fmt.Sprintf("Connector id %s and connector_type %s", connector.ID, connectorPB.ConnectorType(connector.ConnectorType)),
+				connector.Owner,
+				"Already exists",
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
 		}
 	}
 
@@ -203,6 +254,8 @@ func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, connecto
 
 func (s *service) UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
@@ -222,7 +275,19 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 	}
 
 	if connectorPB.ConnectionType(def.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
-		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be updated")
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "UPDATE",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: "Cannot update a directness connector",
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 
 	if err := s.repository.UpdateConnector(id, ownerPermalink, connectorType, updatedConnector); err != nil {
@@ -256,6 +321,8 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 
 func (s *service) DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error {
 
+	logger, _ := logger.GetZapLogger()
+
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return err
@@ -286,13 +353,27 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		for _, pipe := range pipeResp.Pipelines {
 			pipeIDs = append(pipeIDs, pipe.GetId())
 		}
-		return status.Errorf(codes.FailedPrecondition, "[DELETE] The connector with connector_type %s and id %s is still used by pipeline: %s ", connectorPB.ConnectorType(connectorType), id, strings.Join(pipeIDs, " "))
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] delete connector",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "DELETE",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: fmt.Sprintf("The connector is still in use by pipeline: %s ", strings.Join(pipeIDs, " ")),
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 
 func (s *service) UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -310,17 +391,46 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 		return nil, err
 	}
 
-	if connectorPB.ConnectionType(connDef.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
-		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be changed for state due to being always connected")
+	switch connectorPB.ConnectionType(connDef.ConnectionType) {
+	case connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS:
+		switch state {
+		case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
+			st, err := sterr.CreateErrorPreconditionFailure(
+				"[service] update connector state",
+				[]*errdetails.PreconditionFailure_Violation{
+					{
+						Type:        "STATE",
+						Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+						Description: "Cannot disconnect a directness connector",
+					},
+				})
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
+		}
 	}
 
-	if state == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) && conn.State != datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
-		return nil, status.Errorf(codes.InvalidArgument, "Connector id %s and connector_type %s is not in the disconnected state", id, connectorPB.ConnectorType(connectorType))
-	} else if state == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) && conn.State != datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
-		return nil, status.Errorf(codes.InvalidArgument, "Connector id %s and connector_type %s is not in the connected state", id, connectorPB.ConnectorType(connectorType))
+	switch conn.State {
+	case datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR):
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector state",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "STATE",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: "The connector is in STATE_ERROR",
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 
-	if state == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
+	switch state {
+	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
+
 		// Set connector state to STATE_UNSPECIFIED when it is set to STATE_CONNECTED from STATE_DISCONNECTED
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
 			return nil, err
@@ -339,7 +449,8 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 			connDef.DockerRepository, connDef.DockerImageTag); err != nil {
 			return nil, err
 		}
-	} else if state == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
+
+	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
@@ -356,6 +467,8 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 }
 
 func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -374,7 +487,19 @@ func (s *service) UpdateConnectorID(id string, ownerRscName string, connectorTyp
 	}
 
 	if connectorPB.ConnectionType(def.ConnectionType) == connectorPB.ConnectionType_CONNECTION_TYPE_DIRECTNESS {
-		return nil, status.Errorf(codes.InvalidArgument, "Directness connector cannot be updated")
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector id",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "RENAME",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: "Directness connector cannot be renamed",
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 
 	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {
@@ -400,7 +525,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, err.Error())
+		return err
 	}
 
 	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), true)

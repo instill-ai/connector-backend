@@ -2,16 +2,19 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/jackc/pgconn"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
+	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/x/paginate"
+	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
@@ -54,6 +57,8 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
 
+	logger, _ := logger.GetZapLogger()
+
 	r.db.Model(&datamodel.ConnectorDefinition{}).Where("connector_type = ?", connectorType).Count(&totalSize)
 
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Order("create_time DESC, uid DESC").Where("connector_type = ?", connectorType)
@@ -69,7 +74,19 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	if pageToken != "" {
 		createdAt, uid, err := paginate.DecodeToken(pageToken)
 		if err != nil {
-			return nil, 0, "", status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[db] list connector definition error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "page_token",
+						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
 		queryBuilder = queryBuilder.Where("(create_time,uid) < (?::timestamp, ?)", createdAt, uid)
 	}
@@ -82,13 +99,35 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	var createTime time.Time
 	rows, err := queryBuilder.Rows()
 	if err != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] list connector definition error",
+			"connector_definition",
+			fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+			"",
+			err.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, 0, "", st.Err()
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var item datamodel.ConnectorDefinition
 		if err = r.db.ScanRows(rows, &item); err != nil {
-			return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[db] list connector definition error",
+				"connector_definition",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				"",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
 		createTime = item.CreateTime
 		connectorDefinitions = append(connectorDefinitions, &item)
@@ -103,7 +142,18 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 		if result := r.db.Model(&datamodel.ConnectorDefinition{}).
 			Where("connector_type = ?", connectorType).
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-			return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[db] list connector definition error",
+				"connector_definition",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				"",
+				result.Error.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
 		if lastItem.UID.String() == lastUID.String() {
 			nextPageToken = ""
@@ -117,35 +167,78 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 }
 
 func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connectorDefinition datamodel.ConnectorDefinition
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("id = ? AND connector_type = ?", id, connectorType)
 	if isBasicView {
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "[GetConnectorDefinitionByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] get connector definition by id error",
+			"connector_definition",
+			fmt.Sprintf("id %s", id),
+			"",
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
+
 	return &connectorDefinition, nil
 }
 
 func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connectorDefinition datamodel.ConnectorDefinition
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("uid = ?", uid)
 	if isBasicView {
 		queryBuilder.Omit("spec")
 	}
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "[GetConnectorDefinitionByUID] The connector with uid '%s' you specified is not found", uid)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] get connector definition by uid error",
+			"connector_definition",
+			fmt.Sprintf("uid %s", uid.String()),
+			"",
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 	return &connectorDefinition, nil
 }
 
 func (r *repository) CreateConnector(connector *datamodel.Connector) error {
+
+	logger, _ := logger.GetZapLogger()
+
 	if result := r.db.Model(&datamodel.Connector{}).Create(connector); result.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(result.Error, &pgErr) {
 			if pgErr.Code == "23505" {
-				return status.Errorf(codes.AlreadyExists, pgErr.Message)
+				st, err := sterr.CreateErrorResourceInfo(
+					codes.AlreadyExists,
+					"[db] create connector error",
+					"connector",
+					fmt.Sprintf("id %s and connector_type %s", connector.ID, connectorPB.ConnectorType(connector.ConnectorType)),
+					connector.Owner,
+					pgErr.Message,
+				)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return st.Err()
 			}
 		}
 	}
@@ -153,6 +246,8 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 }
 
 func (r *repository) ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+
+	logger, _ := logger.GetZapLogger()
 
 	r.db.Model(&datamodel.Connector{}).Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType).Count(&totalSize)
 
@@ -169,8 +264,21 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	if pageToken != "" {
 		createdAt, uid, err := paginate.DecodeToken(pageToken)
 		if err != nil {
-			return nil, 0, "", status.Errorf(codes.InvalidArgument, "Invalid page token: %s", err.Error())
+			st, err := sterr.CreateErrorBadRequest(
+				"[db] list connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "page_token",
+						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
+
 		queryBuilder = queryBuilder.Where("(create_time,uid) < (?::timestamp, ?)", createdAt, uid)
 	}
 
@@ -181,13 +289,35 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	var createTime time.Time // only using one for all loops, we only need the latest one in the end
 	rows, err := queryBuilder.Rows()
 	if err != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] list connector error",
+			"connector",
+			fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			err.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, 0, "", st.Err()
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var item datamodel.Connector
 		if err = r.db.ScanRows(rows, &item); err != nil {
-			return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[db] list connector error",
+				"connector",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				ownerPermalink,
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
 		createTime = item.CreateTime
 		connectors = append(connectors, &item)
@@ -199,7 +329,18 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 		if result := r.db.Model(&datamodel.Connector{}).
 			Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType).
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-			return nil, 0, "", status.Errorf(codes.Internal, result.Error.Error())
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				"[db] list connector error",
+				"connector",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				ownerPermalink,
+				result.Error.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
 		}
 		if lastItem.UID.String() == lastUID.String() {
 			nextPageToken = ""
@@ -212,6 +353,9 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 }
 
 func (r *repository) GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
@@ -222,12 +366,26 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "[GetConnectorByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] get connector by id error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 	return &connector, nil
 }
 
 func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
+
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
@@ -238,68 +396,203 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, con
 	}
 
 	if result := queryBuilder.First(&connector); result.Error != nil {
-		return nil, status.Errorf(codes.NotFound, "[GetConnectorByUID] The connector with connector_type '%s' and uid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] get connector by uid error",
+			"connector",
+			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
 	}
 	return &connector, nil
 }
 
 func (r *repository) UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
+
+	logger, _ := logger.GetZapLogger()
+
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Updates(connector); result.Error != nil {
-		return status.Errorf(codes.Internal, result.Error.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] update connector error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	} else if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "[UpdateConnector] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] update connector error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			"Not found",
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 	return nil
 }
 
 func (r *repository) DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error {
 
+	logger, _ := logger.GetZapLogger()
+
 	result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Delete(&datamodel.Connector{})
 
 	if result.Error != nil {
-		return status.Error(codes.Internal, result.Error.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] delete connector error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 
 	if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "[DeleteConnector] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] delete connector error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			"Not found",
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 
 	return nil
 }
 
 func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error {
+
+	logger, _ := logger.GetZapLogger()
+
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Update("id", newID); result.Error != nil {
-		return status.Errorf(codes.Internal, result.Error.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] update connector id error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	} else if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "[UpdateConnectorID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] update connector id error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			"Not found",
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 	return nil
 }
 
 func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+
+	logger, _ := logger.GetZapLogger()
+
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
 		Update("state", state); result.Error != nil {
-		return status.Errorf(codes.Internal, result.Error.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] update connector state by id error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	} else if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "[UpdateConnectorStateByID] The connector with connector_type '%s' and id '%s' you specified is not found", connectorPB.ConnectorType(connectorType), id)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] update connector state by id error",
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			"Not found",
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 	return nil
 }
 
 func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+
+	logger, _ := logger.GetZapLogger()
+
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("uid = ? AND owner = ? AND connector_type = ?", uid, ownerPermalink, connectorType).
 		Update("state", state); result.Error != nil {
-		return status.Errorf(codes.Internal, result.Error.Error())
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			"[db] update connector state by uid error",
+			"connector",
+			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	} else if result.RowsAffected == 0 {
-		return status.Errorf(codes.NotFound, "[UpdateConnectorStateByUID] The connector with connector_type '%s' and uuid '%s' you specified is not found", connectorPB.ConnectorType(connectorType), uid)
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			"[db] update connector state by uid error",
+			"connector",
+			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			ownerPermalink,
+			"Not found",
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return st.Err()
 	}
 	return nil
 }
