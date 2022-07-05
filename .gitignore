@@ -104,6 +104,9 @@ mysql-persistence/
 # local protogen-go
 protogen-go
 
+# local x
+x
+
 # air related files and folders
 .air.toml
 tmp
