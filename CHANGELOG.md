@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.2-alpha...v0.4.3-alpha) (2022-07-07)
+
+
+### Bug Fixes
+
+* fix error handler middleware ([2fc9487](https://github.com/instill-ai/connector-backend/commit/2fc9487cdf44c62b783f10772e77191177198554))
+* skip JSON Schema snake_case convert ([c19cc53](https://github.com/instill-ai/connector-backend/commit/c19cc536334cbfbb1f97bc1700d234af8a66c7c5)), closes [#17](https://github.com/instill-ai/connector-backend/issues/17)
+
 ## [0.4.2-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.1-alpha...v0.4.2-alpha) (2022-06-27)
 
 
