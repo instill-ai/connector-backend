@@ -9,19 +9,12 @@ export function CheckCreate() {
 
     group("Connector API: Create destination connectors", () => {
 
+        // destination-http
         var dirHTTPDstConnector = {
             "id": "destination-http",
             "destination_connector_definition": constant.httpDstDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
-            }
-        }
-
-        var dirGRPCDstConnector = {
-            "id": "destination-grpc",
-            "destination_connector_definition": constant.gRPCDstDefRscName,
-            "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -48,6 +41,15 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response duplicate directness connector status 409": (r) => r.status === 409
         });
 
+        // destination-grpc
+        var dirGRPCDstConnector = {
+            "id": "destination-grpc",
+            "destination_connector_definition": constant.gRPCDstDefRscName,
+            "connector": {
+                "configuration": {}
+            }
+        }
+
         var resDstGRPC = http.request(
             "POST",
             `${connectorHost}/v1alpha/destination-connectors`,
@@ -62,34 +64,19 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorHost}/v1alpha/destination-connectors`,
-            JSON.stringify({}), {
+            {}, {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/destination-connectors response status for creating empty body 400": (r) => r.status === 400,
         });
 
-        var jsonSchemaFailedBody = {
-            "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": JSON.stringify({}) // required destination_path
-            }
-        }
-
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBody), {
-            headers: { "Content-Type": "application/json" },
-        }), {
-            "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400": (r) => r.status === 400,
-        });
-
-        // Test destination-csv connector
+        // destination-csv
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -118,6 +105,70 @@ export function CheckCreate() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response STATE_CONNECTED`]: (r) => r.json().destination_connector.connector.state === "STATE_CONNECTED",
         });
 
+        // destination-mysql ()
+        var mySQLDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.mySQLDstDefRscName,
+            "connector": {
+                "configuration": {
+                    "host": randomString(10),
+                    "port": 3306,
+                    "username": randomString(10),
+                    "database": randomString(10),
+                }
+            }
+        }
+
+        var resDstMySQL = http.request(
+            "POST",
+            `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(mySQLDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(resDstMySQL, {
+            "POST /v1alpha/destination-connectors response status for creating MySQL destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/destination-connectors response connector name": (r) => r.json().destination_connector.name == `destination-connectors/${mySQLDstConnector.id}`,
+            "POST /v1alpha/destination-connectors response connector uid": (r) => helper.isUUID(r.json().destination_connector.uid),
+            "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.mySQLDstDefRscName
+        });
+
+        // check JSON Schema failure cases
+        var jsonSchemaFailedBodyCSV = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {} // required destination_path
+            }
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === 400,
+        });
+
+        var jsonSchemaFailedBodyMySQL = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.mySQLDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "host": randomString(10),
+                    "port": "3306",
+                    "username": randomString(10),
+                    "database": randomString(10),
+                } // required port integer type
+            }
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), {
+            headers: { "Content-Type": "application/json" },
+        }), {
+            "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === 400,
+        });
+
         // Delete test records
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
@@ -127,6 +178,9 @@ export function CheckCreate() {
         });
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 
@@ -148,10 +202,10 @@ export function CheckList() {
         for (var i = 0; i < numConnectors; i++) {
             reqBodies[i] = {
                 "id": randomString(10),
-                "destination_connector_definition": constant.csvDstDefinitionRscName,
+                "destination_connector_definition": constant.csvDstDefRscName,
                 "connector": {
                     "description": randomString(50),
-                    "configuration": JSON.stringify(constant.csvDstConfig)
+                    "configuration": constant.csvDstConfig
                 }
             }
         }
@@ -192,17 +246,17 @@ export function CheckList() {
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors has no configuration": (r) => JSON.parse(r.json().destination_connectors[0].connector.configuration) === null,
+            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors has no configuration": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors has configuration": (r) => JSON.parse(r.json().destination_connectors[0].connector.configuration) !== null
+            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors has configuration": (r) => r.json().destination_connectors[0].connector.configuration !== null
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
             "GET /v1alpha/destination-connectors?page_size=1 response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors has no configuration": (r) => JSON.parse(r.json().destination_connectors[0].connector.configuration) === null,
+            "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors has no configuration": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
@@ -225,10 +279,10 @@ export function CheckGet() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -240,7 +294,7 @@ export function CheckGet() {
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
-            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefinitionRscName,
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
@@ -255,10 +309,10 @@ export function CheckUpdate() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -276,13 +330,11 @@ export function CheckUpdate() {
             "connector": {
                 "tombstone": true,
                 "description": randomString(50),
-                "configuration": JSON.stringify(configUpdate)
+                "configuration": configUpdate
             }
         }
 
-        var resCSVDstUpdate = http.request(
-            "PATCH",
-            `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+        var resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
             JSON.stringify(csvDstConnectorUpdate), {
             headers: { "Content-Type": "application/json" },
         })
@@ -290,10 +342,10 @@ export function CheckUpdate() {
         check(resCSVDstUpdate, {
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnectorUpdate.id,
-            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefinitionRscName,
+            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector description`]: (r) => r.json().destination_connector.connector.description === csvDstConnectorUpdate.connector.description,
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector tombstone`]: (r) => r.json().destination_connector.connector.tombstone === false,
-            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector configuration`]: (r) => JSON.parse(r.json().destination_connector.connector.configuration).destination_path === JSON.parse(csvDstConnectorUpdate.connector.configuration).destination_path
+            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector configuration`]: (r) => r.json().destination_connector.connector.configuration.destination_path === csvDstConnectorUpdate.connector.configuration.destination_path
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${csvDstConnector.id}`), {
@@ -308,10 +360,10 @@ export function CheckLookUp() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -323,7 +375,7 @@ export function CheckLookUp() {
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}:lookUp`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}:lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}:lookUp response connector uid`]: (r) => r.json().destination_connector.uid === resCSVDst.json().destination_connector.uid,
-            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}:lookUp response connector destination_connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefinitionRscName,
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}:lookUp response connector destination_connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
@@ -338,10 +390,10 @@ export function CheckState() {
     group("Connector API: Change state destination connectors", () => {
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -424,10 +476,10 @@ export function CheckRename() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 
@@ -458,10 +510,10 @@ export function CheckWrite() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefinitionRscName,
+            "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": JSON.stringify(constant.csvDstConfig)
+                "configuration": constant.csvDstConfig
             }
         }
 

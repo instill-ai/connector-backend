@@ -18,8 +18,6 @@ export let options = {
   },
 };
 
-export function setup() { }
-
 export default function (data) {
 
   /*
@@ -62,5 +60,3 @@ export default function (data) {
   destinationConnector.CheckWrite()
 
 }
-
-export function teardown(data) { }

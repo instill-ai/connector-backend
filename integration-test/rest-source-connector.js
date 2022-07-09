@@ -13,7 +13,7 @@ export function CheckCreate() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -21,7 +21,7 @@ export function CheckCreate() {
             "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -62,7 +62,7 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify({}), {
+            {}, {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/source-connectors response status for creating empty body 400": (r) => r.status === 400,
@@ -94,7 +94,7 @@ export function CheckList() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -102,7 +102,7 @@ export function CheckList() {
             "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -143,17 +143,17 @@ export function CheckList() {
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response source_connectors has no configuration": (r) => JSON.parse(r.json().source_connectors[0].connector.configuration) === null
+            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response source_connectors has no configuration": (r) => r.json().source_connectors[0].connector.configuration === null
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response source_connectors has configuration": (r) => JSON.parse(r.json().source_connectors[0].connector.configuration) !== null,
+            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response source_connectors has configuration": (r) => r.json().source_connectors[0].connector.configuration !== null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=1`), {
             "GET /v1alpha/source-connectors?page_size=1 response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1 response source_connectors has no configuration": (r) => JSON.parse(r.json().source_connectors[0].connector.configuration) === null
+            "GET /v1alpha/source-connectors?page_size=1 response source_connectors has no configuration": (r) => r.json().source_connectors[0].connector.configuration === null
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors?page_size=${limitedRecords.json().total_size}`), {
@@ -178,7 +178,7 @@ export function CheckGet() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -208,7 +208,7 @@ export function CheckUpdate() {
             "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -248,7 +248,7 @@ export function CheckDelete() {
                 "id": "source-http",
                 "source_connector_definition": "source-connector-definitions/source-http",
                 "connector": {
-                    "configuration": JSON.stringify({})
+                    "configuration": {}
                 }
             }), { headers: { "Content-Type": "application/json" } }), {
             "POST /v1alpha/source-connectors response status for creating directness HTTP source connector 201": (r) => r.status === 201,
@@ -259,7 +259,7 @@ export function CheckDelete() {
                 "id": "destination-http",
                 "destination_connector_definition": "destination-connector-definitions/destination-http",
                 "connector": {
-                    "configuration": JSON.stringify({})
+                    "configuration": {}
                 }
             }), { headers: { "Content-Type": "application/json" } }), {
             "POST /v1alpha/destination-connectors response status for creating directness HTTP destination connector 201": (r) => r.status === 201,
@@ -340,7 +340,7 @@ export function CheckLookUp() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -369,7 +369,7 @@ export function CheckState() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 
@@ -405,7 +405,7 @@ export function CheckRename() {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": JSON.stringify({})
+                "configuration": {}
             }
         }
 

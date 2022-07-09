@@ -2,8 +2,8 @@ export const csvDstConfig = {
     "destination_path": "/local"
 };
 
-export const csvDstDefinitionRscName = "destination-connector-definitions/destination-csv"
-export const csvDstDefinitionRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
+export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
+export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
 export const httpSrcDefRscName = "source-connector-definitions/source-http"
 export const httpSrcDefRscPermalink = "source-connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
@@ -16,6 +16,9 @@ export const httpDstDefRscPermalink = "destination-connector-definitions/909c327
 
 export const gRPCDstDefRscName = "destination-connector-definitions/destination-grpc"
 export const gRPCDstDefRscPermalink = "destination-connector-definitions/c0e4a82c-9620-4a72-abd1-18586f2acccd"
+
+export const mySQLDstDefRscName = "destination-connector-definitions/destination-mysql"
+export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
 export const detModelOutput = {
     "detection_outputs": [

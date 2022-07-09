@@ -22,9 +22,9 @@
       "ui_component": "textarea_enable_counter"
     },
     "configuration": {
-      "type": "string",
+      "type": "object",
       "title": "Configuration",
-      "description": "Connector configuration JSON string that has been validated using the JSON schema of the corresponding `Spec.connection_specification`.",
+      "description": "Connector configuration JSON that has been validated using the JSON schema of the corresponding `Spec.connection_specification`.",
       "ui_order": 1,
       "ui_disabled": true
     },

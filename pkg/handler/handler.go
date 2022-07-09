@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/iancoleman/strcase"
@@ -219,7 +220,10 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		connID = v.GetSourceConnector().GetId()
 
-		connConfig = []byte(v.GetSourceConnector().GetConnector().GetConfiguration())
+		connConfig, err = v.GetSourceConnector().GetConnector().GetConfiguration().MarshalJSON()
+		if err != nil {
+			return resp, err
+		}
 
 		connDesc = sql.NullString{
 			String: v.SourceConnector.GetConnector().GetDescription(),
@@ -347,7 +351,10 @@ func (h *handler) createConnector(ctx context.Context, req interface{}) (resp in
 
 		connID = v.GetDestinationConnector().GetId()
 
-		connConfig = []byte(v.GetDestinationConnector().GetConnector().GetConfiguration())
+		connConfig, err = v.GetDestinationConnector().GetConnector().GetConfiguration().MarshalJSON()
+		if err != nil {
+			return resp, err
+		}
 
 		connDesc = sql.NullString{
 			String: v.DestinationConnector.GetConnector().GetDescription(),
@@ -628,6 +635,14 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		resp = &connectorPB.UpdateSourceConnectorResponse{}
 		pbConnectorReq = v.GetSourceConnector()
 		pbUpdateMask := v.GetUpdateMask()
+
+		// configuration filed is type google.protobuf.Struct, which needs to be updated as a whole
+		for idx, path := range pbUpdateMask.Paths {
+			if strings.Contains(path, "configuration") {
+				pbUpdateMask.Paths[idx] = "connector.configuration"
+			}
+		}
+
 		if !pbUpdateMask.IsValid(v.GetSourceConnector()) {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] update connector error",
@@ -729,9 +744,18 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connDefUID = dbConnDef.UID
 
 	case *connectorPB.UpdateDestinationConnectorRequest:
+
 		resp = &connectorPB.UpdateDestinationConnectorResponse{}
 		pbConnectorReq = v.GetDestinationConnector()
 		pbUpdateMask := v.GetUpdateMask()
+
+		// configuration filed is type google.protobuf.Struct, which needs to be updated as a whole
+		for idx, path := range pbUpdateMask.Paths {
+			if strings.Contains(path, "configuration") {
+				pbUpdateMask.Paths[idx] = "connector.configuration"
+			}
+		}
+
 		if !pbUpdateMask.IsValid(v.GetDestinationConnector()) {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] update connector error",
@@ -747,6 +771,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 			}
 			return resp, st.Err()
 		}
+
 		// Set all OUTPUT_ONLY fields to zero value on the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {

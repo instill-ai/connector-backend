@@ -8,6 +8,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 )
@@ -102,15 +103,20 @@ func ValidateJSONSchema(schema *jsonschema.Schema, msg proto.Message, emitUnpopu
 }
 
 // ValidateJSONSchemaString validates the string data given a string schema
-func ValidateJSONSchemaString(schema string, data string) error {
+func ValidateJSONSchemaString(schema string, data *structpb.Struct) error {
 
 	sch, err := jsonschema.CompileString("schema.json", schema)
 	if err != nil {
 		return err
 	}
 
+	b, err := data.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
 	var v interface{}
-	if err := json.Unmarshal([]byte(data), &v); err != nil {
+	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
 

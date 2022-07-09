@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -105,7 +104,7 @@ func PBToDBConnector(
 	var state datamodel.ConnectorState
 	var tombstone bool
 	var description sql.NullString
-	var configuration string
+	var configuration *structpb.Struct
 	var createTime time.Time
 	var updateTime time.Time
 	var err error
@@ -155,7 +154,17 @@ func PBToDBConnector(
 		State:                  state,
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: connectorDefinitionUID,
-		Configuration:          []byte(configuration),
+
+		Configuration: func() []byte {
+			if configuration != nil {
+				b, err := configuration.MarshalJSON()
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return b
+			}
+			return []byte{}
+		}(),
 
 		BaseDynamic: datamodel.BaseDynamic{
 			UID:        uid,
@@ -182,13 +191,16 @@ func DBToPBConnector(
 		CreateTime:  timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:  timestamppb.New(dbConnector.UpdateTime),
 
-		Configuration: func() string {
-			b, err := json.Marshal(dbConnector.Configuration)
-			if err != nil {
-				logger.Fatal(err.Error())
+		Configuration: func() *structpb.Struct {
+			if dbConnector.Configuration != nil {
+				str := structpb.Struct{}
+				err := str.UnmarshalJSON(dbConnector.Configuration)
+				if err != nil {
+					logger.Fatal(err.Error())
+				}
+				return &str
 			}
-
-			return string(b)
+			return nil
 		}(),
 	}
 	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
