@@ -33,7 +33,7 @@ export function CheckCreate() {
         })
 
         check(resSrcHTTP, {
-            "POST /v1alpha/source-connectors response status for creating directness HTTP source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
             "POST /v1alpha/source-connectors response connector name": (r) => r.json().source_connector.name == `source-connectors/${dirHTTPSrcConnector.id}`,
             "POST /v1alpha/source-connectors response connector uid": (r) => helper.isUUID(r.json().source_connector.uid),
             "POST /v1alpha/source-connectors response connector source_connector_definition": (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName
@@ -45,7 +45,7 @@ export function CheckCreate() {
             JSON.stringify(dirHTTPSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            "POST /v1alpha/source-connectors response duplicate directness connector status 409": (r) => r.status === 409
+            "POST /v1alpha/source-connectors response duplicate HTTP source connector status 409": (r) => r.status === 409
         });
 
         var resSrcGRPC = http.request(
@@ -56,7 +56,7 @@ export function CheckCreate() {
         })
 
         check(resSrcGRPC, {
-            "POST /v1alpha/source-connectors response status for creating directness gRPC source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
         check(http.request(
@@ -218,7 +218,7 @@ export function CheckUpdate() {
             JSON.stringify(dirGRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            "POST /v1alpha/source-connectors response status for creating directness gRPC source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
         dirGRPCSrcConnector.connector.description = randomString(20)
@@ -228,7 +228,7 @@ export function CheckUpdate() {
             JSON.stringify(dirGRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating directness gRPC source connector 422`]: (r) => r.status === 422,
+            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`), {
@@ -251,7 +251,7 @@ export function CheckDelete() {
                     "configuration": {}
                 }
             }), { headers: { "Content-Type": "application/json" } }), {
-            "POST /v1alpha/source-connectors response status for creating directness HTTP source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
         })
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
@@ -262,7 +262,7 @@ export function CheckDelete() {
                     "configuration": {}
                 }
             }), { headers: { "Content-Type": "application/json" } }), {
-            "POST /v1alpha/destination-connectors response status for creating directness HTTP destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
         })
 
         check(http.request("POST", `${modelHost}/v1alpha/models`, JSON.stringify({

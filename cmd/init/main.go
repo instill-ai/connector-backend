@@ -13,7 +13,6 @@ import (
 
 var enumRegistry = map[string]map[string]int32{
 	"release_stage":                    connectorPB.ReleaseStage_value,
-	"connection_type":                  connectorPB.ConnectionType_value,
 	"supported_destination_sync_modes": connectorPB.Spec_SupportedDestinationSyncModes_value,
 	"auth_flow_type":                   connectorPB.AdvancedAuth_AuthFlowType_value,
 }
@@ -47,7 +46,15 @@ func main() {
 	}
 
 	for idx, def := range srcDefs {
-		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
+
+		var imgTag string
+		if def.GetDockerImageTag() != "" {
+			imgTag = ":" + def.GetDockerImageTag()
+		} else {
+			imgTag = def.GetDockerImageTag()
+		}
+
+		if spec, err := findDockerImageSpec(def.GetDockerRepository()+imgTag, &dockerImageSpecs); err != nil {
 			logger.Fatal(err.Error())
 		} else {
 			// Create source definition record
@@ -58,7 +65,13 @@ func main() {
 	}
 
 	for idx, def := range dstDefs {
-		if spec, err := findDockerImageSpec(def.GetDockerRepository()+":"+def.GetDockerImageTag(), &dockerImageSpecs); err != nil {
+		var imgTag string
+		if def.GetDockerImageTag() != "" {
+			imgTag = ":" + def.GetDockerImageTag()
+		} else {
+			imgTag = def.GetDockerImageTag()
+		}
+		if spec, err := findDockerImageSpec(def.GetDockerRepository()+imgTag, &dockerImageSpecs); err != nil {
 			logger.Fatal(err.Error())
 		} else {
 			// Create destination definition record

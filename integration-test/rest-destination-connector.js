@@ -26,7 +26,7 @@ export function CheckCreate() {
         })
 
         check(resDstHTTP, {
-            "POST /v1alpha/destination-connectors response status for creating directness HTTP destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
             "POST /v1alpha/destination-connectors response connector name": (r) => r.json().destination_connector.name == `destination-connectors/${dirHTTPDstConnector.id}`,
             "POST /v1alpha/destination-connectors response connector uid": (r) => helper.isUUID(r.json().destination_connector.uid),
             "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.httpDstDefRscName
@@ -38,7 +38,7 @@ export function CheckCreate() {
             JSON.stringify(dirHTTPDstConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            "POST /v1alpha/destination-connectors response duplicate directness connector status 409": (r) => r.status === 409
+            "POST /v1alpha/destination-connectors response duplicate HTTP destination connector status 409": (r) => r.status === 409
         });
 
         // destination-grpc
@@ -58,7 +58,7 @@ export function CheckCreate() {
         })
 
         check(resDstGRPC, {
-            "POST /v1alpha/destination-connectors response status for creating directness gRPC destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/destination-connectors response status for creating gRPC destination connector 201": (r) => r.status === 201,
         });
 
         check(http.request(

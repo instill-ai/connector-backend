@@ -87,7 +87,6 @@ func createDestinationConnectorDefinition(db *gorm.DB, dstConnDef *connectorPB.D
 		spec,
 		resourceRequirements,
 		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
-		datamodel.ConnectionType(dstConnDef.GetConnectorDefinition().GetConnectionType()),
 		datamodel.ReleaseStage(dstConnDef.GetConnectorDefinition().GetReleaseStage()),
 	); err != nil {
 		return err

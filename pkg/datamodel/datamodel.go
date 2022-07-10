@@ -54,7 +54,6 @@ type ConnectorDefinition struct {
 	Spec                 datatypes.JSON `gorm:"type:jsonb"`
 	ResourceRequirements datatypes.JSON `gorm:"type:jsonb"`
 	ConnectorType        ConnectorType  `sql:"type:valid_connector_type"`
-	ConnectionType       ConnectionType `sql:"type:valid_connection_type"`
 	ReleaseStage         ReleaseStage   `sql:"type:valid_release_stage"`
 }
 
@@ -83,20 +82,6 @@ func (c *ConnectorType) Scan(value interface{}) error {
 // Value function for custom GORM type ConnectorType
 func (c ConnectorType) Value() (driver.Value, error) {
 	return connectorPB.ConnectorType(c).String(), nil
-}
-
-// ConnectionType is an alias type for Protobuf enum ConnectionType
-type ConnectionType connectorPB.ConnectionType
-
-// Scan function for custom GORM type ConnectionType
-func (c *ConnectionType) Scan(value interface{}) error {
-	*c = ConnectionType(connectorPB.ConnectionType_value[value.(string)])
-	return nil
-}
-
-// Value function for custom GORM type ConnectionType
-func (c ConnectionType) Value() (driver.Value, error) {
-	return connectorPB.ConnectionType(c).String(), nil
 }
 
 // ReleaseStage is an alias type for Protobuf enum ReleaseStage

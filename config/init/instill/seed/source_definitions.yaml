@@ -1,14 +1,12 @@
 - name: HTTP
   uid: f20a3c02-c70e-4e76-8566-7c13ca11d18d
   dockerRepository: instill-ai/source-http
-  dockerImageTag: directness
-  documentationUrl: https://docs.instill.tech/connectors/definitions/source-http-directness
+  dockerImageTag: ""
+  documentationUrl: https://docs.instill.tech/connectors/definitions/source-http
   icon: http.svg
-  connectionType: directness
 - name: gRPC
   uid: 82ca7d29-a35c-4222-b900-8d6878195e7a
   dockerRepository: instill-ai/source-grpc
-  dockerImageTag: directness
-  documentationUrl: https://docs.instill.tech/connectors/definitions/source-grpc-directness
+  dockerImageTag: ""
+  documentationUrl: https://docs.instill.tech/connectors/definitions/source-grpc
   icon: grpc.svg
-  connectionType: directness

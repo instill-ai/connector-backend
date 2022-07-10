@@ -32,7 +32,6 @@ func DBToPBConnectorDefinition(dbSrcDef *datamodel.ConnectorDefinition, connecto
 		Custom:           dbSrcDef.Custom,
 		CreateTime:       timestamppb.New(dbSrcDef.CreateTime),
 		UpdateTime:       timestamppb.New(dbSrcDef.UpdateTime),
-		ConnectionType:   connectorPB.ConnectionType(dbSrcDef.ConnectionType),
 
 		ReleaseStage: func() connectorPB.ReleaseStage {
 			return connectorPB.ReleaseStage(dbSrcDef.ReleaseStage)

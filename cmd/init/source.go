@@ -88,7 +88,6 @@ func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.Source
 		spec,
 		resourceRequirements,
 		datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
-		datamodel.ConnectionType(connDef.GetConnectionType()),
 		datamodel.ReleaseStage(connDef.GetReleaseStage()),
 	); err != nil {
 		return err

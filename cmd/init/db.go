@@ -26,7 +26,6 @@ func createConnectorDefinitionRecord(
 	spec datatypes.JSON,
 	resourceRequirements datatypes.JSON,
 	connectorType datamodel.ConnectorType,
-	connectionType datamodel.ConnectionType,
 	releaseStage datamodel.ReleaseStage) error {
 
 	connectorDef := datamodel.ConnectorDefinition{
@@ -44,7 +43,6 @@ func createConnectorDefinitionRecord(
 		Custom:               custom,
 		ConnectorType:        connectorType,
 		ReleaseDate:          releaseDate,
-		ConnectionType:       connectionType,
 		ReleaseStage:         releaseStage,
 	}
 
