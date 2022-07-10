@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.3-alpha...v0.4.4-alpha) (2022-07-10)
+
+
+### Bug Fixes
+
+* use google.protobuf.Struct for connector configuration ([6bbf8a7](https://github.com/instill-ai/connector-backend/commit/6bbf8a71c15dd93f20598218e2a525a0d54702c6))
+
 ## [0.4.3-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.2-alpha...v0.4.3-alpha) (2022-07-07)
 
 
