@@ -47,10 +47,10 @@ func main() {
 
 	w := worker.New(c, connWorker.TaskQueue, worker.Options{})
 
-	w.RegisterWorkflow(cw.CheckStateWorkflow)
-	w.RegisterActivity(cw.CheckStateActivity)
-	w.RegisterWorkflow(cw.WriteDestinationWorkflow)
-	w.RegisterActivity(cw.WriteDestinationActivity)
+	w.RegisterWorkflow(cw.CheckWorkflow)
+	w.RegisterActivity(cw.CheckActivity)
+	w.RegisterWorkflow(cw.WriteWorkflow)
+	w.RegisterActivity(cw.WriteActivity)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

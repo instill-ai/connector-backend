@@ -180,7 +180,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 			connCollectionID = "destination-connectors"
 		}
 
-		if err := s.startCheckStateWorkflow(
+		if err := s.startCheckWorkflow(
 			ownerRscName, ownerPermalink,
 			fmt.Sprintf("%s/%s", connCollectionID, connector.ID), fmt.Sprintf("%s/%s", connCollectionID, connector.UID), connector.ConnectorType,
 			connDef.DockerRepository, connDef.DockerImageTag); err != nil {
@@ -302,7 +302,7 @@ func (s *service) UpdateConnector(id string, ownerRscName string, connectorType 
 		connCollectionID = "destination-connectors"
 	}
 
-	if err := s.startCheckStateWorkflow(
+	if err := s.startCheckWorkflow(
 		ownerRscName, ownerPermalink,
 		fmt.Sprintf("%s/%s", connCollectionID, existingConnector.ID), fmt.Sprintf("%s/%s", connCollectionID, existingConnector.UID), existingConnector.ConnectorType,
 		def.DockerRepository, def.DockerImageTag); err != nil {
@@ -442,7 +442,7 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 			connCollectionID = "destination-connectors"
 		}
 
-		if err := s.startCheckStateWorkflow(
+		if err := s.startCheckWorkflow(
 			ownerRscName, ownerPermalink,
 			fmt.Sprintf("%s/%s", connCollectionID, conn.ID), fmt.Sprintf("%s/%s", connCollectionID, conn.UID), conn.ConnectorType,
 			connDef.DockerRepository, connDef.DockerImageTag); err != nil {
@@ -580,7 +580,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 	}
 
 	// Start Temporal worker
-	if err := s.startWriteDestinationWorkflow(
+	if err := s.startWriteWorkflow(
 		ownerRscName, ownerPermalink,
 		fmt.Sprintf("destination-connectors/%s", conn.ID), fmt.Sprintf("destination-connectors/%s", conn.UID),
 		connDef.DockerRepository, connDef.DockerImageTag, byteCfgAbCatalog, byteAbMsgs); err != nil {

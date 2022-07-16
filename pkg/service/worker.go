@@ -13,7 +13,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 )
 
-func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, connType datamodel.ConnectorType, dockerRepo string, dockerImgTag string) error {
+func (s *service) startCheckWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, connType datamodel.ConnectorType, dockerRepo string, dockerImgTag string) error {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -28,8 +28,8 @@ func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink st
 	we, err := s.temporalClient.ExecuteWorkflow(
 		context.Background(),
 		workflowOptions,
-		"CheckStateWorkflow",
-		&worker.CheckStateWorkflowParam{
+		"CheckWorkflow",
+		&worker.CheckWorkflowParam{
 			OwnerPermalink:     ownerPermalink,
 			ConnectorPermalink: connPermalink,
 			ConnectorType:      connType,
@@ -46,7 +46,7 @@ func (s *service) startCheckStateWorkflow(ownerRscName string, ownerPermalink st
 	return nil
 }
 
-func (s *service) startWriteDestinationWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
+func (s *service) startWriteWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -61,8 +61,8 @@ func (s *service) startWriteDestinationWorkflow(ownerRscName string, ownerPermal
 	we, err := s.temporalClient.ExecuteWorkflow(
 		context.Background(),
 		workflowOptions,
-		"WriteDestinationWorkflow",
-		&worker.WriteDestinationWorkflowParam{
+		"WriteWorkflow",
+		&worker.WriteWorkflowParam{
 			OwnerPermalink:           ownerPermalink,
 			ConnectorPermalink:       connPermalink,
 			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),

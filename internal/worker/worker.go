@@ -27,10 +27,10 @@ const (
 
 // Worker interface
 type Worker interface {
-	CheckStateWorkflow(ctx workflow.Context, param *CheckStateWorkflowParam) error
-	CheckStateActivity(ctx context.Context, param *CheckStateActivityParam) (exitCode, error)
-	WriteDestinationWorkflow(ctx workflow.Context, param *WriteDestinationWorkflowParam) error
-	WriteDestinationActivity(ctx context.Context, param *WriteDestinationActivityParam) (exitCode, error)
+	CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) error
+	CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error)
+	WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) error
+	WriteActivity(ctx context.Context, param *WriteActivityParam) (exitCode, error)
 }
 
 // worker represents resources required to run Temporal workflow and activity

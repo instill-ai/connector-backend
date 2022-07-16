@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -15,41 +14,39 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-// WriteDestinationWorkflowParam represents the parameters for WriteDestinationWorkflow
-type WriteDestinationWorkflowParam struct {
-	OwnerPermalink           string
-	ConnectorPermalink       string
-	ImageName                string
-	ContainerName            string
-	ConfiguredAirbyteCatalog []byte
-	AirbyteMessages          []byte
+// CheckWorkflowParam represents the parameters for CheckWorkflow
+type CheckWorkflowParam struct {
+	OwnerPermalink     string
+	ConnectorPermalink string
+	ImageName          string
+	ContainerName      string
+	ConnectorType      datamodel.ConnectorType
 }
 
-// WriteDestinationActivityParam represents the parameters for WriteDestinationActivity
-type WriteDestinationActivityParam struct {
-	ImageName                string
-	ContainerName            string
-	ConnectorConfig          []byte
-	ConfiguredAirbyteCatalog []byte
-	AirbyteMessages          []byte
+// CheckActivityParam represents the parameters for CheckActivity
+type CheckActivityParam struct {
+	ImageName       string
+	ContainerName   string
+	ConnectorConfig []byte
 }
 
-func (w *worker) WriteDestinationWorkflow(ctx workflow.Context, param *WriteDestinationWorkflowParam) error {
+// CheckWorkflow is a check workflow definition.
+func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) error {
 
 	logger := workflow.GetLogger(ctx)
-	logger.Info("WriteDestinationWorkflow started")
+	logger.Info("CheckWorkflow started")
 
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 120 * time.Second,
@@ -69,18 +66,16 @@ func (w *worker) WriteDestinationWorkflow(ctx workflow.Context, param *WriteDest
 		return temporal.NewNonRetryableApplicationError("unable to get the connector UUID", "ParsingError", err)
 	}
 
-	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
+	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, param.ConnectorType, false)
 	if err != nil {
 		return temporal.NewNonRetryableApplicationError("cannot get the connector", "RepositoryError", err)
 	}
 
 	var result exitCode
-	if err := workflow.ExecuteActivity(ctx, w.WriteDestinationActivity, &WriteDestinationActivityParam{
-		ImageName:                param.ImageName,
-		ContainerName:            param.ContainerName,
-		ConnectorConfig:          dbConnector.Configuration,
-		ConfiguredAirbyteCatalog: param.ConfiguredAirbyteCatalog,
-		AirbyteMessages:          param.AirbyteMessages,
+	if err := workflow.ExecuteActivity(ctx, w.CheckActivity, &CheckActivityParam{
+		ImageName:       param.ImageName,
+		ContainerName:   param.ContainerName,
+		ConnectorConfig: dbConnector.Configuration,
 	}).Get(ctx, &result); err != nil {
 		if err := stopAndRemoveContainer(w.dockerClient, param.ContainerName); err != nil {
 			logger.Error(fmt.Sprintf("unable to stop and remove container: %s", err))
@@ -94,22 +89,29 @@ func (w *worker) WriteDestinationWorkflow(ctx workflow.Context, param *WriteDest
 
 	switch result {
 	case exitCodeOK:
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
+		}
 	case exitCodeError:
 		logger.Error("connector container exited with errors")
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
+			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
+		}
 	}
 
-	logger.Info("WriteDestinationWorkflow completed")
+	logger.Info("CheckWorkflow completed")
 
 	return nil
 }
 
-func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDestinationActivityParam) (exitCode, error) {
+// CheckActivity is a check activity definition.
+func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error) {
 
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".check", ""))
 	if _, err := os.Stat(configFilePath); err != nil {
 		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
@@ -119,18 +121,6 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		}
 	}
 
-	// Write catalog into a container local file
-	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
-	if _, err := os.Stat(catalogFilePath); err != nil {
-		if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
-		}
-		if err := ioutil.WriteFile(catalogFilePath, param.ConfiguredAirbyteCatalog, 0644); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", catalogFilePath), "WriteContainerLocalFileError", err)
-		}
-	}
-
-	// Pull image
 	pull, err := w.dockerClient.ImagePull(context.Background(), param.ImageName, types.ImagePullOptions{})
 	if err != nil {
 		return exitCodeUnknown, err
@@ -141,7 +131,8 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		return exitCodeUnknown, err
 	}
 
-	// Configured hostConfig
+	// Configured hostConfig:
+	// https://godoc.org/github.com/docker/docker/api/types/container#HostConfig
 	hostConfig := &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "no",
@@ -156,30 +147,23 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 				Source: w.mountSourceVDP,
 				Target: w.mountTargetVDP,
 			},
-			{
-				Type:   w.mountType,
-				Source: w.mountSourceAirbyte,
-				Target: w.mountTargetAirbyte,
-			},
 		},
 	}
 
 	// Configuration
+	// https://godoc.org/github.com/docker/docker/api/types/container#Config
 	config := &container.Config{
 		Image:        param.ImageName,
-		AttachStderr: true,
+		Tty:          false,
 		AttachStdin:  true,
 		AttachStdout: true,
-		Tty:          true,
-		OpenStdin:    true,
+		AttachStderr: true,
 		Cmd: []string{
-			"write",
-			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
-			"--catalog", fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTargetVDP, filepath.Base(catalogFilePath)),
-		},
+			"check",
+			"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath))},
 	}
 
-	// Creating the actual cont
+	// Creating the actual container. This is "nil,nil,nil" in every example.
 	cont, err := w.dockerClient.ContainerCreate(
 		context.Background(),
 		config,
@@ -188,57 +172,26 @@ func (w *worker) WriteDestinationActivity(ctx context.Context, param *WriteDesti
 		nil,
 		param.ContainerName,
 	)
+
 	if err != nil {
 		return exitCodeUnknown, err
 	}
 
 	// Run the container
-	exitCode, err := runWriteDestinationContainer(w.dockerClient, &cont, param.AirbyteMessages)
+	exitCode, err := runCheckContainer(w.dockerClient, &cont)
 	if err != nil {
-		return exitCode, temporal.NewNonRetryableApplicationError("unable to run container", "DockerError", err)
+		return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to run container", "DockerError", err)
 	}
 
 	return exitCode, nil
 }
 
-func runWriteDestinationContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody, abMsgs []byte) (exitCode, error) {
-
-	logger, _ := logger.GetZapLogger()
+func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody) (exitCode, error) {
 
 	// Run the actual container
 	if err := cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
 		return exitCodeUnknown, err
 	}
-
-	resp, err := cli.ContainerAttach(context.Background(), cont.ID, types.ContainerAttachOptions{
-		Stdin:  true,
-		Stdout: true,
-		Stderr: true,
-		Stream: true,
-	})
-	if err != nil {
-		return exitCodeUnknown, err
-	}
-
-	go func() {
-		if _, err := io.Copy(os.Stdout, resp.Reader); err != nil {
-			logger.Error(err.Error())
-		}
-	}()
-
-	go func() {
-		if _, err := io.Copy(os.Stderr, resp.Reader); err != nil {
-			logger.Error(err.Error())
-		}
-	}()
-
-	// Append Ctrl+D (EOT)
-	abMsgs = append(abMsgs, 4)
-	go func() {
-		if _, err := io.Copy(resp.Conn, bytes.NewReader(abMsgs)); err != nil {
-			logger.Error(err.Error())
-		}
-	}()
 
 	var statusCode int64
 	statusCh, errCh := cli.ContainerWait(context.Background(), cont.ID, container.WaitConditionNotRunning)
@@ -249,6 +202,16 @@ func runWriteDestinationContainer(cli *client.Client, cont *container.ContainerC
 		}
 	case status := <-statusCh:
 		statusCode = status.StatusCode
+	}
+
+	out, err := cli.ContainerLogs(context.Background(), cont.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		return exitCodeUnknown, err
+	}
+	defer out.Close()
+
+	if _, err := stdcopy.StdCopy(os.Stdout, os.Stderr, out); err != nil {
+		return exitCodeUnknown, err
 	}
 
 	switch statusCode {
