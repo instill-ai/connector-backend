@@ -268,11 +268,11 @@ export function CheckDelete() {
         check(http.request("POST", `${modelHost}/v1alpha/models`, JSON.stringify({
             "id": "dummy-cls",
             "model_definition": "model-definitions/github",
-            "configuration": JSON.stringify({
+            "configuration": {
                 "repository": "instill-ai/model-dummy-cls"
-            }),
+            },
         }), { headers: { "Content-Type": "application/json" } }), {
-            "POST /v1alpha/models:multipart task cls response status": (r) => r.status === 201,
+            "POST /v1alpha/models cls response status": (r) => r.status === 201,
         })
 
         const detSyncRecipe = {
@@ -311,8 +311,10 @@ export function CheckDelete() {
             [`DELETE /v1alpha/destination-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
         });
 
+        // Cannot delete model due to pipeline occupancy
         check(http.request("DELETE", `${modelHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 204,
+            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
         });
 
         check(http.request("DELETE", `${pipelineHost}/v1alpha/pipelines/${pipelineID}`), {
@@ -327,6 +329,11 @@ export function CheckDelete() {
         // Can delete destination connector now
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/destination-http`), {
             [`DELETE /v1alpha/destination-connectors/destination-http response status 204`]: (r) => r.status === 204,
+        });
+
+        // Can delete model now
+        check(http.request("DELETE", `${modelHost}/v1alpha/models/dummy-cls`), {
+            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 204,
         });
 
     });
