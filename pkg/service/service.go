@@ -103,7 +103,7 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 				[]*errdetails.BadRequest_FieldViolation{
 					{
 						Field:       "id",
-						Description: fmt.Sprintf("Connector is must be %s", connDef.ID),
+						Description: fmt.Sprintf("Connector id must be %s", connDef.ID),
 					},
 				},
 			)

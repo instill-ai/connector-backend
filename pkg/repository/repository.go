@@ -180,7 +180,7 @@ func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamod
 			codes.NotFound,
 			"[db] get connector definition by id error",
 			"connector_definition",
-			fmt.Sprintf("id %s", id),
+			id,
 			"",
 			result.Error.Error(),
 		)
@@ -207,7 +207,7 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 			codes.NotFound,
 			"[db] get connector definition by uid error",
 			"connector_definition",
-			fmt.Sprintf("uid %s", uid.String()),
+			uid.String(),
 			"",
 			result.Error.Error(),
 		)
