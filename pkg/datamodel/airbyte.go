@@ -29,7 +29,6 @@ type AirbyteRecordMessage struct {
 	Stream    string          `json:"stream"`
 	Data      json.RawMessage `json:"data"`
 	EmittedAt int64           `json:"emitted_at"`
-	Namespace string          `json:"namespace"`
 }
 
 // AirbyteCatalog defines the AirbyteCatalog protocol as in:
@@ -47,7 +46,6 @@ type AirbyteStream struct {
 	SourceDefinedCursor     bool            `json:"source_defined_cursor"`
 	DefaultCursorField      []string        `json:"default_cursor_field"`
 	SourceDefinedPrimaryKey [][]string      `json:"source_defined_primary_key"`
-	Namespace               string          `json:"namespace"`
 }
 
 // ConfiguredAirbyteCatalog defines the ConfiguredAirbyteCatalog protocol  as in:
