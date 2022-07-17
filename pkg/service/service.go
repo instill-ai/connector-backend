@@ -36,7 +36,7 @@ type Service interface {
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
 	ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(uid uuid.UUID, ownerRscName string, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
 	UpdateConnectorID(id string, ownerRscName string, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
 	UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
@@ -235,14 +235,14 @@ func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType
 	return dbConnector, nil
 }
 
-func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByUID(uid, ownerPermalink, connectorType, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByUID(uid, ownerPermalink, isBasicView)
 	if err != nil {
 		return nil, err
 	}

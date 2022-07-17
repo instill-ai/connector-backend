@@ -36,7 +36,7 @@ type Repository interface {
 	CreateConnector(connector *datamodel.Connector) error
 	ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
 	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
 	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
@@ -382,14 +382,14 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger()
 
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("uid = ? AND owner = ? AND connector_type = ?", uid, ownerPermalink, connectorType)
+		Where("uid = ? AND owner = ?", uid, ownerPermalink)
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -400,7 +400,7 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, con
 			codes.NotFound,
 			"[db] get connector by uid error",
 			"connector",
-			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			uid.String(),
 			ownerPermalink,
 			result.Error.Error(),
 		)

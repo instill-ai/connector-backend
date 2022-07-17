@@ -1005,7 +1005,7 @@ func (h *handler) lookUpConnector(ctx context.Context, req interface{}) (resp in
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUID(connUID, ownerRscName, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUID(connUID, ownerRscName, isBasicView)
 	if err != nil {
 		return resp, err
 	}

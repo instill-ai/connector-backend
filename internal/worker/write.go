@@ -22,9 +22,6 @@ import (
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
-
-	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // WriteWorkflowParam represents the parameters for WriteWorkflow
@@ -69,7 +66,7 @@ func (w *worker) WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) 
 		return temporal.NewNonRetryableApplicationError("unable to get the connector UUID", "ParsingError", err)
 	}
 
-	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
+	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, false)
 	if err != nil {
 		return temporal.NewNonRetryableApplicationError("cannot get the connector", "RepositoryError", err)
 	}

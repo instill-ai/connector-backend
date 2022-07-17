@@ -66,7 +66,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 		return temporal.NewNonRetryableApplicationError("unable to get the connector UUID", "ParsingError", err)
 	}
 
-	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, param.ConnectorType, false)
+	dbConnector, err := w.repository.GetConnectorByUID(connUID, param.OwnerPermalink, false)
 	if err != nil {
 		return temporal.NewNonRetryableApplicationError("cannot get the connector", "RepositoryError", err)
 	}
