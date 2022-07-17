@@ -41,7 +41,7 @@ type Repository interface {
 	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
 	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
 	UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
-	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
+	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
 }
 
 type repository struct {
@@ -561,18 +561,18 @@ func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, 
 	return nil
 }
 
-func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	if result := r.db.Model(&datamodel.Connector{}).
-		Where("uid = ? AND owner = ? AND connector_type = ?", uid, ownerPermalink, connectorType).
+		Where("uid = ? AND owner = ?", uid, ownerPermalink).
 		Update("state", state); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
 			"[db] update connector state by uid error",
 			"connector",
-			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			uid.String(),
 			ownerPermalink,
 			result.Error.Error(),
 		)
@@ -585,7 +585,7 @@ func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink str
 			codes.NotFound,
 			"[db] update connector state by uid error",
 			"connector",
-			fmt.Sprintf("uid %s and connector_type %s", uid, connectorPB.ConnectorType(connectorType)),
+			uid.String(),
 			ownerPermalink,
 			"Not found",
 		)

@@ -32,7 +32,6 @@ type CheckWorkflowParam struct {
 	ConnectorPermalink string
 	ImageName          string
 	ContainerName      string
-	ConnectorType      datamodel.ConnectorType
 }
 
 // CheckActivityParam represents the parameters for CheckActivity
@@ -89,12 +88,12 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 
 	switch result {
 	case exitCodeOK:
-		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
 	case exitCodeError:
 		logger.Error("connector container exited with errors")
-		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, param.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
+		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
 			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
 	}

@@ -32,7 +32,6 @@ func (s *service) startCheckWorkflow(ownerRscName string, ownerPermalink string,
 		&worker.CheckWorkflowParam{
 			OwnerPermalink:     ownerPermalink,
 			ConnectorPermalink: connPermalink,
-			ConnectorType:      connType,
 			ImageName:          fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
 			ContainerName:      strings.ReplaceAll(fmt.Sprintf("%s.%s.check", ownerRscName, connRscName), "/", "."),
 		})
