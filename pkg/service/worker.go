@@ -3,22 +3,20 @@ package service
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/worker"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 )
 
-func (s *service) startCheckWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, connType datamodel.ConnectorType, dockerRepo string, dockerImgTag string) error {
+func (s *service) startCheckWorkflow(ownerPermalink string, connPermalink string, dockerRepo string, dockerImgTag string) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        strings.ReplaceAll(fmt.Sprintf("%s.%s.check", ownerRscName, connRscName), "/", "."),
+		ID:        fmt.Sprintf("%s.check", connPermalink),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -33,7 +31,7 @@ func (s *service) startCheckWorkflow(ownerRscName string, ownerPermalink string,
 			OwnerPermalink:     ownerPermalink,
 			ConnectorPermalink: connPermalink,
 			ImageName:          fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:      strings.ReplaceAll(fmt.Sprintf("%s.%s.check", ownerRscName, connRscName), "/", "."),
+			ContainerName:      fmt.Sprintf("%s.check", connPermalink),
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
@@ -45,12 +43,12 @@ func (s *service) startCheckWorkflow(ownerRscName string, ownerPermalink string,
 	return nil
 }
 
-func (s *service) startWriteWorkflow(ownerRscName string, ownerPermalink string, connRscName string, connPermalink string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
+func (s *service) startWriteWorkflow(ownerPermalink string, connPermalink string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        strings.ReplaceAll(fmt.Sprintf("%s.%s.write", ownerRscName, connRscName), "/", "."),
+		ID:        fmt.Sprintf("%s.write", connPermalink),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -65,7 +63,7 @@ func (s *service) startWriteWorkflow(ownerRscName string, ownerPermalink string,
 			OwnerPermalink:           ownerPermalink,
 			ConnectorPermalink:       connPermalink,
 			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:            strings.ReplaceAll(fmt.Sprintf("%s.%s.write", ownerRscName, connRscName), "/", "."),
+			ContainerName:            fmt.Sprintf("%s.write", connPermalink),
 			ConfiguredAirbyteCatalog: cfgAbCatalog,
 			AirbyteMessages:          abMsgs,
 		})
@@ -79,12 +77,12 @@ func (s *service) startWriteWorkflow(ownerRscName string, ownerPermalink string,
 	return nil
 }
 
-func (s *service) startDeleteWorkflow(ownerRscName string, connRscName string) error {
+func (s *service) startDeleteWorkflow(connPermalink string) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        strings.ReplaceAll(fmt.Sprintf("%s.%s.delete", ownerRscName, connRscName), "/", "."),
+		ID:        fmt.Sprintf("%s.delete", connPermalink),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -96,7 +94,7 @@ func (s *service) startDeleteWorkflow(ownerRscName string, connRscName string) e
 		workflowOptions,
 		"DeleteWorkflow",
 		&worker.DeleteWorkflowParam{
-			ContainerLocalFileName: strings.ReplaceAll(fmt.Sprintf("%s.%s", ownerRscName, connRscName), "/", "."),
+			ContainerLocalFileName: connPermalink,
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
