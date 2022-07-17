@@ -30,6 +30,8 @@ type Worker interface {
 	CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error)
 	WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) error
 	WriteActivity(ctx context.Context, param *WriteActivityParam) (exitCode, error)
+	DeleteWorkflow(ctx workflow.Context, param *DeleteWorkflowParam) error
+	DeleteActivity(ctx context.Context, param *DeleteActivityParam) (exitCode, error)
 }
 
 // worker represents resources required to run Temporal workflow and activity

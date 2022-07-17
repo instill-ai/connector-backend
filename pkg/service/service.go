@@ -368,6 +368,20 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		return st.Err()
 	}
 
+	// Start Temporal worker
+	var connCollectionID string
+	if dbConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
+		connCollectionID = "source-connectors"
+	} else if dbConnector.ConnectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
+		connCollectionID = "destination-connectors"
+	}
+
+	if err := s.startDeleteWorkflow(
+		ownerRscName,
+		fmt.Sprintf("%s/%s", connCollectionID, dbConnector.ID)); err != nil {
+		return err
+	}
+
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 
