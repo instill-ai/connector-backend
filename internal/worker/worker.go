@@ -20,8 +20,7 @@ const TaskQueue = "connector-backend"
 type exitCode int64
 
 const (
-	exitCodeUnknown exitCode = iota
-	exitCodeOK
+	exitCodeOK exitCode = iota
 	exitCodeError
 )
 

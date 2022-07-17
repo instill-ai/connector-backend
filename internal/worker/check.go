@@ -110,25 +110,23 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
-	// Write config into a container local file
+	// Write config into a container local file (always overwrite)
 	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".check", ""))
-	if _, err := os.Stat(configFilePath); err != nil {
-		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
-		}
-		if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
-		}
+	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
 
 	pull, err := w.dockerClient.ImagePull(context.Background(), param.ImageName, types.ImagePullOptions{})
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 	defer pull.Close()
 
 	if _, err := io.Copy(os.Stdout, pull); err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	// Configured hostConfig:
@@ -174,13 +172,13 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	)
 
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	// Run the container
 	exitCode, err := runCheckContainer(w.dockerClient, &cont)
 	if err != nil {
-		return exitCodeUnknown, temporal.NewNonRetryableApplicationError("unable to run container", "DockerError", err)
+		return exitCodeError, temporal.NewNonRetryableApplicationError("unable to run container", "DockerError", err)
 	}
 
 	return exitCode, nil
@@ -190,7 +188,7 @@ func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreate
 
 	// Run the actual container
 	if err := cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	var statusCode int64
@@ -198,7 +196,7 @@ func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreate
 	select {
 	case err := <-errCh:
 		if err != nil {
-			return exitCodeUnknown, err
+			return exitCodeError, err
 		}
 	case status := <-statusCh:
 		statusCode = status.StatusCode
@@ -206,12 +204,12 @@ func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreate
 
 	out, err := cli.ContainerLogs(context.Background(), cont.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 	defer out.Close()
 
 	if _, err := stdcopy.StdCopy(os.Stdout, os.Stderr, out); err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	switch statusCode {
@@ -221,5 +219,5 @@ func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreate
 		return exitCodeError, nil
 	}
 
-	return exitCodeUnknown, nil
+	return exitCodeError, nil
 }

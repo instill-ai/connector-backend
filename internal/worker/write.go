@@ -108,37 +108,33 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
-	// Write config into a container local file
+	// Write config into a container local file (always overwrite)
 	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
-	if _, err := os.Stat(configFilePath); err != nil {
-		if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
-		}
-		if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
-		}
+	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
 
-	// Write catalog into a container local file
+	// Write catalog into a container local file (always overwrite)
 	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
-	if _, err := os.Stat(catalogFilePath); err != nil {
-		if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
-		}
-		if err := ioutil.WriteFile(catalogFilePath, param.ConfiguredAirbyteCatalog, 0644); err != nil {
-			return exitCodeUnknown, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", catalogFilePath), "WriteContainerLocalFileError", err)
-		}
+	if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := ioutil.WriteFile(catalogFilePath, param.ConfiguredAirbyteCatalog, 0644); err != nil {
+		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector catalog file %s", catalogFilePath), "WriteContainerLocalFileError", err)
 	}
 
 	// Pull image
 	pull, err := w.dockerClient.ImagePull(context.Background(), param.ImageName, types.ImagePullOptions{})
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 	defer pull.Close()
 
 	if _, err := io.Copy(os.Stdout, pull); err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	// Configured hostConfig
@@ -189,7 +185,7 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 		param.ContainerName,
 	)
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	// Run the container
@@ -207,7 +203,7 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 
 	// Run the actual container
 	if err := cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	resp, err := cli.ContainerAttach(context.Background(), cont.ID, types.ContainerAttachOptions{
@@ -217,7 +213,7 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 		Stream: true,
 	})
 	if err != nil {
-		return exitCodeUnknown, err
+		return exitCodeError, err
 	}
 
 	go func() {
@@ -245,7 +241,7 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 	select {
 	case err := <-errCh:
 		if err != nil {
-			return exitCodeUnknown, err
+			return exitCodeError, err
 		}
 	case status := <-statusCh:
 		statusCode = status.StatusCode
@@ -258,5 +254,5 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 		return exitCodeError, nil
 	}
 
-	return exitCodeUnknown, nil
+	return exitCodeError, nil
 }
