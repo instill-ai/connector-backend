@@ -87,7 +87,7 @@ export function CheckCreate() {
 
         // Check connector state being updated in 120 secs
         let currentTime = new Date().getTime();
-        const timeoutTime = new Date().getTime() + 120000;
+        let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -105,7 +105,7 @@ export function CheckCreate() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response STATE_CONNECTED`]: (r) => r.json().destination_connector.connector.state === "STATE_CONNECTED",
         });
 
-        // destination-mysql ()
+        // destination-mysql (will end up with STATE_ERROR)
         var mySQLDstConnector = {
             "id": randomString(10),
             "destination_connector_definition": constant.mySQLDstDefRscName,
@@ -132,6 +132,18 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response connector uid": (r) => helper.isUUID(r.json().destination_connector.uid),
             "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.mySQLDstDefRscName
         });
+
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_ERROR") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         // check JSON Schema failure cases
         var jsonSchemaFailedBodyCSV = {
@@ -543,8 +555,6 @@ export function CheckWrite() {
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200`]: (r) => r.status === 200,
         });
-
-        sleep(6)
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,

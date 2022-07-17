@@ -1,7 +1,10 @@
 package worker
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -134,10 +137,6 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 		RestartPolicy: container.RestartPolicy{
 			Name: "no",
 		},
-		LogConfig: container.LogConfig{
-			Type:   "json-file",
-			Config: map[string]string{},
-		},
 		Mounts: []mount.Mount{
 			{
 				Type:   w.mountType,
@@ -152,7 +151,7 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	config := &container.Config{
 		Image:        param.ImageName,
 		Tty:          false,
-		AttachStdin:  true,
+		AttachStdin:  false,
 		AttachStdout: true,
 		AttachStderr: true,
 		Cmd: []string{
@@ -183,19 +182,19 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	return exitCode, nil
 }
 
-func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody) (exitCode, error) {
+func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody) (code exitCode, err error) {
 
 	// Run the actual container
-	if err := cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
-		return exitCodeError, err
+	if err = cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
+		code = exitCodeError
 	}
 
 	var statusCode int64
 	statusCh, errCh := cli.ContainerWait(context.Background(), cont.ID, container.WaitConditionNotRunning)
 	select {
-	case err := <-errCh:
+	case err = <-errCh:
 		if err != nil {
-			return exitCodeError, err
+			code = exitCodeError
 		}
 	case status := <-statusCh:
 		statusCode = status.StatusCode
@@ -203,20 +202,48 @@ func runCheckContainer(cli *client.Client, cont *container.ContainerCreateCreate
 
 	out, err := cli.ContainerLogs(context.Background(), cont.ID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return exitCodeError, err
+		code = exitCodeError
 	}
 	defer out.Close()
 
-	if _, err := stdcopy.StdCopy(os.Stdout, os.Stderr, out); err != nil {
-		return exitCodeError, err
+	var buf bytes.Buffer
+	tee := io.TeeReader(out, &buf)
+
+	if _, err = stdcopy.StdCopy(os.Stdout, os.Stderr, tee); err != nil {
+		code = exitCodeError
 	}
 
 	switch statusCode {
 	case 0:
-		return exitCodeOK, nil
+		scanner := bufio.NewScanner(&buf)
+		for scanner.Scan() {
+			// header := [8]byte{STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}
+			// STREAM_TYPE can be:
+			// 0: stdin (is written on stdout)
+			// 1: stdout
+			// 2: stderr
+			// SIZE1, SIZE2, SIZE3, SIZE4 are the four bytes of the uint32 size encoded as big endian.
+			if scanner.Bytes()[0] == 1 {
+				var jsonMsg map[string]interface{}
+				if err := json.Unmarshal(scanner.Bytes()[8:], &jsonMsg); err == nil {
+					switch jsonMsg["type"] {
+					case "CONNECTION_STATUS":
+						switch jsonMsg["connectionStatus"].(map[string]interface{})["status"] {
+						case "SUCCEEDED":
+							code = exitCodeOK
+						case "FAILED":
+							code = exitCodeError
+						}
+					}
+				}
+			}
+		}
+		if err = scanner.Err(); err != nil {
+			code = exitCodeError
+		}
 	case 1:
-		return exitCodeError, nil
+		code = exitCodeError
 	}
 
-	return exitCodeError, nil
+	return code, nil
 }

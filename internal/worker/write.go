@@ -139,10 +139,6 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 		RestartPolicy: container.RestartPolicy{
 			Name: "no",
 		},
-		LogConfig: container.LogConfig{
-			Type:   "json-file",
-			Config: map[string]string{},
-		},
 		Mounts: []mount.Mount{
 			{
 				Type:   w.mountType,
@@ -194,13 +190,13 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	return exitCode, nil
 }
 
-func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody, abMsgs []byte) (exitCode, error) {
+func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreatedBody, abMsgs []byte) (code exitCode, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
 	// Run the actual container
-	if err := cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
-		return exitCodeError, err
+	if err = cli.ContainerStart(context.Background(), cont.ID, types.ContainerStartOptions{}); err != nil {
+		code = exitCodeError
 	}
 
 	resp, err := cli.ContainerAttach(context.Background(), cont.ID, types.ContainerAttachOptions{
@@ -210,7 +206,7 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 		Stream: true,
 	})
 	if err != nil {
-		return exitCodeError, err
+		code = exitCodeError
 	}
 
 	go func() {
@@ -236,9 +232,9 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 	var statusCode int64
 	statusCh, errCh := cli.ContainerWait(context.Background(), cont.ID, container.WaitConditionNotRunning)
 	select {
-	case err := <-errCh:
+	case err = <-errCh:
 		if err != nil {
-			return exitCodeError, err
+			code = exitCodeError
 		}
 	case status := <-statusCh:
 		statusCode = status.StatusCode
@@ -246,10 +242,10 @@ func runWriteContainer(cli *client.Client, cont *container.ContainerCreateCreate
 
 	switch statusCode {
 	case 0:
-		return exitCodeOK, nil
+		code = exitCodeOK
 	case 1:
-		return exitCodeError, nil
+		code = exitCodeError
 	}
 
-	return exitCodeError, nil
+	return code, nil
 }
