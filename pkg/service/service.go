@@ -542,7 +542,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 		abMsg.Record = &datamodel.AirbyteRecordMessage{
 			Stream:    datamodel.TaskAirbyteCatalog[task.String()].Streams[0].Name,
 			Data:      b,
-			EmittedAt: time.Now().Unix(),
+			EmittedAt: time.Now().UnixMilli(),
 		}
 
 		b, err = json.Marshal(&abMsg)
