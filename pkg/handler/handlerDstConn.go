@@ -147,7 +147,25 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		return resp, st.Err()
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, batch); err != nil {
+	var syncMode string
+	switch req.SyncMode {
+	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
+		syncMode = "full_refresh"
+	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
+		syncMode = "incremental"
+	}
+
+	var dstSyncMode string
+	switch req.DestinationSyncMode {
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
+		dstSyncMode = "overwrite"
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
+		dstSyncMode = "append"
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
+		dstSyncMode = "append_dedup"
+	}
+
+	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, batch); err != nil {
 		return resp, err
 	}
 

@@ -549,6 +549,8 @@ export function CheckWrite() {
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "task": "TASK_DETECTION",
+                "sync_modes": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_modes": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "data": constant.detModelOutput
             }), {
             headers: { "Content-Type": "application/json" }

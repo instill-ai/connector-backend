@@ -106,7 +106,7 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
 
 	// Write config into a container local file (always overwrite)
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.Split(param.ContainerName, ".")[0])
 	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
@@ -115,7 +115,7 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	}
 
 	// Write catalog into a container local file (always overwrite)
-	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.ReplaceAll(param.ContainerName, ".write", ""))
+	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.Split(param.ContainerName, ".")[0])
 	if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
 	}

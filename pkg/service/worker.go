@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
@@ -16,7 +17,7 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connPermalink string
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        fmt.Sprintf("%s.check", connPermalink),
+		ID:        fmt.Sprintf("%s.%d.check", connPermalink, time.Now().UnixNano()),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -31,7 +32,7 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connPermalink string
 			OwnerPermalink:     ownerPermalink,
 			ConnectorPermalink: connPermalink,
 			ImageName:          fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:      fmt.Sprintf("%s.check", connPermalink),
+			ContainerName:      fmt.Sprintf("%s.%d.check", connPermalink, time.Now().UnixNano()),
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
@@ -48,7 +49,7 @@ func (s *service) startWriteWorkflow(ownerPermalink string, connPermalink string
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        fmt.Sprintf("%s.write", connPermalink),
+		ID:        fmt.Sprintf("%s.%d.write", connPermalink, time.Now().UnixNano()),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -63,7 +64,7 @@ func (s *service) startWriteWorkflow(ownerPermalink string, connPermalink string
 			OwnerPermalink:           ownerPermalink,
 			ConnectorPermalink:       connPermalink,
 			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:            fmt.Sprintf("%s.write", connPermalink),
+			ContainerName:            fmt.Sprintf("%s.%d.write", connPermalink, time.Now().UnixNano()),
 			ConfiguredAirbyteCatalog: cfgAbCatalog,
 			AirbyteMessages:          abMsgs,
 		})
@@ -82,7 +83,7 @@ func (s *service) startDeleteWorkflow(connPermalink string) error {
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
-		ID:        fmt.Sprintf("%s.delete", connPermalink),
+		ID:        fmt.Sprintf("%s.%d.delete", connPermalink, time.Now().UnixNano()),
 		TaskQueue: worker.TaskQueue,
 		RetryPolicy: &temporal.RetryPolicy{
 			MaximumAttempts: 1,
@@ -94,7 +95,7 @@ func (s *service) startDeleteWorkflow(connPermalink string) error {
 		workflowOptions,
 		"DeleteWorkflow",
 		&worker.DeleteWorkflowParam{
-			ContainerLocalFileName: connPermalink,
+			ContainerName: fmt.Sprintf("%s.%d.delete", connPermalink, time.Now().UnixNano()),
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))

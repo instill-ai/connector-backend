@@ -13,7 +13,7 @@ import (
 
 var enumRegistry = map[string]map[string]int32{
 	"release_stage":                    connectorPB.ReleaseStage_value,
-	"supported_destination_sync_modes": connectorPB.Spec_SupportedDestinationSyncModes_value,
+	"supported_destination_sync_modes": connectorPB.SupportedDestinationSyncModes_value,
 	"auth_flow_type":                   connectorPB.AdvancedAuth_AuthFlowType_value,
 }
 

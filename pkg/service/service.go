@@ -46,7 +46,7 @@ type Service interface {
 	ReadSourceConnector(id string, ownerRscName string) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, batch *structpb.Value) error
+	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, batch *structpb.Value) error
 }
 
 type service struct {
@@ -494,7 +494,7 @@ func (s *service) ReadSourceConnector(id string, ownerRscName string) ([]byte, e
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, batch *structpb.Value) error {
+func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, batch *structpb.Value) error {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -517,8 +517,8 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 		Streams: []datamodel.ConfiguredAirbyteStream{
 			{
 				Stream:              &datamodel.TaskAirbyteCatalog[task.String()].Streams[0],
-				SyncMode:            "full_refresh",
-				DestinationSyncMode: "overwrite",
+				SyncMode:            syncMode,
+				DestinationSyncMode: dstSyncMode,
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"go.temporal.io/sdk/activity"
@@ -13,12 +14,12 @@ import (
 
 // DeleteWorkflowParam represents the parameters for DeleteWorkflow
 type DeleteWorkflowParam struct {
-	ContainerLocalFileName string
+	ContainerName string
 }
 
 // DeleteActivityParam represents the parameters for DeleteActivity
 type DeleteActivityParam struct {
-	ContainerLocalFileName string
+	ContainerName string
 }
 
 func (w *worker) DeleteWorkflow(ctx workflow.Context, param *DeleteWorkflowParam) error {
@@ -36,7 +37,7 @@ func (w *worker) DeleteWorkflow(ctx workflow.Context, param *DeleteWorkflowParam
 
 	var result exitCode
 	if err := workflow.ExecuteActivity(ctx, w.DeleteActivity, &DeleteActivityParam{
-		ContainerLocalFileName: param.ContainerLocalFileName,
+		ContainerName: param.ContainerName,
 	}).Get(ctx, &result); err != nil {
 		return temporal.NewNonRetryableApplicationError("activity failed", "ActivityError", err)
 	}
@@ -55,10 +56,10 @@ func (w *worker) DeleteWorkflow(ctx workflow.Context, param *DeleteWorkflowParam
 func (w *worker) DeleteActivity(ctx context.Context, param *DeleteActivityParam) (exitCode, error) {
 
 	logger := activity.GetLogger(ctx)
-	logger.Info("Activity", "ContainerLocalFileName", param.ContainerLocalFileName)
+	logger.Info("Activity", "ContainerName", param.ContainerName)
 
 	// Delete config local file
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, param.ContainerLocalFileName)
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", w.mountTargetVDP, strings.Split(param.ContainerName, ".")[0])
 	if _, err := os.Stat(configFilePath); err == nil {
 		if err := os.Remove(configFilePath); err != nil {
 			return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to delete config file %s", configFilePath), "DeleteContainerLocalFileError", err)
@@ -66,7 +67,7 @@ func (w *worker) DeleteActivity(ctx context.Context, param *DeleteActivityParam)
 	}
 
 	// Delete catalog local file
-	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, param.ContainerLocalFileName)
+	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", w.mountTargetVDP, strings.Split(param.ContainerName, ".")[0])
 	if _, err := os.Stat(catalogFilePath); err == nil {
 		if err := os.Remove(catalogFilePath); err != nil {
 			return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to delete catalog file %s", catalogFilePath), "DeleteContainerLocalFileError", err)
