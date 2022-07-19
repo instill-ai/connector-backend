@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.5-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.4-alpha...v0.4.5-alpha) (2022-07-19)
+
+
+### Bug Fixes
+
+* fix airbyte emitted_at timestamp ([3eca9d6](https://github.com/instill-ai/connector-backend/commit/3eca9d67e5c14838145133b775c7c15de43c290c))
+* fix wrong state when connector check failed ([92367e1](https://github.com/instill-ai/connector-backend/commit/92367e118fe7091e1e6b5b15a66486ab83ae6dc8))
+* remove airbyte namespace ([bd7baa4](https://github.com/instill-ai/connector-backend/commit/bd7baa4300c004968d6b3601259c24fdccb4bc4f))
+
 ## [0.4.4-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.3-alpha...v0.4.4-alpha) (2022-07-10)
 
 
