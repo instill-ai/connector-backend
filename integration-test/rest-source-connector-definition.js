@@ -1,6 +1,7 @@
 import http from "k6/http";
 import { check, group } from "k6";
 
+import { connectorHost } from "./const.js"
 import { deepEqual } from "./helper.js"
 
 export function CheckList() {

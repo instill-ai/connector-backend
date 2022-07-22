@@ -1,14 +1,12 @@
 import http from "k6/http";
 import { check, group } from "k6";
 
+import { connectorHost } from "./const.js"
+
 import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
 import * as sourceConnector from './rest-source-connector.js';
 import * as destinationConnector from './rest-destination-connector.js';
-
-const pipelineHost = "http://pipeline-backend:8081"
-const connectorHost = "http://connector-backend:8082";
-const modelHost = "http://model-backend:8083"
 
 export let options = {
   setupTimeout: '300s',

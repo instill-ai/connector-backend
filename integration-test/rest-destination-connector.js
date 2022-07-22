@@ -2,6 +2,8 @@ import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
+import { connectorHost } from "./const.js"
+
 import * as constant from "./const.js"
 import * as helper from "./helper.js"
 
@@ -133,17 +135,23 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.mySQLDstDefRscName
         });
 
-        // Check connector state being updated in 120 secs
+        // Check connector state being updated in 80 secs
         currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
+        timeoutTime = new Date().getTime() + 80000;
+        var pass = false
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_ERROR") {
+                pass = true
                 break
             }
             sleep(1)
             currentTime = new Date().getTime();
         }
+
+        check(null, {
+            "POST /v1alpha/destination-connectors MySQL destination connector ended up STATE_ERROR": (r) => pass
+        })
 
         // check JSON Schema failure cases
         var jsonSchemaFailedBodyCSV = {
