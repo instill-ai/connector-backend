@@ -347,11 +347,6 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		return st.Err()
 	}
 
-	// Start Temporal worker
-	if err := s.startDeleteWorkflow(dbConnector.UID.String()); err != nil {
-		return err
-	}
-
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 

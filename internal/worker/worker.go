@@ -2,10 +2,7 @@ package worker
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"go.temporal.io/sdk/workflow"
 
@@ -30,15 +27,12 @@ type Worker interface {
 	CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error)
 	WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) error
 	WriteActivity(ctx context.Context, param *WriteActivityParam) (exitCode, error)
-	DeleteWorkflow(ctx workflow.Context, param *DeleteWorkflowParam) error
-	DeleteActivity(ctx context.Context, param *DeleteActivityParam) (exitCode, error)
 }
 
 // worker represents resources required to run Temporal workflow and activity
 type worker struct {
 	repository         repository.Repository
 	dockerClient       *client.Client
-	mountType          mount.Type
 	mountSourceVDP     string
 	mountTargetVDP     string
 	mountSourceAirbyte string
@@ -57,29 +51,9 @@ func NewWorker(r repository.Repository) Worker {
 	return &worker{
 		repository:         r,
 		dockerClient:       cli,
-		mountType:          mount.TypeVolume,
 		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
 		mountTargetVDP:     "/vdp",
 		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,
 		mountTargetAirbyte: "/local",
 	}
-}
-
-// Stop and remove a container
-func stopAndRemoveContainer(cli *client.Client, containerName string) error {
-
-	if err := cli.ContainerStop(context.Background(), containerName, nil); err != nil {
-		return fmt.Errorf("unable to stop container %s: %s", containerName, err)
-	}
-
-	removeOptions := types.ContainerRemoveOptions{
-		RemoveVolumes: true,
-		Force:         true,
-	}
-
-	if err := cli.ContainerRemove(context.Background(), containerName, removeOptions); err != nil {
-		return fmt.Errorf("Unable to remove container %s: %s", containerName, err)
-	}
-
-	return nil
 }

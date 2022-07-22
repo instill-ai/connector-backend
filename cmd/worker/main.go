@@ -51,8 +51,6 @@ func main() {
 	w.RegisterActivity(cw.CheckActivity)
 	w.RegisterWorkflow(cw.WriteWorkflow)
 	w.RegisterActivity(cw.WriteActivity)
-	w.RegisterWorkflow(cw.DeleteWorkflow)
-	w.RegisterActivity(cw.DeleteActivity)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
