@@ -113,6 +113,9 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		return resp, err
 	}
 
+	modelInst := req.ModelInstance
+	indices := req.Indices
+
 	var rootFieldName string
 	switch req.Task {
 	case modelPB.ModelInstance_TASK_UNSPECIFIED:
@@ -125,13 +128,17 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		rootFieldName = "keypoint_outputs"
 	}
 
-	batch, ok := req.Data.Fields[rootFieldName]
+	data, ok := req.Data.Fields[rootFieldName]
 	if !ok {
 		return resp, fmt.Errorf("Task input array is not found in the payload")
 	}
 
+	if len(indices) != len(data.GetListValue().GetValues()) {
+		return resp, fmt.Errorf("indices list and data list size (batch size) are not equal")
+	}
+
 	// Validate TaskAirbyteCatalog's JSON schema
-	if err := datamodel.ValidateTaskAirbyteCatalog(req.Task, batch); err != nil {
+	if err := datamodel.ValidateTaskAirbyteCatalog(req.Task, data); err != nil {
 		st, err := sterr.CreateErrorBadRequest(
 			"[handler] write destination connector error",
 			[]*errdetails.BadRequest_FieldViolation{
@@ -165,7 +172,7 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		dstSyncMode = "append_dedup"
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, batch); err != nil {
+	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, modelInst, indices, data); err != nil {
 		return resp, err
 	}
 

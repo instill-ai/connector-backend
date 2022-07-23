@@ -559,6 +559,8 @@ export function CheckWrite() {
                 "task": "TASK_DETECTION",
                 "sync_modes": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_modes": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "model_instance": "models/dummy/instances/dummy",
+                "indices": ["img1", "img2", "img3"],
                 "data": constant.detModelOutput
             }), {
             headers: { "Content-Type": "application/json" }

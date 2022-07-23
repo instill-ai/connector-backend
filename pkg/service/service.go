@@ -46,7 +46,7 @@ type Service interface {
 	ReadSourceConnector(id string, ownerRscName string) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, batch *structpb.Value) error
+	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, modelInst string, indices []string, data *structpb.Value) error
 }
 
 type service struct {
@@ -489,7 +489,7 @@ func (s *service) ReadSourceConnector(id string, ownerRscName string) ([]byte, e
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, batch *structpb.Value) error {
+func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, modelInst string, indices []string, data *structpb.Value) error {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -525,7 +525,10 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 
 	// Create AirbyteMessage RECORD type, i.e., AirbyteRecordMessage in JSON Line format
 	var byteAbMsgs []byte
-	for idx, value := range batch.GetListValue().GetValues() {
+	for idx, value := range data.GetListValue().GetValues() {
+
+		value.GetStructValue().GetFields()["model_instance"] = structpb.NewStringValue(modelInst)
+		value.GetStructValue().GetFields()["index"] = structpb.NewStringValue(indices[idx])
 
 		b, err := protojson.Marshal(value)
 		if err != nil {
