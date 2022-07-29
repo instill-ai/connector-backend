@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -48,10 +47,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	logger.Info("CheckWorkflow started")
 
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 120 * time.Second,
-		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
+		StartToCloseTimeout: 10 * time.Minute,
 	}
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
@@ -72,7 +68,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 		ConfigFileName:  param.ConfigFileName,
 		ConnectorConfig: dbConnector.Configuration,
 	}).Get(ctx, &result); err != nil {
-		return temporal.NewNonRetryableApplicationError("activity failed", "ActivityError", err)
+		return err
 	}
 
 	switch result {
@@ -93,7 +89,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 }
 
 // CheckActivity is a check activity definition.
-func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (code exitCode, err error) {
+func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error) {
 
 	logger := activity.GetLogger(ctx)
 	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName)
@@ -107,17 +103,46 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
 
-	pull, err := w.dockerClient.ImagePull(context.Background(), param.ImageName, types.ImagePullOptions{})
-	if err != nil {
-		return exitCodeError, err
-	}
-	defer pull.Close()
-
-	if _, err := io.Copy(os.Stdout, pull); err != nil {
-		return exitCodeError, err
-	}
+	defer func() {
+		// Delete config local file
+		if _, err := os.Stat(configFilePath); err == nil {
+			if err := os.Remove(configFilePath); err != nil {
+				logger.Error("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "Error", err)
+			}
+		}
+	}()
 
 	runCmd := exec.Command(
+		"docker",
+		"inspect",
+		"--type=image",
+		param.ImageName,
+	)
+
+	// Check image existing or otherwise pull image
+	if err := runCmd.Run(); err != nil {
+
+		runCmd = exec.Command(
+			"docker",
+			"pull",
+			param.ImageName,
+		)
+
+		var out bytes.Buffer
+		runCmd.Stdout = &out
+		runCmd.Stderr = &out
+
+		if err := runCmd.Run(); err != nil {
+			return exitCodeError, err
+		}
+
+		if _, err := io.Copy(os.Stdout, &out); err != nil {
+			return exitCodeError, err
+		}
+
+	}
+
+	runCmd = exec.Command(
 		"docker",
 		"run",
 		"-i",
@@ -134,19 +159,17 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	runCmd.Stdout = &out
 	runCmd.Stderr = &out
 
-	buf := bytes.Buffer{}
-	tee := io.TeeReader(&out, &buf)
-
 	if err := runCmd.Run(); err != nil {
-		logger.Error("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "Error", err)
+		return exitCodeError, err
 	}
 
-	scanner := bufio.NewScanner(tee)
+	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "STDOUT", out.String())
+
+	scanner := bufio.NewScanner(&out)
 	for scanner.Scan() {
 
-		if err = scanner.Err(); err != nil {
-			code = exitCodeError
-			break
+		if err := scanner.Err(); err != nil {
+			return exitCodeError, err
 		}
 
 		var jsonMsg map[string]interface{}
@@ -155,25 +178,14 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 			case "CONNECTION_STATUS":
 				switch jsonMsg["connectionStatus"].(map[string]interface{})["status"] {
 				case "SUCCEEDED":
-					code = exitCodeOK
+					return exitCodeOK, nil
 				case "FAILED":
-					code = exitCodeError
+					return exitCodeError, nil
 				}
 			}
 		}
-
 	}
 
-	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "STDOUT", buf.String())
-
-	// Delete config local file
-	if _, err := os.Stat(configFilePath); err == nil {
-		if err := os.Remove(configFilePath); err != nil {
-			logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "Error", err)
-			code = exitCodeError
-		}
-	}
-
-	return code, nil
+	return exitCodeError, fmt.Errorf("unable to scan container stdout")
 
 }

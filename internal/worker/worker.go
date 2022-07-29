@@ -2,12 +2,12 @@ package worker
 
 import (
 	"context"
+	"time"
 
-	"github.com/docker/docker/client"
+	"github.com/allegro/bigcache"
 	"go.temporal.io/sdk/workflow"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 )
 
@@ -31,8 +31,8 @@ type Worker interface {
 
 // worker represents resources required to run Temporal workflow and activity
 type worker struct {
+	cache              *bigcache.BigCache
 	repository         repository.Repository
-	dockerClient       *client.Client
 	mountSourceVDP     string
 	mountTargetVDP     string
 	mountSourceAirbyte string
@@ -41,16 +41,12 @@ type worker struct {
 
 // NewWorker initiates a temporal worker for workflow and activity definition
 func NewWorker(r repository.Repository) Worker {
-	logger, _ := logger.GetZapLogger()
 
-	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		logger.Error("Unable to create docker client")
-	}
+	cache, _ := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
 
 	return &worker{
+		cache:              cache,
 		repository:         r,
-		dockerClient:       cli,
 		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
 		mountTargetVDP:     "/vdp",
 		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,

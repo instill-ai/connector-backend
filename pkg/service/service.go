@@ -46,7 +46,7 @@ type Service interface {
 	ReadSourceConnector(id string, ownerRscName string) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, modelInst string, indices []string, data *structpb.Value) error
+	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, pipeline string, recipe *pipelinePB.Recipe, indices []string, data *structpb.Value) error
 }
 
 type service struct {
@@ -489,7 +489,7 @@ func (s *service) ReadSourceConnector(id string, ownerRscName string) ([]byte, e
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, modelInst string, indices []string, data *structpb.Value) error {
+func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, pipeline string, recipe *pipelinePB.Recipe, indices []string, data *structpb.Value) error {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -527,10 +527,22 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 	var byteAbMsgs []byte
 	for idx, value := range data.GetListValue().GetValues() {
 
-		value.GetStructValue().GetFields()["model_instance"] = structpb.NewStringValue(modelInst)
+		b, err := protojson.Marshal(recipe)
+		if err != nil {
+			return fmt.Errorf("batch[%d] error: %w", idx, err)
+		}
+
+		recipeStruct := structpb.Struct{}
+		err = protojson.Unmarshal(b, &recipeStruct)
+		if err != nil {
+			return fmt.Errorf("batch[%d] error: %w", idx, err)
+		}
+
+		value.GetStructValue().GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
+		value.GetStructValue().GetFields()["pipeline"] = structpb.NewStringValue(pipeline)
 		value.GetStructValue().GetFields()["index"] = structpb.NewStringValue(indices[idx])
 
-		b, err := protojson.Marshal(value)
+		b, err = protojson.Marshal(value)
 		if err != nil {
 			return fmt.Errorf("batch[%d] error: %w", idx, err)
 		}
@@ -551,10 +563,14 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 		byteAbMsgs = append(byteAbMsgs, b...)
 	}
 
+	// Remove the last "\n"
+	byteAbMsgs = byteAbMsgs[:len(byteAbMsgs)-1]
+
 	// Start Temporal worker
 	if err := s.startWriteWorkflow(
 		ownerPermalink, conn.UID.String(),
 		connDef.DockerRepository, connDef.DockerImageTag,
+		pipeline, indices,
 		byteCfgAbCatalog, byteAbMsgs); err != nil {
 		return err
 	}

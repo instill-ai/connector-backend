@@ -113,7 +113,8 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		return resp, err
 	}
 
-	modelInst := req.ModelInstance
+	pipeline := req.Pipeline
+	recipe := req.Recipe
 	indices := req.Indices
 
 	var rootFieldName string
@@ -172,7 +173,7 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		dstSyncMode = "append_dedup"
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, modelInst, indices, data); err != nil {
+	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, pipeline, recipe, indices, data); err != nil {
 		return resp, err
 	}
 

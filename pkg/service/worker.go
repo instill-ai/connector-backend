@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/worker"
@@ -19,9 +18,6 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connUID string, dock
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("%s.%d.check", connUID, time.Now().UnixNano()),
 		TaskQueue: worker.TaskQueue,
-		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
 	}
 
 	we, err := s.temporalClient.ExecuteWorkflow(
@@ -32,8 +28,8 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connUID string, dock
 			OwnerPermalink: ownerPermalink,
 			ConnUID:        connUID,
 			ImageName:      fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:  fmt.Sprintf("%s.%d.check", connUID, time.Now().UnixNano()),
-			ConfigFileName: fmt.Sprintf("%s.%d", connUID, time.Now().UnixNano()),
+			ContainerName:  fmt.Sprintf("%s.check", workflowOptions.ID),
+			ConfigFileName: workflowOptions.ID,
 		})
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
@@ -45,16 +41,14 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connUID string, dock
 	return nil
 }
 
-func (s *service) startWriteWorkflow(ownerPermalink string, connUID string, dockerRepo string, dockerImgTag string, cfgAbCatalog []byte, abMsgs []byte) error {
+func (s *service) startWriteWorkflow(ownerPermalink string, connUID string,
+	dockerRepo string, dockerImgTag string, pipeline string, indices []string, cfgAbCatalog []byte, abMsgs []byte) error {
 
 	logger, _ := logger.GetZapLogger()
 
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("%s.%d.write", connUID, time.Now().UnixNano()),
 		TaskQueue: worker.TaskQueue,
-		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: 1,
-		},
 	}
 
 	we, err := s.temporalClient.ExecuteWorkflow(
@@ -65,9 +59,11 @@ func (s *service) startWriteWorkflow(ownerPermalink string, connUID string, dock
 			OwnerPermalink:           ownerPermalink,
 			ConnectorPermalink:       connUID,
 			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:            fmt.Sprintf("%s.%d.write", connUID, time.Now().UnixNano()),
-			ConfigFileName:           fmt.Sprintf("%s.%d", connUID, time.Now().UnixNano()),
-			CatalogFileName:          fmt.Sprintf("%s.%d", connUID, time.Now().UnixNano()),
+			ContainerName:            fmt.Sprintf("%s.write", workflowOptions.ID),
+			ConfigFileName:           workflowOptions.ID,
+			CatalogFileName:          workflowOptions.ID,
+			Pipeline:                 pipeline,
+			Indices:                  indices,
 			ConfiguredAirbyteCatalog: cfgAbCatalog,
 			AirbyteMessages:          abMsgs,
 		})
