@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.5-alpha...v0.5.0-alpha) (2022-07-29)
+
+
+### Features
+
+* add data association with pipeline ([c3236f7](https://github.com/instill-ai/connector-backend/commit/c3236f79474bcd45bffeaaa806c37635ab086308))
+
+
+### Bug Fixes
+
+* fix dst data duplicate and lost issue ([eb7ad97](https://github.com/instill-ai/connector-backend/commit/eb7ad9786f6c4ab7d42311e3e0746e713e839d4a)), closes [#25](https://github.com/instill-ai/connector-backend/issues/25)
+
 ## [0.4.5-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.4-alpha...v0.4.5-alpha) (2022-07-19)
 
 
