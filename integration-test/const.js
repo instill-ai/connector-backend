@@ -1,6 +1,6 @@
-export const pipelineHost = "http://pipeline-backend:8081"
-export const connectorHost = "http://connector-backend:8082";
-export const modelHost = "http://model-backend:8083"
+export const pipelineHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8081` : "http://pipeline-backend:8081";
+export const connectorHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8082` : "http://connector-backend:8082";
+export const modelHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8083` : "http://model-backend:8083";
 
 export const csvDstConfig = {
     "destination_path": "/local"
