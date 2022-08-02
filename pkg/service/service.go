@@ -370,25 +370,6 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 		return nil, err
 	}
 
-	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
-		switch state {
-		case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
-			st, err := sterr.CreateErrorPreconditionFailure(
-				"[service] update connector state",
-				[]*errdetails.PreconditionFailure_Violation{
-					{
-						Type:        "STATE",
-						Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
-						Description: fmt.Sprintf("Cannot disconnect a %s connector", connDef.ID),
-					},
-				})
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return nil, st.Err()
-		}
-	}
-
 	switch conn.State {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR):
 		st, err := sterr.CreateErrorPreconditionFailure(
@@ -409,6 +390,10 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
 
+		if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
+			break
+		}
+
 		// Set connector state to STATE_UNSPECIFIED when it is set to STATE_CONNECTED from STATE_DISCONNECTED
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
 			return nil, err
@@ -419,6 +404,23 @@ func (s *service) UpdateConnectorState(id string, ownerRscName string, connector
 		}
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
+
+		if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
+			st, err := sterr.CreateErrorPreconditionFailure(
+				"[service] update connector state",
+				[]*errdetails.PreconditionFailure_Violation{
+					{
+						Type:        "STATE",
+						Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+						Description: fmt.Sprintf("Cannot disconnect a %s connector", connDef.ID),
+					},
+				})
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
+		}
+
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
