@@ -28,7 +28,7 @@ func (s *service) startCheckWorkflow(ownerPermalink string, connUID string, dock
 			OwnerPermalink: ownerPermalink,
 			ConnUID:        connUID,
 			ImageName:      fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:  fmt.Sprintf("%s.check", workflowOptions.ID),
+			ContainerName:  workflowOptions.ID,
 			ConfigFileName: workflowOptions.ID,
 		})
 	if err != nil {
@@ -59,7 +59,7 @@ func (s *service) startWriteWorkflow(ownerPermalink string, connUID string,
 			OwnerPermalink:           ownerPermalink,
 			ConnectorPermalink:       connUID,
 			ImageName:                fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag),
-			ContainerName:            fmt.Sprintf("%s.write", workflowOptions.ID),
+			ContainerName:            workflowOptions.ID,
 			ConfigFileName:           workflowOptions.ID,
 			CatalogFileName:          workflowOptions.ID,
 			Pipeline:                 pipeline,
