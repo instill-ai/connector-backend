@@ -23,7 +23,7 @@ type AirbyteMessage struct {
 	Record *AirbyteRecordMessage `json:"record"`
 }
 
-// AirbyteRecordMessage defines the RECORD type of AirbyteMessage, AirbyteRecordMessage, protocol as in
+// AirbyteRecordMessage defines the RECORD type of AirbyteMessage, AirbyteRecordMessage, protocol as in (without namespace field)
 // https://github.com/airbytehq/airbyte/blob/master/airbyte-protocol/protocol-models/src/main/resources/airbyte_protocol/airbyte_protocol.yaml#L50-L70
 type AirbyteRecordMessage struct {
 	Stream    string          `json:"stream"`
@@ -37,7 +37,7 @@ type AirbyteCatalog struct {
 	Streams []AirbyteStream `json:"streams"`
 }
 
-// AirbyteStream defines the AirbyteStream protocol as in:
+// AirbyteStream defines the AirbyteStream protocol as in (without namespace field):
 // https://github.com/airbytehq/airbyte/blob/master/airbyte-protocol/protocol-models/src/main/resources/airbyte_protocol/airbyte_protocol.yaml#L223-L260
 type AirbyteStream struct {
 	Name                    string          `json:"name"`
