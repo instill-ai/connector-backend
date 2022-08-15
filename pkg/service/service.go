@@ -21,7 +21,6 @@ import (
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
-	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
 
@@ -46,7 +45,7 @@ type Service interface {
 	ReadSourceConnector(id string, ownerRscName string) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, pipeline string, recipe *pipelinePB.Recipe, indices []string, data *structpb.Value) error
+	WriteDestinationConnector(id string, ownerRscName string, param datamodel.WriteDestinationConnectorParam) error
 }
 
 type service struct {
@@ -491,7 +490,7 @@ func (s *service) ReadSourceConnector(id string, ownerRscName string) ([]byte, e
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(id string, ownerRscName string, task modelPB.ModelInstance_Task, syncMode string, dstSyncMode string, pipeline string, recipe *pipelinePB.Recipe, indices []string, data *structpb.Value) error {
+func (s *service) WriteDestinationConnector(id string, ownerRscName string, param datamodel.WriteDestinationConnectorParam) error {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
@@ -513,9 +512,9 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 	cfgCatalog := datamodel.ConfiguredAirbyteCatalog{
 		Streams: []datamodel.ConfiguredAirbyteStream{
 			{
-				Stream:              &datamodel.TaskAirbyteCatalog[task.String()].Streams[0],
-				SyncMode:            syncMode,
-				DestinationSyncMode: dstSyncMode,
+				Stream:              &datamodel.TaskAirbyteCatalog[param.Task.String()].Streams[0],
+				SyncMode:            param.SyncMode,
+				DestinationSyncMode: param.DstSyncMode,
 			},
 		},
 	}
@@ -527,32 +526,48 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 
 	// Create AirbyteMessage RECORD type, i.e., AirbyteRecordMessage in JSON Line format
 	var byteAbMsgs []byte
-	for idx, value := range data.GetListValue().GetValues() {
+	for idx, batchOutput := range param.BatchOutputs {
 
-		b, err := protojson.Marshal(recipe)
+		b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(batchOutput)
 		if err != nil {
-			return fmt.Errorf("batch[%d] error: %w", idx, err)
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+		}
+
+		dataStruct := structpb.Struct{}
+		err = protojson.Unmarshal(b, &dataStruct)
+		if err != nil {
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+		}
+
+		b, err = protojson.MarshalOptions{UseProtoNames: true}.Marshal(param.Recipe)
+		if err != nil {
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
 		recipeStruct := structpb.Struct{}
 		err = protojson.Unmarshal(b, &recipeStruct)
 		if err != nil {
-			return fmt.Errorf("batch[%d] error: %w", idx, err)
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
-		value.GetStructValue().GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
-		value.GetStructValue().GetFields()["pipeline"] = structpb.NewStringValue(pipeline)
-		value.GetStructValue().GetFields()["index"] = structpb.NewStringValue(indices[idx])
+		pipelineStruct := structpb.Struct{}
+		pipelineStruct.Fields = make(map[string]*structpb.Value)
+		pipelineStruct.GetFields()["name"] = structpb.NewStringValue(param.Pipeline)
+		pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
 
-		b, err = protojson.Marshal(value)
+		dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
+		dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(param.ModelInst)
+		dataStruct.GetFields()["index"] = structpb.NewStringValue(param.Indices[idx])
+
+		b, err = protojson.Marshal(&dataStruct)
 		if err != nil {
-			return fmt.Errorf("batch[%d] error: %w", idx, err)
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
 		abMsg := datamodel.AirbyteMessage{}
 		abMsg.Type = "RECORD"
 		abMsg.Record = &datamodel.AirbyteRecordMessage{
-			Stream:    datamodel.TaskAirbyteCatalog[task.String()].Streams[0].Name,
+			Stream:    datamodel.TaskAirbyteCatalog[param.Task.String()].Streams[0].Name,
 			Data:      b,
 			EmittedAt: time.Now().UnixMilli(),
 		}
@@ -572,7 +587,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, task
 	if err := s.startWriteWorkflow(
 		ownerPermalink, conn.UID.String(),
 		connDef.DockerRepository, connDef.DockerImageTag,
-		pipeline, indices,
+		param.Pipeline, param.Indices,
 		byteCfgAbCatalog, byteAbMsgs); err != nil {
 		return err
 	}

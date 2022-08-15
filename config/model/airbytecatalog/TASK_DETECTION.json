@@ -14,57 +14,67 @@
         "description": "The AirbyteCatalog of detection",
         "type": "object",
         "required": [
-          "bounding_box_objects"
+          "detection"
         ],
         "properties": {
-          "bounding_box_objects": {
-            "type": "array",
-            "title": "Bounding box objects",
-            "description": "A list of bounding box objects",
-            "items": {
-              "type": "object",
-              "required": [
-                "category",
-                "bounding_box",
-                "score"
-              ],
-              "properties": {
-                "category": {
-                  "type": "string",
-                  "title": "Category",
-                  "description": "The object category"
-                },
-                "bounding_box": {
+          "detection": {
+            "title": "Detection object",
+            "description": "The detection object",
+            "type": "object",
+            "required": [
+              "bounding_boxes"
+            ],
+            "properties": {
+              "bounding_boxes": {
+                "type": "array",
+                "title": "Bounding box objects",
+                "description": "A list of bounding box objects",
+                "items": {
                   "type": "object",
-                  "title": "Bounding box",
-                  "description": "Bounding box data in (top, left, width, and height) format",
+                  "required": [
+                    "category",
+                    "bounding_box",
+                    "score"
+                  ],
                   "properties": {
-                    "top": {
-                      "type": "number",
-                      "title": "Top",
-                      "description": "Bounding box top y-axis value"
+                    "category": {
+                      "type": "string",
+                      "title": "Category",
+                      "description": "The object category"
                     },
-                    "left": {
-                      "type": "number",
-                      "title": "Left",
-                      "description": "Bounding box left x-axis value"
+                    "bounding_box": {
+                      "type": "object",
+                      "title": "Bounding box",
+                      "description": "Bounding box data in (top, left, width, and height) format",
+                      "properties": {
+                        "top": {
+                          "type": "number",
+                          "title": "Top",
+                          "description": "Bounding box top y-axis value"
+                        },
+                        "left": {
+                          "type": "number",
+                          "title": "Left",
+                          "description": "Bounding box left x-axis value"
+                        },
+                        "width": {
+                          "type": "number",
+                          "title": "Width",
+                          "description": "Bounding box width value"
+                        },
+                        "height": {
+                          "type": "number",
+                          "title": "Height",
+                          "description": "Bounding box height value"
+                        }
+                      }
                     },
-                    "width": {
+                    "score": {
                       "type": "number",
-                      "title": "Width",
-                      "description": "Bounding box width value"
-                    },
-                    "height": {
-                      "type": "number",
-                      "title": "Height",
-                      "description": "Bounding box height value"
+                      "title": "Score",
+                      "description": "Confidence score"
                     }
                   }
-                },
-                "score": {
-                  "type": "number",
-                  "title": "Score",
-                  "description": "Confidence score"
                 }
               }
             }

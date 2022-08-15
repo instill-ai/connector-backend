@@ -17,7 +17,6 @@ import (
 	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
-	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
 )
 
 func (h *handler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
@@ -117,64 +116,64 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 	recipe := req.Recipe
 	indices := req.Indices
 
-	var rootFieldName string
-	switch req.Task {
-	case modelPB.ModelInstance_TASK_UNSPECIFIED:
-		rootFieldName = "unspecified_outputs"
-	case modelPB.ModelInstance_TASK_CLASSIFICATION:
-		rootFieldName = "classification_outputs"
-	case modelPB.ModelInstance_TASK_DETECTION:
-		rootFieldName = "detection_outputs"
-	case modelPB.ModelInstance_TASK_KEYPOINT:
-		rootFieldName = "keypoint_outputs"
-	}
+	for idx, modelInstOutput := range req.ModelInstanceOutputs {
 
-	data, ok := req.Data.Fields[rootFieldName]
-	if !ok {
-		return resp, fmt.Errorf("Task input array is not found in the payload")
-	}
+		modelInst := recipe.ModelInstances[idx]
+		task := modelInstOutput.Task
+		batchOutputs := modelInstOutput.BatchOutputs
 
-	if len(indices) != len(data.GetListValue().GetValues()) {
-		return resp, fmt.Errorf("indices list and data list size (batch size) are not equal")
-	}
-
-	// Validate TaskAirbyteCatalog's JSON schema
-	if err := datamodel.ValidateTaskAirbyteCatalog(req.Task, data); err != nil {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] write destination connector error",
-			[]*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "data",
-					Description: err.Error(),
-				},
-			},
-		)
-		if err != nil {
-			logger.Error(err.Error())
+		if len(indices) != len(batchOutputs) {
+			return resp, fmt.Errorf("indices list and data list size (batch size) are not equal")
 		}
-		return resp, st.Err()
-	}
 
-	var syncMode string
-	switch req.SyncMode {
-	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
-		syncMode = "full_refresh"
-	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
-		syncMode = "incremental"
-	}
+		// Validate TaskAirbyteCatalog's JSON schema
+		if err := datamodel.ValidateTaskAirbyteCatalog(task, batchOutputs); err != nil {
+			st, err := sterr.CreateErrorBadRequest(
+				"[handler] write destination connector error",
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "data",
+						Description: err.Error(),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return resp, st.Err()
+		}
 
-	var dstSyncMode string
-	switch req.DestinationSyncMode {
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
-		dstSyncMode = "overwrite"
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
-		dstSyncMode = "append"
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
-		dstSyncMode = "append_dedup"
-	}
+		var syncMode string
+		switch req.SyncMode {
+		case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
+			syncMode = "full_refresh"
+		case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
+			syncMode = "incremental"
+		}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName, req.Task, syncMode, dstSyncMode, pipeline, recipe, indices, data); err != nil {
-		return resp, err
+		var dstSyncMode string
+		switch req.DestinationSyncMode {
+		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
+			dstSyncMode = "overwrite"
+		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
+			dstSyncMode = "append"
+		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
+			dstSyncMode = "append_dedup"
+		}
+
+		if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
+			datamodel.WriteDestinationConnectorParam{
+				Task:         task,
+				SyncMode:     syncMode,
+				DstSyncMode:  dstSyncMode,
+				Pipeline:     pipeline,
+				ModelInst:    modelInst,
+				Recipe:       recipe,
+				Indices:      indices,
+				BatchOutputs: batchOutputs,
+			}); err != nil {
+			return resp, err
+		}
 	}
 
 	return resp, nil

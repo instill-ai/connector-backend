@@ -556,17 +556,30 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
-                "task": "TASK_DETECTION",
-                "sync_modes": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_modes": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "model_instance": "models/dummy/instances/dummy",
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0",
+                        "models/dummy-model/instances/v2.0"
+                    ]
+                },
                 "indices": ["img1", "img2", "img3"],
-                "data": constant.detModelOutput
+                "model_instance_outputs": constant.detModelInstOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200`]: (r) => r.status === 200,
         });
+
+        // Check connector state being updated in 3 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 3000;
+        while (timeoutTime > currentTime) {
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,

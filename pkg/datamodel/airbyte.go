@@ -11,9 +11,9 @@ import (
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
+	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
 
 // AirbyteMessage defines the AirbyteMessage protocol  as in
@@ -67,6 +67,18 @@ type ConfiguredAirbyteStream struct {
 // TaskAirbyteCatalog stores the pre-defined task AirbyteCatalog
 var TaskAirbyteCatalog map[string]*AirbyteCatalog
 
+// WriteDestinationConnectorParam stores the parameters for WriteDestinationConnector service per model instance
+type WriteDestinationConnectorParam struct {
+	Task         modelPB.ModelInstance_Task
+	SyncMode     string
+	DstSyncMode  string
+	Pipeline     string
+	ModelInst    string
+	Recipe       *pipelinePB.Recipe
+	Indices      []string
+	BatchOutputs []*modelPB.ModelInstanceOutput
+}
+
 // InitTaskAirbyteCatalog reads all task AirbyteCatalog files and stores the JSON content in the global TaskAirbyteCatalog variable
 func InitTaskAirbyteCatalog() {
 
@@ -97,7 +109,7 @@ func InitTaskAirbyteCatalog() {
 }
 
 // ValidateTaskAirbyteCatalog validates the TaskAirbyteCatalog's JSON schema given the task type and the batch data (i.e., the output from model-backend trigger)
-func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batch *structpb.Value) error {
+func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batchOutputs []*modelPB.ModelInstanceOutput) error {
 
 	// Load TaskAirbyteCatalog JSON Schema
 	jsBytes, err := json.Marshal(TaskAirbyteCatalog[task.String()].Streams[0].JSONSchema)
@@ -111,15 +123,16 @@ func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batch *structpb
 	}
 
 	// Check each element in the batch
-	for idx, value := range batch.GetListValue().GetValues() {
-		b, err := protojson.Marshal(value)
+	for idx, batchOutput := range batchOutputs {
+
+		b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(batchOutput)
 		if err != nil {
-			return fmt.Errorf("batch[%d] error: %w", idx, err)
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
 		var v interface{}
 		if err := json.Unmarshal(b, &v); err != nil {
-			return fmt.Errorf("batch[%d] error: %w", idx, err)
+			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
 		if err = sch.Validate(v); err != nil {
@@ -127,13 +140,13 @@ func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batch *structpb
 			case *jsonschema.ValidationError:
 				b, err := json.MarshalIndent(e.DetailedOutput(), "", "  ")
 				if err != nil {
-					return fmt.Errorf("batch[%d] error: %w", idx, err)
+					return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 				}
-				return fmt.Errorf("batch[%d] error: %s", idx, string(b))
+				return fmt.Errorf("batch_outputs[%d] error: %s", idx, string(b))
 			case jsonschema.InvalidJSONTypeError:
-				return fmt.Errorf("batch[%d] error: %w", idx, e)
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, e)
 			default:
-				return fmt.Errorf("batch[%d] error: %w", idx, e)
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, e)
 			}
 		}
 	}
