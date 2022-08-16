@@ -11,7 +11,7 @@ export function CheckList() {
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions`), {
             "GET /v1alpha/source-connector-definitions response status is 200": (r) => r.status === 200,
             "GET /v1alpha/source-connector-definitions response has source_connector_definitions array": (r) => Array.isArray(r.json().source_connector_definitions),
-            "GET /v1alpha/destination-connector-definitions response total_size > 0": (r) => r.json().total_size > 0
+            "GET /v1alpha/source-connector-definitions response total_size > 0": (r) => r.json().total_size > 0
         });
 
         var limitedRecords = http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions`)
@@ -33,22 +33,22 @@ export function CheckList() {
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_BASIC response source_connector_definitions has no spec": (r) => r.json().source_connector_definitions[0].connector_definition.spec === null,
+            "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_BASIC response source_connector_definitions[0].connector_definition.spec is null": (r) => r.json().source_connector_definitions[0].connector_definition.spec === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_FULL response source_connector_definitions has spec": (r) => r.json().source_connector_definitions[0].connector_definition.spec !== null,
+            "GET /v1alpha/source-connector-definitions?page_size=1&view=VIEW_FULL response source_connector_definitions[0].connector_definition.spec is not null": (r) => r.json().source_connector_definitions[0].connector_definition.spec !== null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=1`), {
             "GET /v1alpha/source-connector-definitions?page_size=1 response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connector-definitions?page_size=1 response source_connector_definitions has no spec": (r) => r.json().source_connector_definitions[0].connector_definition.spec === null,
+            "GET /v1alpha/source-connector-definitions?page_size=1 response source_connector_definitions[0].connector_definition.spec is null": (r) => r.json().source_connector_definitions[0].connector_definition.spec === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size}`), {
             [`GET /v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size} response next_page_token empty`]: (r) => r.json().next_page_token === "",
+            [`GET /v1alpha/source-connector-definitions?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === "",
         });
     });
 }
@@ -66,17 +66,17 @@ export function CheckGet() {
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions/${def.id}?view=VIEW_BASIC`), {
             [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_BASIC response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_BASIC response source_definition has no spec`]: (r) => r.json().source_connector_definition.connector_definition.spec === null,
+            [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_BASIC response source_connector_definition.connector_definition.spec is null`]: (r) => r.json().source_connector_definition.connector_definition.spec === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions/${def.id}?view=VIEW_FULL`), {
             [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_FULL response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_FULL response source_definition has spec`]: (r) => r.json().source_connector_definition.connector_definition.spec !== null,
+            [`GET /v1alpha/source-connector-definitions/${def.id}?view=VIEW_FULL response source_connector_definition.connector_definition.spec is not null`]: (r) => r.json().source_connector_definition.connector_definition.spec !== null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connector-definitions/${def.id}`), {
             [`GET /v1alpha/source-connector-definitions/${def.id} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connector-definitions/${def.id} response source_definition has no spec`]: (r) => r.json().source_connector_definition.connector_definition.spec === null,
+            [`GET /v1alpha/source-connector-definitions/${def.id} response source_connector_definition.connector_definition.spec is null`]: (r) => r.json().source_connector_definition.connector_definition.spec === null,
         });
     });
 }

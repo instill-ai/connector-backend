@@ -337,7 +337,7 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 				{
 					Type:        "DELETE",
 					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
-					Description: fmt.Sprintf("The connector is still in use by pipeline: %s ", strings.Join(pipeIDs, " ")),
+					Description: fmt.Sprintf("The connector is still in use by pipeline: %s", strings.Join(pipeIDs, " ")),
 				},
 			})
 		if err != nil {

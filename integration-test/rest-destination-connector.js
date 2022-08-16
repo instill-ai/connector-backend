@@ -211,10 +211,10 @@ export function CheckList() {
     group("Connector API: List destination connectors", () => {
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors`), {
-            [`GET /v1alpha/destination-connectors empty db response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/destination-connectors empty db response has destination_connectors array`]: (r) => Array.isArray(r.json().destination_connectors),
-            [`GET /v1alpha/destination-connectors empty db response has total_size 0`]: (r) => r.json().total_size == 0,
-            [`GET /v1alpha/destination-connectors empty db response has empty next_page_token`]: (r) => r.json().next_page_token == "",
+            [`GET /v1alpha/destination-connectors response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/destination-connectors response destination_connectors array is 0 length`]: (r) => r.json().destination_connectors.length === 0,
+            [`GET /v1alpha/destination-connectors response next_page_token is empty`]: (r) => r.json().next_page_token === "",
+            [`GET /v1alpha/destination-connectors response total_size is 0`]: (r) => r.json().total_size == 0,
         });
 
         const numConnectors = 10
@@ -266,22 +266,22 @@ export function CheckList() {
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors has no configuration": (r) => r.json().destination_connectors[0].connector.configuration === null,
+            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors has configuration": (r) => r.json().destination_connectors[0].connector.configuration !== null
+            "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors[0].connector.configuration is not null": (r) => r.json().destination_connectors[0].connector.configuration !== null
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
             "GET /v1alpha/destination-connectors?page_size=1 response status 200": (r) => r.status === 200,
-            "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors has no configuration": (r) => r.json().destination_connectors[0].connector.configuration === null,
+            "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
             [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response next_page_token empty`]: (r) => r.json().next_page_token === "",
+            [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === ""
         });
 
         // Delete the destination connectors
