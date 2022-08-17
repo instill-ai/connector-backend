@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1-alpha](https://github.com/instill-ai/connector-backend/compare/v0.5.0-alpha...v0.5.1-alpha) (2022-08-17)
+
+
+### Bug Fixes
+
+* fix http and grpc state change logic ([9e7b7eb](https://github.com/instill-ai/connector-backend/commit/9e7b7eb3cc29fa04d5880ea27dcc532c9407a0fa))
+* fix worker container naming ([b0ad69e](https://github.com/instill-ai/connector-backend/commit/b0ad69e7825a880073561ef8aa066f52e6de0d64))
+
 ## [0.5.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.4.5-alpha...v0.5.0-alpha) (2022-07-29)
 
 
