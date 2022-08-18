@@ -2,11 +2,11 @@
   uid: f20a3c02-c70e-4e76-8566-7c13ca11d18d
   dockerRepository: instill-ai/source-http
   dockerImageTag: ""
-  documentationUrl: https://docs.instill.tech/connectors/definitions/source-http
+  documentationUrl: https://www.instill.tech/docs/source-connectors/http
   icon: http.svg
 - name: gRPC
   uid: 82ca7d29-a35c-4222-b900-8d6878195e7a
   dockerRepository: instill-ai/source-grpc
   dockerImageTag: ""
-  documentationUrl: https://docs.instill.tech/connectors/definitions/source-grpc
+  documentationUrl: https://www.instill.tech/docs/source-connectors/grpc
   icon: grpc.svg
