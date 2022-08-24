@@ -556,8 +556,8 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 		pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
 
 		dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
-		dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(param.ModelInst)
-		dataStruct.GetFields()["index"] = structpb.NewStringValue(param.Indices[idx])
+		dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(param.ModelInstance)
+		dataStruct.GetFields()["index"] = structpb.NewStringValue(param.DataMappingIndices[idx])
 
 		b, err = protojson.Marshal(&dataStruct)
 		if err != nil {
@@ -587,7 +587,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 	if err := s.startWriteWorkflow(
 		ownerPermalink, conn.UID.String(),
 		connDef.DockerRepository, connDef.DockerImageTag,
-		param.Pipeline, param.Indices,
+		param.Pipeline, param.DataMappingIndices,
 		byteCfgAbCatalog, byteAbMsgs); err != nil {
 		return err
 	}

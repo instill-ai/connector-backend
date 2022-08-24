@@ -9,7 +9,7 @@ var connectDestinationRequiredFields = []string{"name"}
 var disconnectDestinationRequiredFields = []string{"name"}
 var renameSourceRequiredFields = []string{"name", "new_source_connector_id"}
 var renameDestinationRequiredFields = []string{"name", "new_destination_connector_id"}
-var writeDestinationRequiredFields = []string{"name", "sync_mode", "destination_sync_mode", "pipeline", "recipe", "indices", "model_instance_outputs"}
+var writeDestinationRequiredFields = []string{"name", "sync_mode", "destination_sync_mode", "pipeline", "recipe", "data_mapping_indices", "model_instance_outputs"}
 
 // *ImmutableFields* are Protobuf message fields with IMMUTABLE field_behavior annotation
 var destinationImmutableFields = []string{"id", "destination_connector_definition"}

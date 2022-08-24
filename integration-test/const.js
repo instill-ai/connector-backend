@@ -3,7 +3,7 @@ export const connectorHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8082` : 
 export const modelHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8083` : "http://model-backend:8083";
 
 export const csvDstConfig = {
-    "destination_path": "/local"
+    "destination_path": "/local/connector-backend-test"
 };
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
@@ -27,8 +27,10 @@ export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee
 export const detModelInstOutputs = [
     {
         "task": "TASK_DETECTION",
+        "model_instance": "models/dummy-model/instances/v1.0",
         "batch_outputs": [
             {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
                 "detection": {
                     "bounding_boxes": [
                         { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
@@ -36,6 +38,7 @@ export const detModelInstOutputs = [
                 }
             },
             {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
                 "detection": {
                     "bounding_boxes": [
                         { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
@@ -43,6 +46,37 @@ export const detModelInstOutputs = [
                 }
             },
             {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
+                "detection": {
+                    "bounding_boxes": [
+                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "task": "TASK_DETECTION",
+        "model_instance": "models/dummy-model/instances/v2.0",
+        "batch_outputs": [
+            {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
+                "detection": {
+                    "bounding_boxes": [
+                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                    ]
+                }
+            },
+            {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
+                "detection": {
+                    "bounding_boxes": [
+                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                    ]
+                }
+            },
+            {
+                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
                 "detection": {
                     "bounding_boxes": [
                         { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }

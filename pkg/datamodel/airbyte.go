@@ -69,14 +69,14 @@ var TaskAirbyteCatalog map[string]*AirbyteCatalog
 
 // WriteDestinationConnectorParam stores the parameters for WriteDestinationConnector service per model instance
 type WriteDestinationConnectorParam struct {
-	Task         modelPB.ModelInstance_Task
-	SyncMode     string
-	DstSyncMode  string
-	Pipeline     string
-	ModelInst    string
-	Recipe       *pipelinePB.Recipe
-	Indices      []string
-	BatchOutputs []*modelPB.ModelInstanceOutput
+	Task               modelPB.ModelInstance_Task
+	SyncMode           string
+	DstSyncMode        string
+	Pipeline           string
+	ModelInstance      string
+	Recipe             *pipelinePB.Recipe
+	DataMappingIndices []string
+	BatchOutputs       []*pipelinePB.BatchOutput
 }
 
 // InitTaskAirbyteCatalog reads all task AirbyteCatalog files and stores the JSON content in the global TaskAirbyteCatalog variable
@@ -109,7 +109,7 @@ func InitTaskAirbyteCatalog() {
 }
 
 // ValidateTaskAirbyteCatalog validates the TaskAirbyteCatalog's JSON schema given the task type and the batch data (i.e., the output from model-backend trigger)
-func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batchOutputs []*modelPB.ModelInstanceOutput) error {
+func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batchOutputs []*pipelinePB.BatchOutput) error {
 
 	// Load TaskAirbyteCatalog JSON Schema
 	jsBytes, err := json.Marshal(TaskAirbyteCatalog[task.String()].Streams[0].JSONSchema)

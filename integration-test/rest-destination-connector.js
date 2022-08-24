@@ -341,16 +341,15 @@ export function CheckUpdate() {
             headers: { "Content-Type": "application/json" },
         })
 
-        var configUpdate = constant.csvDstConfig
-        configUpdate.destination_path = "/tmp"
-
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
             "destination_connector_definition": csvDstConnector.destination_connector_definition,
             "connector": {
                 "tombstone": true,
                 "description": randomString(50),
-                "configuration": configUpdate
+                "configuration": {
+                    destination_path: "/tmp"
+                }
             }
         }
 
@@ -560,12 +559,14 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
+                    "source": "source-connectors/dummy-source",
                     "model_instances": [
                         "models/dummy-model/instances/v1.0",
                         "models/dummy-model/instances/v2.0"
-                    ]
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
                 },
-                "indices": ["img1", "img2", "img3"],
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
                 "model_instance_outputs": constant.detModelInstOutputs
             }), {
             headers: { "Content-Type": "application/json" }

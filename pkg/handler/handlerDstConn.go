@@ -114,16 +114,16 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 
 	pipeline := req.Pipeline
 	recipe := req.Recipe
-	indices := req.Indices
+	dataMappingIndices := req.DataMappingIndices
 
-	for idx, modelInstOutput := range req.ModelInstanceOutputs {
+	for _, modelInstanceOutput := range req.ModelInstanceOutputs {
 
-		modelInst := recipe.ModelInstances[idx]
-		task := modelInstOutput.Task
-		batchOutputs := modelInstOutput.BatchOutputs
+		task := modelInstanceOutput.Task
+		modelInstance := modelInstanceOutput.ModelInstance
+		batchOutputs := modelInstanceOutput.BatchOutputs
 
-		if len(indices) != len(batchOutputs) {
-			return resp, fmt.Errorf("indices list and data list size (batch size) are not equal")
+		if len(dataMappingIndices) != len(batchOutputs) {
+			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(dataMappingIndices), len(batchOutputs))
 		}
 
 		// Validate TaskAirbyteCatalog's JSON schema
@@ -163,14 +163,14 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 
 		if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
 			datamodel.WriteDestinationConnectorParam{
-				Task:         task,
-				SyncMode:     syncMode,
-				DstSyncMode:  dstSyncMode,
-				Pipeline:     pipeline,
-				ModelInst:    modelInst,
-				Recipe:       recipe,
-				Indices:      indices,
-				BatchOutputs: batchOutputs,
+				Task:               task,
+				SyncMode:           syncMode,
+				DstSyncMode:        dstSyncMode,
+				Pipeline:           pipeline,
+				ModelInstance:      modelInstance,
+				Recipe:             recipe,
+				DataMappingIndices: dataMappingIndices,
+				BatchOutputs:       batchOutputs,
 			}); err != nil {
 			return resp, err
 		}
