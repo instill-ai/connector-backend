@@ -730,7 +730,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connID = getResp.GetSourceConnector().GetId()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 
-		dbConnDefID, err := resource.GetRscNameID(v.GetSourceConnector().GetSourceConnectorDefinition())
+		dbConnDefID, err := resource.GetRscNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}
@@ -793,7 +793,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		getResp, err := h.GetDestinationConnector(
 			ctx,
 			&connectorPB.GetDestinationConnectorRequest{
-				Name: fmt.Sprintf("destination-connectors/%s", v.GetDestinationConnector().GetId()),
+				Name: v.GetDestinationConnector().GetName(),
 				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
@@ -845,7 +845,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 		connID = getResp.GetDestinationConnector().GetId()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 
-		dbConnDefID, err := resource.GetRscNameID(v.GetDestinationConnector().GetDestinationConnectorDefinition())
+		dbConnDefID, err := resource.GetRscNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
 			return resp, err
 		}

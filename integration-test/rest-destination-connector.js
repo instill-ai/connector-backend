@@ -367,6 +367,23 @@ export function CheckUpdate() {
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector configuration`]: (r) => r.json().destination_connector.connector.configuration.destination_path === csvDstConnectorUpdate.connector.configuration.destination_path
         });
 
+        // Try to update with a non-existing name field (which should be ignored)
+        csvDstConnectorUpdate = {
+            "name": `destination-connectors/${randomString(5)}`,
+            "connector": {
+                "description": randomString(50),
+            }
+        }
+
+        resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+            JSON.stringify(csvDstConnectorUpdate), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(resCSVDstUpdate, {
+            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} with non-existing name field response status 200`]: (r) => r.status === 200,
+        })
+
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${csvDstConnector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
