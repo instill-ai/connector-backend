@@ -33,7 +33,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             },
@@ -41,7 +41,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             },
@@ -49,7 +49,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             }
@@ -63,7 +63,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             },
@@ -71,7 +71,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             },
@@ -79,7 +79,7 @@ export const detModelInstOutputs = [
                 "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
                 "detection": {
                     "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+                        { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
                     ]
                 }
             }

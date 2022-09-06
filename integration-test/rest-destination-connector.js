@@ -591,9 +591,9 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200`]: (r) => r.status === 200,
         });
 
-        // Check connector state being updated in 3 secs
+        // Wait for 1 sec for the connector writing to the destination-csv
         currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 3000;
+        timeoutTime = new Date().getTime() + 1000;
         while (timeoutTime > currentTime) {
             sleep(1)
             currentTime = new Date().getTime();

@@ -57,6 +57,8 @@ integration-test:				## Run integration test
 	fi
 	@TEST_FOLDER_ABS_PATH=${PWD} ${K6BIN} run -e HOSTNAME=$(HOSTNAME) integration-test/rest.js --no-usage-report
 	@if [ ${K6BIN} != "k6" ]; then rm -rf $(dirname ${K6BIN}); fi
+	@echo "Test destination connector data sanity..."
+	@python3 integration-test/check_connector_destination.py && echo "Pass" || echo "Failed"
 
 .PHONY: help
 help:       	 				## Show this help
