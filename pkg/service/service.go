@@ -528,7 +528,10 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 	var byteAbMsgs []byte
 	for idx, batchOutput := range param.BatchOutputs {
 
-		b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(batchOutput)
+		b, err := protojson.MarshalOptions{
+			UseProtoNames:   true,
+			EmitUnpopulated: true,
+		}.Marshal(batchOutput)
 		if err != nil {
 			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
@@ -539,7 +542,10 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
 
-		b, err = protojson.MarshalOptions{UseProtoNames: true}.Marshal(param.Recipe)
+		b, err = protojson.MarshalOptions{
+			UseProtoNames:   true,
+			EmitUnpopulated: true,
+		}.Marshal(param.Recipe)
 		if err != nil {
 			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
