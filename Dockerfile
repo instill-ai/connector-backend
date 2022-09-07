@@ -28,7 +28,7 @@ COPY --from=docker:dind /usr/local/bin/docker /usr/local/bin/
 COPY --from=build /src/config ./config
 COPY --from=build /src/release-please ./release-please
 COPY --from=build /src/internal/db/migration ./internal/db/migration
-COPY --from=build /src/vdp_protocol.yaml ./vdp_protocol.yaml
+COPY --from=build /usr/local/vdp/vdp_protocol.yaml /usr/local/vdp/vdp_protocol.yaml
 
 COPY --from=build /${SERVICE_NAME}-migrate ./
 COPY --from=build /${SERVICE_NAME}-init ./
