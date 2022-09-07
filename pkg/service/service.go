@@ -507,19 +507,21 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 		return err
 	}
 
+	stream := datamodel.TaskOutputAirbyteCatalog.Streams[0]
+	stream.Name = strings.ToLower(strings.TrimPrefix(param.Task.String(), "TASK_"))
+
 	// Create ConfiguredAirbyteCatalog
-	var byteCfgAbCatalog []byte
-	cfgCatalog := datamodel.ConfiguredAirbyteCatalog{
+	cfgAbCatalog := datamodel.ConfiguredAirbyteCatalog{
 		Streams: []datamodel.ConfiguredAirbyteStream{
 			{
-				Stream:              &datamodel.TaskAirbyteCatalog[param.Task.String()].Streams[0],
+				Stream:              &stream,
 				SyncMode:            param.SyncMode,
 				DestinationSyncMode: param.DstSyncMode,
 			},
 		},
 	}
 
-	byteCfgAbCatalog, err = json.Marshal(&cfgCatalog)
+	byteCfgAbCatalog, err := json.Marshal(&cfgAbCatalog)
 	if err != nil {
 		return fmt.Errorf("Marshal AirbyteMessage error: %w", err)
 	}
@@ -573,7 +575,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 		abMsg := datamodel.AirbyteMessage{}
 		abMsg.Type = "RECORD"
 		abMsg.Record = &datamodel.AirbyteRecordMessage{
-			Stream:    datamodel.TaskAirbyteCatalog[param.Task.String()].Streams[0].Name,
+			Stream:    stream.Name,
 			Data:      b,
 			EmittedAt: time.Now().UnixMilli(),
 		}

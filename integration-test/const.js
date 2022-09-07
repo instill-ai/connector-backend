@@ -2,10 +2,6 @@ export const pipelineHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8081` : "
 export const connectorHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8082` : "http://connector-backend:8082";
 export const modelHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8083` : "http://model-backend:8083";
 
-export const csvDstConfig = {
-    "destination_path": "/local/connector-backend-test"
-};
-
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
 export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
@@ -24,65 +20,150 @@ export const gRPCDstDefRscPermalink = "destination-connector-definitions/c0e4a82
 export const mySQLDstDefRscName = "destination-connector-definitions/destination-mysql"
 export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
+export const csvDstConfig = {
+  "destination_path": "/local/connector-backend-test"
+};
+
+export const clsModelInstOutputs = [
+  {
+    "task": "TASK_CLASSIFICATION",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPS",
+        "classification": {
+          "category": "person",
+          "score": 0.99
+        }
+      }
+    ]
+  }
+]
+
 export const detModelInstOutputs = [
-    {
-        "task": "TASK_DETECTION",
-        "model_instance": "models/dummy-model/instances/v1.0",
-        "batch_outputs": [
+  {
+    "task": "TASK_DETECTION",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      },
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      },
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "task": "TASK_DETECTION",
+    "model_instance": "models/dummy-model/instances/v2.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPP",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      },
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPQ",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      },
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPR",
+        "detection": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
+          ]
+        }
+      }
+    ]
+  }
+]
+
+export const kpModelInstOutputs = [
+  {
+    "task": "TASK_KEYPOINT",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
+        "keypoint": {
+          "keypoint_groups": [
             {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
+              "keypoint_group": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
+              "score": 0.99
             },
             {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
+              "keypoint_group": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
+              "score": 0.99
             },
+          ]
+        }
+      }
+    ]
+  }
+]
+
+export const ocrModelInstOutputs = [
+  {
+    "task": "TASK_OCR",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+        "ocr": {
+          "bounding_boxes": [
+            { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 } },
+            { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 } },
+          ],
+          "texts": ["some text", "some text"],
+        }
+      }
+    ]
+  }
+]
+
+export const unspecifiedModelInstOutputs = [
+  {
+    "task": "TASK_UNSPECIFIED",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "batch_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPV",
+        "unspecified": {
+          "raw_outputs": [
             {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
-            }
-        ]
-    },
-    {
-        "task": "TASK_DETECTION",
-        "model_instance": "models/dummy-model/instances/v2.0",
-        "batch_outputs": [
-            {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
+              "name": "some unspecified model output",
+              "data_type": "INT8",
+              "shape": [3, 3, 3],
+              "data": [1, 2, 3, 4, 5, 6, 7]
             },
-            {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
-            },
-            {
-                "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
-                "detection": {
-                    "bounding_boxes": [
-                        { "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 }, "category": "dog", "score": 0.980409 }, { "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 }, "category": "dog", "score": 0.9009272 }
-                    ]
-                }
-            }
-        ]
-    }
+          ],
+        }
+      }
+    ]
+  }
 ]

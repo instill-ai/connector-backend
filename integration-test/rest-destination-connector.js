@@ -570,6 +570,28 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
+        // Write classification output
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.clsModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (classification)`]: (r) => r.status === 200,
+        });
+
+        // Write detection output
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -588,7 +610,70 @@ export function CheckWrite() {
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (detection)`]: (r) => r.status === 200,
+        });
+
+        // Write keypoint output
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.kpModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (keypoint)`]: (r) => r.status === 200,
+        });
+
+        // Write ocr output
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.ocrModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (ocr)`]: (r) => r.status === 200,
+        });
+
+        // Write unspecified output
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.unspecifiedModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (unspecified)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv

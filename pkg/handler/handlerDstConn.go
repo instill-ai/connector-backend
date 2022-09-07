@@ -127,7 +127,7 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		}
 
 		// Validate TaskAirbyteCatalog's JSON schema
-		if err := datamodel.ValidateTaskAirbyteCatalog(task, batchOutputs); err != nil {
+		if err := datamodel.ValidateAirbyteCatalog(batchOutputs); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] write destination connector error",
 				[]*errdetails.BadRequest_FieldViolation{

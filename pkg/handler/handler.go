@@ -34,7 +34,7 @@ type handler struct {
 // NewHandler initiates a handler instance
 func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
 	datamodel.InitJSONSchema()
-	datamodel.InitTaskAirbyteCatalog()
+	datamodel.InitAirbyteCatalog()
 	return &handler{
 		service: s,
 	}

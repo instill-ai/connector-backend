@@ -1,13 +1,12 @@
 package datamodel
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"io/ioutil"
-	"path/filepath"
-	"strings"
 
+	"github.com/ghodss/yaml"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -48,7 +47,7 @@ type AirbyteStream struct {
 	SourceDefinedPrimaryKey [][]string      `json:"source_defined_primary_key"`
 }
 
-// ConfiguredAirbyteCatalog defines the ConfiguredAirbyteCatalog protocol  as in:
+// ConfiguredAirbyteCatalog defines the ConfiguredAirbyteCatalog protocol as in:
 // https://github.com/airbytehq/airbyte/blob/master/airbyte-protocol/protocol-models/src/main/resources/airbyte_protocol/airbyte_protocol.yaml#L261-L271
 type ConfiguredAirbyteCatalog struct {
 	Streams []ConfiguredAirbyteStream `json:"streams"`
@@ -64,9 +63,6 @@ type ConfiguredAirbyteStream struct {
 	PrimaryKey          []string       `json:"primary_key"`
 }
 
-// TaskAirbyteCatalog stores the pre-defined task AirbyteCatalog
-var TaskAirbyteCatalog map[string]*AirbyteCatalog
-
 // WriteDestinationConnectorParam stores the parameters for WriteDestinationConnector service per model instance
 type WriteDestinationConnectorParam struct {
 	Task               modelPB.ModelInstance_Task
@@ -79,53 +75,60 @@ type WriteDestinationConnectorParam struct {
 	BatchOutputs       []*pipelinePB.BatchOutput
 }
 
-// InitTaskAirbyteCatalog reads all task AirbyteCatalog files and stores the JSON content in the global TaskAirbyteCatalog variable
-func InitTaskAirbyteCatalog() {
+// TaskOutputAirbyteCatalog stores the pre-defined task AirbyteCatalog
+var TaskOutputAirbyteCatalog AirbyteCatalog
+
+var sch *jsonschema.Schema
+
+// InitAirbyteCatalog reads all task AirbyteCatalog files and stores the JSON content in the global TaskAirbyteCatalog variable
+func InitAirbyteCatalog() {
 
 	logger, _ := logger.GetZapLogger()
 
-	TaskAirbyteCatalog = make(map[string]*AirbyteCatalog)
-
-	catalogFiles, err := find("config/model/airbytecatalog", ".json")
+	yamlFile, err := ioutil.ReadFile("/usr/local/vdp/vdp_protocol.yaml")
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
 
-	for _, f := range catalogFiles {
-		taskName := strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
-		TaskAirbyteCatalog[taskName] = &AirbyteCatalog{}
-		if _, ok := modelPB.ModelInstance_Task_value[taskName]; ok {
-			b, err := ioutil.ReadFile(f)
-			if err != nil {
-				logger.Fatal(err.Error())
-			}
-			if err := json.Unmarshal(b, TaskAirbyteCatalog[taskName]); err != nil {
-				logger.Fatal(err.Error())
-			}
-		} else {
-			logger.Fatal(fmt.Sprintf("%s is not a task type defined in the model protobuf", taskName))
-		}
+	jsonSchemaBytes, err := yaml.YAMLToJSON(yamlFile)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}
+
+	compiler := jsonschema.NewCompiler()
+
+	err = compiler.AddResource("vdp_protocol.json", bytes.NewReader(jsonSchemaBytes))
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
+	}
+
+	sch, err = compiler.Compile("vdp_protocol.json")
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
+	}
+
+	// Initialise TaskOutputAirbyteCatalog.Streams[0]
+	TaskOutputAirbyteCatalog.Streams = []AirbyteStream{
+		{
+			JSONSchema:          jsonSchemaBytes,
+			SupportedSyncModes:  []string{"full_refresh", "incremental"},
+			SourceDefinedCursor: false,
+		},
+	}
+
 }
 
-// ValidateTaskAirbyteCatalog validates the TaskAirbyteCatalog's JSON schema given the task type and the batch data (i.e., the output from model-backend trigger)
-func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batchOutputs []*pipelinePB.BatchOutput) error {
-
-	// Load TaskAirbyteCatalog JSON Schema
-	jsBytes, err := json.Marshal(TaskAirbyteCatalog[task.String()].Streams[0].JSONSchema)
-	if err != nil {
-		return err
-	}
-
-	sch, err := jsonschema.CompileString("schema.json", string(jsBytes))
-	if err != nil {
-		return err
-	}
+// ValidateAirbyteCatalog validates the TaskAirbyteCatalog's JSON schema given the task type and the batch data (i.e., the output from model-backend trigger)
+func ValidateAirbyteCatalog(batchOutputs []*pipelinePB.BatchOutput) error {
 
 	// Check each element in the batch
 	for idx, batchOutput := range batchOutputs {
 
-		b, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(batchOutput)
+		b, err := protojson.MarshalOptions{
+			UseProtoNames:   true,
+			EmitUnpopulated: true,
+		}.Marshal(batchOutput)
+
 		if err != nil {
 			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
 		}
@@ -151,20 +154,4 @@ func ValidateTaskAirbyteCatalog(task modelPB.ModelInstance_Task, batchOutputs []
 		}
 	}
 	return nil
-}
-
-func find(root, ext string) ([]string, error) {
-	var a []string
-	if err := filepath.WalkDir(root, func(s string, d fs.DirEntry, e error) error {
-		if e != nil {
-			return e
-		}
-		if filepath.Ext(d.Name()) == ext {
-			a = append(a, s)
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return a, nil
 }
