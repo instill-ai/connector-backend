@@ -11,32 +11,34 @@ export function CheckCreate() {
 
     group("Connector API: Create source connectors", () => {
 
-        var dirHTTPSrcConnector = {
+        var httpSrcConnector = {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
-                "configuration": {}
+                "description": "HTTP source",
+                "configuration": {},
             }
         }
 
-        var dirGRPCSrcConnector = {
+        var gRPCSrcConnector = {
             "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
-                "configuration": {}
+                "description": "gRPC source",
+                "configuration": {},
             }
         }
 
         var resSrcHTTP = http.request(
             "POST",
             `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
         check(resSrcHTTP, {
             "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
-            "POST /v1alpha/source-connectors response connector name": (r) => r.json().source_connector.name == `source-connectors/${dirHTTPSrcConnector.id}`,
+            "POST /v1alpha/source-connectors response connector name": (r) => r.json().source_connector.name == `source-connectors/${httpSrcConnector.id}`,
             "POST /v1alpha/source-connectors response connector uid": (r) => helper.isUUID(r.json().source_connector.uid),
             "POST /v1alpha/source-connectors response connector source_connector_definition": (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName
         });
@@ -44,7 +46,7 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/source-connectors response duplicate HTTP source connector status 409": (r) => r.status === 409
@@ -53,7 +55,7 @@ export function CheckCreate() {
         var resSrcGRPC = http.request(
             "POST",
             `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirGRPCSrcConnector), {
+            JSON.stringify(gRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
@@ -177,7 +179,7 @@ export function CheckGet() {
 
     group("Connector API: Get source connectors by ID", () => {
 
-        var dirHTTPSrcConnector = {
+        var httpSrcConnector = {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
@@ -186,13 +188,13 @@ export function CheckGet() {
         }
 
         var resHTTP = http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
         check(http.request("GET", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector id`]: (r) => r.json().source_connector.id === dirHTTPSrcConnector.id,
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector id`]: (r) => r.json().source_connector.id === httpSrcConnector.id,
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
         });
 
@@ -207,7 +209,7 @@ export function CheckUpdate() {
 
     group("Connector API: Update source connectors", () => {
 
-        var dirGRPCSrcConnector = {
+        var gRPCSrcConnector = {
             "id": "source-grpc",
             "source_connector_definition": constant.gRPCSrcDefRscName,
             "connector": {
@@ -218,24 +220,24 @@ export function CheckUpdate() {
         check(http.request(
             "POST",
             `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirGRPCSrcConnector), {
+            JSON.stringify(gRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
-        dirGRPCSrcConnector.connector.description = randomString(20)
+        gRPCSrcConnector.connector.description = randomString(20)
         check(http.request(
             "PATCH",
-            `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`,
-            JSON.stringify(dirGRPCSrcConnector), {
+            `${connectorHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`,
+            JSON.stringify(gRPCSrcConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
-            [`PATCH /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
+            [`PATCH /v1alpha/source-connectors/${gRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
         });
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${dirGRPCSrcConnector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${dirGRPCSrcConnector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`), {
+            [`DELETE /v1alpha/source-connectors/${gRPCSrcConnector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -346,7 +348,7 @@ export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID", () => {
 
-        var dirHTTPSrcConnector = {
+        var httpSrcConnector = {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
@@ -355,7 +357,7 @@ export function CheckLookUp() {
         }
 
         var resHTTP = http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
@@ -375,7 +377,7 @@ export function CheckLookUp() {
 export function CheckState() {
 
     group("Connector API: Change state source connectors", () => {
-        var dirHTTPSrcConnector = {
+        var httpSrcConnector = {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
@@ -384,7 +386,7 @@ export function CheckState() {
         }
 
         var resHTTP = http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
@@ -411,7 +413,7 @@ export function CheckState() {
 export function CheckRename() {
 
     group("Connector API: Rename source connectors", () => {
-        var dirHTTPSrcConnector = {
+        var httpSrcConnector = {
             "id": "source-http",
             "source_connector_definition": constant.httpSrcDefRscName,
             "connector": {
@@ -420,7 +422,7 @@ export function CheckRename() {
         }
 
         var resHTTP = http.request("POST", `${connectorHost}/v1alpha/source-connectors`,
-            JSON.stringify(dirHTTPSrcConnector), {
+            JSON.stringify(httpSrcConnector), {
             headers: { "Content-Type": "application/json" },
         })
 

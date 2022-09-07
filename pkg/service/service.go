@@ -112,22 +112,6 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 			return nil, st.Err()
 		}
 
-		if connector.Description.String != "" {
-			st, err := sterr.CreateErrorBadRequest(
-				"[service] create connector",
-				[]*errdetails.BadRequest_FieldViolation{
-					{
-						Field:       "connector.description",
-						Description: fmt.Sprintf("%s connector description must be empty", connDef.ID),
-					},
-				},
-			)
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return nil, st.Err()
-		}
-
 		if connector.Configuration.String() != "{}" {
 			st, err := sterr.CreateErrorBadRequest(
 				"[service] create connector",

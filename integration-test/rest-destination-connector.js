@@ -12,24 +12,25 @@ export function CheckCreate() {
     group("Connector API: Create destination connectors", () => {
 
         // destination-http
-        var dirHTTPDstConnector = {
+        var httpDstConnector = {
             "id": "destination-http",
             "destination_connector_definition": constant.httpDstDefRscName,
             "connector": {
-                "configuration": {}
+                "description": "HTTP source",
+                "configuration": {},
             }
         }
 
         var resDstHTTP = http.request(
             "POST",
             `${connectorHost}/v1alpha/destination-connectors`,
-            JSON.stringify(dirHTTPDstConnector), {
+            JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
         check(resDstHTTP, {
             "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
-            "POST /v1alpha/destination-connectors response connector name": (r) => r.json().destination_connector.name == `destination-connectors/${dirHTTPDstConnector.id}`,
+            "POST /v1alpha/destination-connectors response connector name": (r) => r.json().destination_connector.name == `destination-connectors/${httpDstConnector.id}`,
             "POST /v1alpha/destination-connectors response connector uid": (r) => helper.isUUID(r.json().destination_connector.uid),
             "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.httpDstDefRscName
         });
@@ -37,14 +38,14 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorHost}/v1alpha/destination-connectors`,
-            JSON.stringify(dirHTTPDstConnector), {
+            JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/destination-connectors response duplicate HTTP destination connector status 409": (r) => r.status === 409
         });
 
         // destination-grpc
-        var dirGRPCDstConnector = {
+        var gRPCDstConnector = {
             "id": "destination-grpc",
             "destination_connector_definition": constant.gRPCDstDefRscName,
             "connector": {
@@ -55,7 +56,7 @@ export function CheckCreate() {
         var resDstGRPC = http.request(
             "POST",
             `${connectorHost}/v1alpha/destination-connectors`,
-            JSON.stringify(dirGRPCDstConnector), {
+            JSON.stringify(gRPCDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
