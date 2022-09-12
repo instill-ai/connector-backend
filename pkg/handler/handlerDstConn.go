@@ -112,18 +112,11 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 		return resp, err
 	}
 
-	pipeline := req.Pipeline
-	recipe := req.Recipe
-	dataMappingIndices := req.DataMappingIndices
-
+	// Validate batch outputs of each model
 	for _, modelInstanceOutput := range req.ModelInstanceOutputs {
-
-		task := modelInstanceOutput.Task
-		modelInstance := modelInstanceOutput.ModelInstance
 		batchOutputs := modelInstanceOutput.BatchOutputs
-
-		if len(dataMappingIndices) != len(batchOutputs) {
-			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(dataMappingIndices), len(batchOutputs))
+		if len(req.DataMappingIndices) != len(batchOutputs) {
+			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(req.DataMappingIndices), len(batchOutputs))
 		}
 
 		// Validate TaskAirbyteCatalog's JSON schema
@@ -142,38 +135,36 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 			}
 			return resp, st.Err()
 		}
+	}
 
-		var syncMode string
-		switch req.SyncMode {
-		case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
-			syncMode = "full_refresh"
-		case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
-			syncMode = "incremental"
-		}
+	var syncMode string
+	switch req.SyncMode {
+	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
+		syncMode = "full_refresh"
+	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
+		syncMode = "incremental"
+	}
 
-		var dstSyncMode string
-		switch req.DestinationSyncMode {
-		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
-			dstSyncMode = "overwrite"
-		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
-			dstSyncMode = "append"
-		case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
-			dstSyncMode = "append_dedup"
-		}
+	var dstSyncMode string
+	switch req.DestinationSyncMode {
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
+		dstSyncMode = "overwrite"
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
+		dstSyncMode = "append"
+	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
+		dstSyncMode = "append_dedup"
+	}
 
-		if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
-			datamodel.WriteDestinationConnectorParam{
-				Task:               task,
-				SyncMode:           syncMode,
-				DstSyncMode:        dstSyncMode,
-				Pipeline:           pipeline,
-				ModelInstance:      modelInstance,
-				Recipe:             recipe,
-				DataMappingIndices: dataMappingIndices,
-				BatchOutputs:       batchOutputs,
-			}); err != nil {
-			return resp, err
-		}
+	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
+		datamodel.WriteDestinationConnectorParam{
+			SyncMode:             syncMode,
+			DstSyncMode:          dstSyncMode,
+			Pipeline:             req.Pipeline,
+			Recipe:               req.Recipe,
+			DataMappingIndices:   req.DataMappingIndices,
+			ModelInstanceOutputs: req.ModelInstanceOutputs,
+		}); err != nil {
+		return resp, err
 	}
 
 	return resp, nil

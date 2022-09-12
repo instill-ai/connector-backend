@@ -491,14 +491,11 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 		return err
 	}
 
-	stream := datamodel.TaskOutputAirbyteCatalog.Streams[0]
-	stream.Name = strings.ToLower(strings.TrimPrefix(param.Task.String(), "TASK_"))
-
 	// Create ConfiguredAirbyteCatalog
 	cfgAbCatalog := datamodel.ConfiguredAirbyteCatalog{
 		Streams: []datamodel.ConfiguredAirbyteStream{
 			{
-				Stream:              &stream,
+				Stream:              &datamodel.TaskOutputAirbyteCatalog.Streams[0],
 				SyncMode:            param.SyncMode,
 				DestinationSyncMode: param.DstSyncMode,
 			},
@@ -512,64 +509,69 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 
 	// Create AirbyteMessage RECORD type, i.e., AirbyteRecordMessage in JSON Line format
 	var byteAbMsgs []byte
-	for idx, batchOutput := range param.BatchOutputs {
 
-		b, err := protojson.MarshalOptions{
-			UseProtoNames:   true,
-			EmitUnpopulated: true,
-		}.Marshal(batchOutput)
-		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+	for _, modelInstanceOutput := range param.ModelInstanceOutputs {
+
+		for idx, batchOutput := range modelInstanceOutput.BatchOutputs {
+
+			b, err := protojson.MarshalOptions{
+				UseProtoNames:   true,
+				EmitUnpopulated: true,
+			}.Marshal(batchOutput)
+			if err != nil {
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			}
+
+			dataStruct := structpb.Struct{}
+			err = protojson.Unmarshal(b, &dataStruct)
+			if err != nil {
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			}
+
+			b, err = protojson.MarshalOptions{
+				UseProtoNames:   true,
+				EmitUnpopulated: true,
+			}.Marshal(param.Recipe)
+			if err != nil {
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			}
+
+			recipeStruct := structpb.Struct{}
+			err = protojson.Unmarshal(b, &recipeStruct)
+			if err != nil {
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			}
+
+			pipelineStruct := structpb.Struct{}
+			pipelineStruct.Fields = make(map[string]*structpb.Value)
+			pipelineStruct.GetFields()["name"] = structpb.NewStringValue(param.Pipeline)
+			pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
+
+			dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
+			dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(modelInstanceOutput.ModelInstance)
+			dataStruct.GetFields()["index"] = structpb.NewStringValue(param.DataMappingIndices[idx])
+
+			b, err = protojson.Marshal(&dataStruct)
+			if err != nil {
+				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			}
+
+			abMsg := datamodel.AirbyteMessage{}
+			abMsg.Type = "RECORD"
+			abMsg.Record = &datamodel.AirbyteRecordMessage{
+				Stream:    datamodel.TaskOutputAirbyteCatalog.Streams[0].Name,
+				Data:      b,
+				EmittedAt: time.Now().UnixMilli(),
+			}
+
+			b, err = json.Marshal(&abMsg)
+			if err != nil {
+				return fmt.Errorf("Marshal AirbyteMessage error: %w", err)
+			}
+			b = []byte(string(b) + "\n")
+			byteAbMsgs = append(byteAbMsgs, b...)
 		}
 
-		dataStruct := structpb.Struct{}
-		err = protojson.Unmarshal(b, &dataStruct)
-		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
-		}
-
-		b, err = protojson.MarshalOptions{
-			UseProtoNames:   true,
-			EmitUnpopulated: true,
-		}.Marshal(param.Recipe)
-		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
-		}
-
-		recipeStruct := structpb.Struct{}
-		err = protojson.Unmarshal(b, &recipeStruct)
-		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
-		}
-
-		pipelineStruct := structpb.Struct{}
-		pipelineStruct.Fields = make(map[string]*structpb.Value)
-		pipelineStruct.GetFields()["name"] = structpb.NewStringValue(param.Pipeline)
-		pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
-
-		dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
-		dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(param.ModelInstance)
-		dataStruct.GetFields()["index"] = structpb.NewStringValue(param.DataMappingIndices[idx])
-
-		b, err = protojson.Marshal(&dataStruct)
-		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
-		}
-
-		abMsg := datamodel.AirbyteMessage{}
-		abMsg.Type = "RECORD"
-		abMsg.Record = &datamodel.AirbyteRecordMessage{
-			Stream:    stream.Name,
-			Data:      b,
-			EmittedAt: time.Now().UnixMilli(),
-		}
-
-		b, err = json.Marshal(&abMsg)
-		if err != nil {
-			return fmt.Errorf("Marshal AirbyteMessage error: %w", err)
-		}
-		b = []byte(string(b) + "\n")
-		byteAbMsgs = append(byteAbMsgs, b...)
 	}
 
 	// Remove the last "\n"

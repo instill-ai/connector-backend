@@ -11,7 +11,6 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	modelPB "github.com/instill-ai/protogen-go/vdp/model/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
 
@@ -65,14 +64,12 @@ type ConfiguredAirbyteStream struct {
 
 // WriteDestinationConnectorParam stores the parameters for WriteDestinationConnector service per model instance
 type WriteDestinationConnectorParam struct {
-	Task               modelPB.ModelInstance_Task
-	SyncMode           string
-	DstSyncMode        string
-	Pipeline           string
-	ModelInstance      string
-	Recipe             *pipelinePB.Recipe
-	DataMappingIndices []string
-	BatchOutputs       []*pipelinePB.BatchOutput
+	SyncMode             string
+	DstSyncMode          string
+	Pipeline             string
+	Recipe               *pipelinePB.Recipe
+	DataMappingIndices   []string
+	ModelInstanceOutputs []*pipelinePB.ModelInstanceOutput
 }
 
 // TaskOutputAirbyteCatalog stores the pre-defined task AirbyteCatalog
@@ -110,6 +107,7 @@ func InitAirbyteCatalog() {
 	// Initialise TaskOutputAirbyteCatalog.Streams[0]
 	TaskOutputAirbyteCatalog.Streams = []AirbyteStream{
 		{
+			Name:                "vdp",
 			JSONSchema:          jsonSchemaBytes,
 			SupportedSyncModes:  []string{"full_refresh", "incremental"},
 			SourceDefinedCursor: false,

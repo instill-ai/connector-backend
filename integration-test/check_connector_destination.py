@@ -9,12 +9,12 @@ import tempfile
 import os
 
 
-def test_destination_csv(cvTask: str):
+def test_destination_csv(case: str):
 
     tmpCSV = tempfile.NamedTemporaryFile()
 
     subprocess.call(shlex.split(
-        f'docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i sh -c "cat /var/lib/docker/volumes/airbyte/_data/connector-backend-test/_airbyte_raw_{cvTask}.csv"'),
+        f'docker run -it --privileged --pid=host debian nsenter -t 1 -m -u -n -i sh -c "cat /var/lib/docker/volumes/airbyte/_data/test-{case}/_airbyte_raw_vdp.csv"'),
         stdout=open(tmpCSV.name, "w"))
 
     # The VDP protocol YAML file downloaded during image build time
@@ -43,15 +43,16 @@ def test_destination_csv(cvTask: str):
 
 if __name__ == "__main__":
 
-    CV_TASKS = [
+    test_cases = [
         "classification",
-        "detection",
+        "detection-empty-bounding-boxes",
+        "detection-multi-models",
         "keypoint",
         "ocr",
         "unspecified"
     ]
 
-    for cvTask in CV_TASKS:
-        test_destination_csv(cvTask)
+    for case in test_cases:
+        test_destination_csv(case)
 
     sys.exit(0)

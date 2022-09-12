@@ -545,16 +545,21 @@ export function CheckWrite() {
 
     group("Connector API: Write destination connectors", () => {
 
-        var csvDstConnector = {
+        var csvDstConnector, resCSVDst
+
+        // Write classification output
+        csvDstConnector = {
             "id": randomString(10),
             "destination_connector_definition": constant.csvDstDefRscName,
             "connector": {
                 "description": randomString(50),
-                "configuration": constant.csvDstConfig
+                "configuration": {
+                    "destination_path": "/local/test-classification"
+                },
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -571,7 +576,6 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        // Write classification output
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -592,7 +596,85 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (classification)`]: (r) => r.status === 200,
         });
 
-        // Write detection output
+        // Write detection output (empty bounding_boxes)
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-detection-empty-bounding-boxes"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0",
+                        "models/dummy-model/instances/v2.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
+                "model_instance_outputs": constant.detEmptyModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write response status 200 (detection)`]: (r) => r.status === 200,
+        });
+
+        // Write detection output (multiple models)
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-detection-multi-models"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -615,6 +697,34 @@ export function CheckWrite() {
         });
 
         // Write keypoint output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-keypoint"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -636,6 +746,34 @@ export function CheckWrite() {
         });
 
         // Write ocr output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-ocr"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -657,6 +795,34 @@ export function CheckWrite() {
         });
 
         // Write unspecified output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-unspecified"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}:write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
