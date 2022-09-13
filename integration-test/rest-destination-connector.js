@@ -639,7 +639,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-                "model_instance_outputs": constant.detEmptyModelInstOutputs
+                "model_instance_outputs": constant.detectionEmptyModelInstOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -689,7 +689,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-                "model_instance_outputs": constant.detModelInstOutputs
+                "model_instance_outputs": constant.detectionModelInstOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -738,7 +738,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.kpModelInstOutputs
+                "model_instance_outputs": constant.keypointModelInstOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {

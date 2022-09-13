@@ -10,14 +10,14 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/protogen-go v0.3.2-alpha
+	github.com/instill-ai/protogen-go v0.3.3-alpha
 	github.com/instill-ai/usage-client v0.2.1-alpha
 	github.com/instill-ai/x v0.2.0-alpha
 	github.com/jackc/pgconn v1.13.0
 	github.com/knadh/koanf v1.4.3
 	github.com/mennanov/fieldmask-utils v0.6.0
 	github.com/rs/cors v1.8.2
-	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	go.temporal.io/sdk v1.17.0
 	go.uber.org/zap v1.23.0
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591
@@ -63,7 +63,7 @@ require (
 	github.com/robfig/cron v1.2.0 // indirect
 	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
-	go.temporal.io/api v1.11.1-0.20220907050538-6de5285cf463 // indirect
+	go.temporal.io/api v1.12.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect

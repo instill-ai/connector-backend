@@ -114,13 +114,13 @@ func (h *handler) WriteDestinationConnector(ctx context.Context, req *connectorP
 
 	// Validate batch outputs of each model
 	for _, modelInstanceOutput := range req.ModelInstanceOutputs {
-		batchOutputs := modelInstanceOutput.BatchOutputs
-		if len(req.DataMappingIndices) != len(batchOutputs) {
-			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(req.DataMappingIndices), len(batchOutputs))
+		taskOutputs := modelInstanceOutput.TaskOutputs
+		if len(req.DataMappingIndices) != len(taskOutputs) {
+			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(req.DataMappingIndices), len(taskOutputs))
 		}
 
 		// Validate TaskAirbyteCatalog's JSON schema
-		if err := datamodel.ValidateAirbyteCatalog(batchOutputs); err != nil {
+		if err := datamodel.ValidateAirbyteCatalog(taskOutputs); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] write destination connector error",
 				[]*errdetails.BadRequest_FieldViolation{

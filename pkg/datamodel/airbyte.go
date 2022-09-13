@@ -117,23 +117,23 @@ func InitAirbyteCatalog() {
 }
 
 // ValidateAirbyteCatalog validates the TaskAirbyteCatalog's JSON schema given the task type and the batch data (i.e., the output from model-backend trigger)
-func ValidateAirbyteCatalog(batchOutputs []*pipelinePB.BatchOutput) error {
+func ValidateAirbyteCatalog(taskOutputs []*pipelinePB.TaskOutput) error {
 
 	// Check each element in the batch
-	for idx, batchOutput := range batchOutputs {
+	for idx, taskOutput := range taskOutputs {
 
 		b, err := protojson.MarshalOptions{
 			UseProtoNames:   true,
 			EmitUnpopulated: true,
-		}.Marshal(batchOutput)
+		}.Marshal(taskOutput)
 
 		if err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 		}
 
 		var v interface{}
 		if err := json.Unmarshal(b, &v); err != nil {
-			return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+			return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 		}
 
 		if err = sch.Validate(v); err != nil {
@@ -141,13 +141,13 @@ func ValidateAirbyteCatalog(batchOutputs []*pipelinePB.BatchOutput) error {
 			case *jsonschema.ValidationError:
 				b, err := json.MarshalIndent(e.DetailedOutput(), "", "  ")
 				if err != nil {
-					return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+					return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 				}
-				return fmt.Errorf("batch_outputs[%d] error: %s", idx, string(b))
+				return fmt.Errorf("task_outputs[%d] error: %s", idx, string(b))
 			case jsonschema.InvalidJSONTypeError:
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, e)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, e)
 			default:
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, e)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, e)
 			}
 		}
 	}

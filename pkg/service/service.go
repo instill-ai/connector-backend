@@ -512,20 +512,20 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 
 	for _, modelInstanceOutput := range param.ModelInstanceOutputs {
 
-		for idx, batchOutput := range modelInstanceOutput.BatchOutputs {
+		for idx, taskOutput := range modelInstanceOutput.TaskOutputs {
 
 			b, err := protojson.MarshalOptions{
 				UseProtoNames:   true,
 				EmitUnpopulated: true,
-			}.Marshal(batchOutput)
+			}.Marshal(taskOutput)
 			if err != nil {
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 			}
 
 			dataStruct := structpb.Struct{}
 			err = protojson.Unmarshal(b, &dataStruct)
 			if err != nil {
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 			}
 
 			b, err = protojson.MarshalOptions{
@@ -533,13 +533,13 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 				EmitUnpopulated: true,
 			}.Marshal(param.Recipe)
 			if err != nil {
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 			}
 
 			recipeStruct := structpb.Struct{}
 			err = protojson.Unmarshal(b, &recipeStruct)
 			if err != nil {
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 			}
 
 			pipelineStruct := structpb.Struct{}
@@ -553,7 +553,7 @@ func (s *service) WriteDestinationConnector(id string, ownerRscName string, para
 
 			b, err = protojson.Marshal(&dataStruct)
 			if err != nil {
-				return fmt.Errorf("batch_outputs[%d] error: %w", idx, err)
+				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
 			}
 
 			abMsg := datamodel.AirbyteMessage{}

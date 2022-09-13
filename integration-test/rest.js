@@ -29,32 +29,32 @@ export default function (data) {
     });
   });
 
-  // Source connector definitions
-  sourceConnectorDefinition.CheckList()
-  sourceConnectorDefinition.CheckGet()
+  // // Source connector definitions
+  // sourceConnectorDefinition.CheckList()
+  // sourceConnectorDefinition.CheckGet()
 
-  // Destination connector definitions
-  destinationConnectorDefinition.CheckList()
-  destinationConnectorDefinition.CheckGet()
+  // // Destination connector definitions
+  // destinationConnectorDefinition.CheckList()
+  // destinationConnectorDefinition.CheckGet()
 
-  // Source connectors
-  sourceConnector.CheckCreate()
-  sourceConnector.CheckList()
-  sourceConnector.CheckGet()
-  sourceConnector.CheckUpdate()
-  sourceConnector.CheckDelete()
-  sourceConnector.CheckLookUp()
-  sourceConnector.CheckState()
-  sourceConnector.CheckRename()
+  // // Source connectors
+  // sourceConnector.CheckCreate()
+  // sourceConnector.CheckList()
+  // sourceConnector.CheckGet()
+  // sourceConnector.CheckUpdate()
+  // sourceConnector.CheckDelete()
+  // sourceConnector.CheckLookUp()
+  // sourceConnector.CheckState()
+  // sourceConnector.CheckRename()
 
-  // Destination connectors
-  destinationConnector.CheckCreate()
-  destinationConnector.CheckList()
-  destinationConnector.CheckGet()
-  destinationConnector.CheckUpdate()
-  destinationConnector.CheckLookUp()
-  destinationConnector.CheckState()
-  destinationConnector.CheckRename()
+  // // Destination connectors
+  // destinationConnector.CheckCreate()
+  // destinationConnector.CheckList()
+  // destinationConnector.CheckGet()
+  // destinationConnector.CheckUpdate()
+  // destinationConnector.CheckLookUp()
+  // destinationConnector.CheckState()
+  // destinationConnector.CheckRename()
   destinationConnector.CheckWrite()
 
 }
