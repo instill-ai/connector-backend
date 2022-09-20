@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.6.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.5.3-alpha...v0.6.0-alpha) (2022-09-20)
+
+
+### Features
+
+* add data mapping ([5596716](https://github.com/instill-ai/connector-backend/commit/5596716cb2809441aaf7270fc49ba97ddb581857))
+* support all cv tasks defined in vdp protocol ([c38f9e8](https://github.com/instill-ai/connector-backend/commit/c38f9e8ae482ac27c8ae7d391bcac6a85fb4b483)), closes [#33](https://github.com/instill-ai/connector-backend/issues/33)
+
+
+### Bug Fixes
+
+* add http/grpc release stage in connector definitions ([f2648c0](https://github.com/instill-ai/connector-backend/commit/f2648c06105a3eb9ab92dd3291ee03cb0f2630ed)), closes [#30](https://github.com/instill-ai/connector-backend/issues/30)
+* fix destination write for multiple models ([860f62e](https://github.com/instill-ai/connector-backend/commit/860f62ef7486d21b62ffb773ba2ccd1fbeb8ab8d))
+* fix update not using name field ([f8e98c3](https://github.com/instill-ai/connector-backend/commit/f8e98c3d968603e0d3cf0ed652a09b14906ab445))
+* fix zero-value field dropped ([31e297c](https://github.com/instill-ai/connector-backend/commit/31e297c8597415c3d2e8038d2de0bcd1c45480a0))
+
 ## [0.5.3-alpha](https://github.com/instill-ai/connector-backend/compare/v0.5.2-alpha...v0.5.3-alpha) (2022-08-21)
 
 
