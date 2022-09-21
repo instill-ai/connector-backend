@@ -368,7 +368,24 @@ export function CheckUpdate() {
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector configuration`]: (r) => r.json().destination_connector.connector.configuration.destination_path === csvDstConnectorUpdate.connector.configuration.destination_path
         });
 
-        // Try to update with a non-existing name field (which should be ignored)
+        // Try to update with empty description
+        csvDstConnectorUpdate = {
+            "connector": {
+                "description": "",
+            }
+        }
+
+        resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+            JSON.stringify(csvDstConnectorUpdate), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        check(resCSVDstUpdate, {
+            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} with empty description response status 200`]: (r) => r.status === 200,
+            [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} with empty description response empty description`]: (r) => r.json().destination_connector.connector.description === csvDstConnectorUpdate.connector.description,
+        })
+
+        // Try to update with a non-existing name field (which should be ignored because name field is OUTPUT_ONLY)
         csvDstConnectorUpdate = {
             "name": `destination-connectors/${randomString(5)}`,
             "connector": {

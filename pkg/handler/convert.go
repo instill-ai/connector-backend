@@ -124,7 +124,7 @@ func PBToDBConnector(
 
 		description = sql.NullString{
 			String: v.GetConnector().GetDescription(),
-			Valid:  len(v.GetConnector().GetDescription()) > 0,
+			Valid:  true,
 		}
 	case *connectorPB.DestinationConnector:
 		id = v.GetId()
@@ -141,7 +141,7 @@ func PBToDBConnector(
 
 		description = sql.NullString{
 			String: v.GetConnector().GetDescription(),
-			Valid:  len(v.GetConnector().GetDescription()) > 0,
+			Valid:  true,
 		}
 	}
 

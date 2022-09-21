@@ -658,7 +658,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 			}
 			return resp, st.Err()
 		}
-		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		// Remove all OUTPUT_ONLY fields in the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
 			st, err := sterr.CreateErrorBadRequest(
@@ -772,7 +772,7 @@ func (h *handler) updateConnector(ctx context.Context, req interface{}) (resp in
 			return resp, st.Err()
 		}
 
-		// Set all OUTPUT_ONLY fields to zero value on the requested payload
+		// Remove all OUTPUT_ONLY fields in the requested payload
 		pbUpdateMask, err = checkfield.CheckUpdateOutputOnlyFields(pbUpdateMask, outputOnlyFields)
 		if err != nil {
 			st, err := sterr.CreateErrorBadRequest(
