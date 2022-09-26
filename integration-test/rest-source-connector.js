@@ -361,10 +361,10 @@ export function CheckLookUp() {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("GET", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}:lookUp`), {
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}:lookUp response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}:lookUp response connector uid`]: (r) => r.json().source_connector.uid === resHTTP.json().source_connector.uid,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}:lookUp response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
+        check(http.request("GET", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`), {
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector uid`]: (r) => r.json().source_connector.uid === resHTTP.json().source_connector.uid,
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
@@ -390,16 +390,16 @@ export function CheckState() {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect`, null, {
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:connect response status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect response status 200`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect`, null, {
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:disconnect response status 422`]: (r) => r.status === 422,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect response status 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
@@ -426,13 +426,13 @@ export function CheckRename() {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename`,
+        check(http.request("POST", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename`,
             JSON.stringify({
                 "new_source_connector_id": "some-id-not-http"
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}:rename response status 422`]: (r) => r.status === 422,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename response status 422`]: (r) => r.status === 422,
         });
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
