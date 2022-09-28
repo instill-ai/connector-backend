@@ -613,6 +613,10 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (classification)`]: (r) => r.status === 200,
         });
 
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
         // Write detection output (empty bounding_boxes)
         csvDstConnector = {
             "id": randomString(10),
@@ -641,7 +645,7 @@ export function CheckWrite() {
             sleep(1)
             currentTime = new Date().getTime();
         }
-
+        
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -661,6 +665,10 @@ export function CheckWrite() {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
+        });
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
 
         // Write detection output (multiple models)
@@ -713,6 +721,10 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
         });
 
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
         // Write keypoint output
         csvDstConnector = {
             "id": randomString(10),
@@ -762,6 +774,10 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
         });
 
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
         // Write ocr output
         csvDstConnector = {
             "id": randomString(10),
@@ -809,6 +825,10 @@ export function CheckWrite() {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
+        });
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
 
         // Write unspecified output
