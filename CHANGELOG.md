@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.6.0-alpha...v0.7.0-alpha) (2022-10-19)
+
+
+### Bug Fixes
+
+* fix connector empty description update ([0bc3086](https://github.com/instill-ai/connector-backend/commit/0bc3086f7eb79f605ccc3d8c4ea65da84b06f563))
+
+
+### Miscellaneous Chores
+
+* release v0.7.0-alpha ([dc2ae3e](https://github.com/instill-ai/connector-backend/commit/dc2ae3eb37e0df26a1402338b052117d4c6239d3))
+
 ## [0.6.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.5.3-alpha...v0.6.0-alpha) (2022-09-20)
 
 
