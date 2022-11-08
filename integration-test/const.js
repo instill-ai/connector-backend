@@ -1,6 +1,19 @@
-export const pipelineHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8081` : "http://pipeline-backend:8081";
-export const connectorHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8082` : "http://connector-backend:8082";
-export const modelHost = __ENV.HOSTNAME ? `http://${__ENV.HOSTNAME}:8083` : "http://model-backend:8083";
+let pHost = __ENV.HOSTNAME ? `${__ENV.HOSTNAME}` : "pipeline-backend"
+let cHost = __ENV.HOSTNAME ? `${__ENV.HOSTNAME}` : "connector-backend"
+let mHost = __ENV.HOSTNAME ? `${__ENV.HOSTNAME}` : "model-backend"
+let pPort = 8081
+let cPort = 8082
+let mPort = 8083
+if (__ENV.HOSTNAME=="api-gateway") { 
+  pHost = cHost = mHost = "localhost" 
+}
+if (__ENV.HOSTNAME=="api-gateway") { 
+  pPort = cPort = mPort = 8000 
+}
+
+export const pipelineHost = `http://${pHost}:${pPort}`;
+export const connectorHost = `http://${cHost}:${cPort}`;
+export const modelHost = `http://${mHost}:${mPort}`;
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
 export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
