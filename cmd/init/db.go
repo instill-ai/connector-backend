@@ -46,7 +46,7 @@ func createConnectorDefinitionRecord(
 		ReleaseStage:         releaseStage,
 	}
 
-	if result := db.Model(&datamodel.ConnectorDefinition{}).Create(&connectorDef); result.Error != nil {
+	if result := db.Model(&datamodel.ConnectorDefinition{}).FirstOrCreate(&connectorDef); result.Error != nil {
 		return result.Error
 	}
 
