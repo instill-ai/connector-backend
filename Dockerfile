@@ -32,4 +32,4 @@ COPY --from=build /${SERVICE_NAME}-worker ./
 COPY --from=build /${SERVICE_NAME} ./
 
 # Download vdp protocol YAML file
-RUN mkdir /usr/local/vdp && curl https://raw.githubusercontent.com/instill-ai/vdp/main/protocol/vdp_protocol.yaml -so /usr/local/vdp/vdp_protocol.yaml
+ADD https://raw.githubusercontent.com/instill-ai/vdp/main/protocol/vdp_protocol.yaml /usr/local/vdp/vdp_protocol.yaml
