@@ -562,7 +562,7 @@ export function CheckWrite() {
 
     group("Connector API: Write destination connectors", () => {
 
-        var csvDstConnector, resCSVDst
+        var csvDstConnector, resCSVDst, currentTime, timeoutTime
 
         // Write classification output
         csvDstConnector = {
@@ -582,8 +582,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -613,6 +613,9 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (classification)`]: (r) => r.status === 200,
         });
 
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
+
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
@@ -635,8 +638,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -645,7 +648,7 @@ export function CheckWrite() {
             sleep(1)
             currentTime = new Date().getTime();
         }
-        
+
         check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
@@ -666,6 +669,9 @@ export function CheckWrite() {
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
         });
+
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
@@ -689,8 +695,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -721,6 +727,9 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
         });
 
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
+
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
@@ -743,8 +752,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -774,6 +783,9 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
         });
 
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
+
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
@@ -796,8 +808,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -827,6 +839,65 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
         });
 
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
+
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
+        // Write instance segmentation output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-instance-segmentation"
+                },
+            }
+        }
+
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
+
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.instSegModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (instance_segmentation)`]: (r) => r.status === 200,
+        });
+
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
+
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
@@ -849,8 +920,8 @@ export function CheckWrite() {
         })
 
         // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
@@ -880,13 +951,8 @@ export function CheckWrite() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (unspecified)`]: (r) => r.status === 200,
         });
 
-        // Wait for 1 sec for the connector writing to the destination-csv
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 1000;
-        while (timeoutTime > currentTime) {
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
         check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,

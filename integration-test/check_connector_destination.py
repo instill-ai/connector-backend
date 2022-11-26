@@ -49,6 +49,7 @@ if __name__ == "__main__":
         "detection-multi-models",
         "keypoint",
         "ocr",
+        "instance-segmentation",
         "unspecified"
     ]
 

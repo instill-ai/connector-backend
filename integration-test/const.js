@@ -4,11 +4,11 @@ let mHost = __ENV.HOSTNAME ? `${__ENV.HOSTNAME}` : "model-backend"
 let pPort = 8081
 let cPort = 8082
 let mPort = 8083
-if (__ENV.HOSTNAME=="api-gateway") { 
-  pHost = cHost = mHost = "localhost" 
+if (__ENV.HOSTNAME == "api-gateway") {
+  pHost = cHost = mHost = "localhost"
 }
-if (__ENV.HOSTNAME=="api-gateway") { 
-  pPort = cPort = mPort = 8000 
+if (__ENV.HOSTNAME == "api-gateway") {
+  pPort = cPort = mPort = 8000
 }
 
 export const pipelineHost = `http://${pHost}:${pPort}`;
@@ -229,6 +229,44 @@ export const ocrModelInstOutputs = [
               "score": 0.99
             },
           ],
+        }
+      }
+    ]
+  }
+]
+
+export const instSegModelInstOutputs = [
+  {
+    "task": "TASK_INSTANCE_SEGMENTATION",
+    "model_instance": "models/dummy-model/instances/v1.0",
+    "task_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+        "instance_segmentation": {
+          "objects": [
+            {
+              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,19,254,19,278,21,303,21,328,21,353,21,377,23,402,23,427,23,452,23,477,23,501,24,526,24,551,549,1101,24,1126,24,1151,24,1176,24,1201,24,1226,23,1251,23,1276,23,1301,23,1326,23,1351,22,1377,21,1402,21,1427,20,1452,20,1478,19,1503,18,1528,18,1554,16,1580,15,1605,14,1631,13,1657,11,1684,9,1710,6,1735,6",
+              "score": 0.9996394,
+              "bounding_box": {
+                "top": 375,
+                "left": 166,
+                "width": 25,
+                "height": 70
+              },
+              "label": "stomata"
+            },
+            {
+              "rle": "29,4,55,7,82,9,109,10,136,12,164,12,192,12,220,12,248,12,276,12,304,12,332,12,360,11,388,11,416,11,443,12,472,10,500,10,528,10,556,9,585,8,613,7,641,7,669,6,697,5,726,3",
+              "score": 0.9990727,
+              "bounding_box": {
+                "top": 107,
+                "left": 240,
+                "width": 27,
+                "height": 27
+              },
+              "label": "stomata"
+            }
+          ]
         }
       }
     ]
