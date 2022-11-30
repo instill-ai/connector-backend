@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.0-alpha...v0.7.1-alpha) (2022-11-30)
+
+
+### Miscellaneous Chores
+
+* release 0.7.1-alpha ([6b98ad4](https://github.com/instill-ai/connector-backend/commit/6b98ad4ca5f6ff35abbf85c1b711bac0e9d3b966))
+
 ## [0.7.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.6.0-alpha...v0.7.0-alpha) (2022-10-19)
 
 
