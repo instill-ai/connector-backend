@@ -1,12 +1,9 @@
 server:
   port: 8082
   https:
-    cert:   # /ssl/tls.crt
-    key:    # /ssl/tls.key
+    cert:
+    key:
   corsorigins:
-    - http://localhost:3000
-    - https://instill-inc.tech
-    - https://instill.tech
   edition: local-ce:dev
   disableusage: false
   debug: true
@@ -33,14 +30,14 @@ pipelinebackend:
   host: pipeline-backend
   port: 8081
   https:
-    cert:   # /ssl/tls.crt
-    key:    # /ssl/tls.key
+    cert:
+    key:
 mgmtbackend:
   host: mgmt-backend
   port: 8084
   https:
-    cert:   # /ssl/tls.crt
-    key:    # /ssl/tls.key
+    cert:
+    key:
 usagebackend:
   tlsenabled: true
   host: usage.instill.tech
