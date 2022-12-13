@@ -253,7 +253,7 @@ export const instSegModelInstOutputs = [
                 "width": 25,
                 "height": 70
               },
-              "label": "stomata"
+              "category": "stomata"
             },
             {
               "rle": "29,4,55,7,82,9,109,10,136,12,164,12,192,12,220,12,248,12,276,12,304,12,332,12,360,11,388,11,416,11,443,12,472,10,500,10,528,10,556,9,585,8,613,7,641,7,669,6,697,5,726,3",
@@ -264,7 +264,7 @@ export const instSegModelInstOutputs = [
                 "width": 27,
                 "height": 27
               },
-              "label": "stomata"
+              "category": "stomata"
             }
           ]
         }
