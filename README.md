@@ -1,6 +1,6 @@
 # connector-backend
 
-`connector-backend` manages all connector resources and communicates with [Visual Data Preparation (VDP)](https://github.com/instill-ai/vdp) to connect a pipeline to flow the source unstructured visual data to the destination structured data.
+`connector-backend` manages all connector resources and communicates with [Versatile Data Pipeline (VDP)](https://github.com/instill-ai/vdp) to connect a pipeline to flow the source unstructured data to the destination.
 
 ## Local dev
 
