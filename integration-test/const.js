@@ -1,14 +1,18 @@
-let pHost = __ENV.HOST ? `${__ENV.HOST}` : "pipeline-backend"
-let cHost = __ENV.HOST ? `${__ENV.HOST}` : "connector-backend"
-let mHost = __ENV.HOST ? `${__ENV.HOST}` : "model-backend"
-let pPort = 8081
-let cPort = 8082
-let mPort = 8083
-if (__ENV.HOST == "api-gateway") {
+let pHost, cHost, mHost
+let pPort, cPort, mPort
+
+if (__ENV.HOST == "localhost") {
+  // api-gateway mode (outside container)
   pHost = cHost = mHost = "localhost"
-}
-if (__ENV.HOST == "api-gateway") {
-  pPort = cPort = mPort = 8000
+  pPort = cPort = mPort = 8080
+} else {
+  // container mode (inside container)
+  pHost = "pipeline-backend"
+  cHost = "connector-backend"
+  mHost = "model-backend"
+  pPort = 8081
+  cPort = 8082
+  mPort = 8083
 }
 
 export const pipelineHost = `http://${pHost}:${pPort}`;
