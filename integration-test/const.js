@@ -1,12 +1,15 @@
+let proto
 let pHost, cHost, mHost
 let pPort, cPort, mPort
 
 if (__ENV.HOST == "localhost") {
   // api-gateway mode (outside container)
+  proto = "https"
   pHost = cHost = mHost = "localhost"
   pPort = cPort = mPort = 8080
 } else {
   // container mode (inside container)
+  proto = "http"
   pHost = "pipeline-backend"
   cHost = "connector-backend"
   mHost = "model-backend"
@@ -15,9 +18,9 @@ if (__ENV.HOST == "localhost") {
   mPort = 8083
 }
 
-export const pipelineHost = `http://${pHost}:${pPort}`;
-export const connectorHost = `http://${cHost}:${cPort}`;
-export const modelHost = `http://${mHost}:${mPort}`;
+export const pipelineHost = `${proto}://${pHost}:${pPort}`;
+export const connectorHost = `${proto}://${cHost}:${cPort}`;
+export const modelHost = `${proto}://${mHost}:${mPort}`;
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
 export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
