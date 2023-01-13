@@ -270,15 +270,29 @@ export function CheckDelete() {
             "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
         })
 
-        check(http.request("POST", `${modelHost}/v1alpha/models`, JSON.stringify({
+        let createClsModelRes = http.request("POST", `${modelHost}/v1alpha/models`, JSON.stringify({
             "id": "dummy-cls",
             "model_definition": "model-definitions/github",
             "configuration": {
                 "repository": "instill-ai/model-dummy-cls"
             },
-        }), { headers: { "Content-Type": "application/json" } }), {
+        }), { headers: { "Content-Type": "application/json" } })
+        check(createClsModelRes, {
             "POST /v1alpha/models cls response status": (r) => r.status === 201,
         })
+        // Check model creation finished
+        let currentTime = new Date().getTime();
+        let timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            let res = http.get(`${modelHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
+                headers: { "Content-Type": "application/json" },
+            })
+            if (res.json().operation.done === true) {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         const detSyncRecipe = {
             recipe: {
