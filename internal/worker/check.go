@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -99,7 +98,7 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
-	if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
+	if err := os.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
 

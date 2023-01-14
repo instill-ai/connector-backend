@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,7 +110,7 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
-	if err := ioutil.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
+	if err := os.WriteFile(configFilePath, param.ConnectorConfig, 0644); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
 	}
 
@@ -120,7 +119,7 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
 	}
-	if err := ioutil.WriteFile(catalogFilePath, param.ConfiguredAirbyteCatalog, 0644); err != nil {
+	if err := os.WriteFile(catalogFilePath, param.ConfiguredAirbyteCatalog, 0644); err != nil {
 		return exitCodeError, temporal.NewNonRetryableApplicationError(fmt.Sprintf("unable to write connector catalog file %s", catalogFilePath), "WriteContainerLocalFileError", err)
 	}
 

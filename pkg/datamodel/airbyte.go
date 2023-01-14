@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/ghodss/yaml"
 	"github.com/instill-ai/connector-backend/internal/logger"
@@ -82,7 +82,7 @@ func InitAirbyteCatalog() {
 
 	logger, _ := logger.GetZapLogger()
 
-	yamlFile, err := ioutil.ReadFile("/usr/local/vdp/vdp_protocol.yaml")
+	yamlFile, err := os.ReadFile("/usr/local/vdp/vdp_protocol.yaml")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}

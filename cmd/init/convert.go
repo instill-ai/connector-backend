@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 
@@ -64,7 +64,7 @@ func unmarshalConnectorPB(jsonSliceMap interface{}, pb interface{}) error {
 
 func processJSONSliceMap(filename string) ([]map[string]interface{}, error) {
 
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
