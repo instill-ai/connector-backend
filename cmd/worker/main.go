@@ -41,7 +41,7 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatalln("Unable to create client", err)
+		logger.Fatal(fmt.Sprintf("Unable to create client: %s", err))
 	}
 	defer c.Close()
 
@@ -54,6 +54,6 @@ func main() {
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("Unable to start worker %s", err))
+		logger.Fatal(fmt.Sprintf("Unable to start worker: %s", err))
 	}
 }
