@@ -601,7 +601,7 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0"
+                        "models/dummy-model/instances/v1.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -657,8 +657,8 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0",
-                        "models/dummy-model/instances/v2.0"
+                        "models/dummy-model/instances/v1.0-cpu",
+                        "models/dummy-model/instances/v2.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -714,8 +714,8 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0",
-                        "models/dummy-model/instances/v2.0"
+                        "models/dummy-model/instances/v1.0-cpu",
+                        "models/dummy-model/instances/v2.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -771,7 +771,7 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0"
+                        "models/dummy-model/instances/v1.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -827,7 +827,7 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0"
+                        "models/dummy-model/instances/v1.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -883,7 +883,7 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0"
+                        "models/dummy-model/instances/v1.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
@@ -939,7 +939,7 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0"
+                        "models/dummy-model/instances/v1.0-cpu"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
