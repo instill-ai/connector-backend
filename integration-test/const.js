@@ -52,7 +52,7 @@ export const csvDstConfig = {
 export const clsModelInstOutputs = [
   {
     "task": "TASK_CLASSIFICATION",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPS",
@@ -68,7 +68,7 @@ export const clsModelInstOutputs = [
 export const detectionModelInstOutputs = [
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -125,7 +125,7 @@ export const detectionModelInstOutputs = [
   },
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v2.0",
+    "model_instance": "models/dummy-model/instances/v2.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -185,7 +185,7 @@ export const detectionModelInstOutputs = [
 export const detectionEmptyModelInstOutputs = [
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -200,7 +200,7 @@ export const detectionEmptyModelInstOutputs = [
 export const keypointModelInstOutputs = [
   {
     "task": "TASK_KEYPOINT",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
@@ -224,7 +224,7 @@ export const keypointModelInstOutputs = [
 export const ocrModelInstOutputs = [
   {
     "task": "TASK_OCR",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -250,7 +250,7 @@ export const ocrModelInstOutputs = [
 export const instSegModelInstOutputs = [
   {
     "task": "TASK_INSTANCE_SEGMENTATION",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -288,7 +288,7 @@ export const instSegModelInstOutputs = [
 export const unspecifiedModelInstOutputs = [
   {
     "task": "TASK_UNSPECIFIED",
-    "model_instance": "models/dummy-model/instances/v1.0",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPV",
