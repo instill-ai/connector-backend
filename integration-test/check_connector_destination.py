@@ -18,7 +18,7 @@ def test_destination_csv(case: str):
         stdout=open(tmpCSV.name, "w"))
 
     # The VDP protocol YAML file downloaded during image build time
-    with open("/usr/local/vdp/vdp_protocol.yaml") as f:
+    with open("/etc/vdp/vdp_protocol.yaml") as f:
         jsonSchema = json.loads(json.dumps(yaml.safe_load(f)))
 
     # read csv file

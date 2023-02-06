@@ -82,7 +82,7 @@ func InitAirbyteCatalog() {
 
 	logger, _ := logger.GetZapLogger()
 
-	yamlFile, err := os.ReadFile("/usr/local/vdp/vdp_protocol.yaml")
+	yamlFile, err := os.ReadFile("/etc/vdp/vdp_protocol.yaml")
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("%#v\n", err.Error()))
 	}

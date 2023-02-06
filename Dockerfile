@@ -15,22 +15,34 @@ RUN --mount=target=. --mount=type=cache,target=/root/.cache/go-build --mount=typ
 RUN --mount=target=. --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /${SERVICE_NAME}-worker ./cmd/worker
 RUN --mount=target=. --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /${SERVICE_NAME} ./cmd/main
 
-FROM gcr.io/distroless/base
+RUN mkdir /etc/vdp
+RUN mkdir /vdp
+RUN mkdir /airbyte
+
+# Download vdp protocol YAML file
+ADD https://raw.githubusercontent.com/instill-ai/vdp/main/protocol/vdp_protocol.yaml /etc/vdp/vdp_protocol.yaml
+
+FROM gcr.io/distroless/base:nonroot
+
+USER nonroot
 
 ARG SERVICE_NAME
 
 WORKDIR /${SERVICE_NAME}
 
-COPY --from=docker:dind /usr/local/bin/docker /usr/local/bin/
+COPY --from=docker:dind-rootless --chown=nonroot:nonroot /usr/local/bin/docker /usr/local/bin/
 
-COPY --from=build /src/config ./config
-COPY --from=build /src/release-please ./release-please
-COPY --from=build /src/internal/db/migration ./internal/db/migration
+COPY --from=build --chown=nonroot:nonroot /src/config ./config
+COPY --from=build --chown=nonroot:nonroot /src/release-please ./release-please
+COPY --from=build --chown=nonroot:nonroot /src/internal/db/migration ./internal/db/migration
 
-COPY --from=build /${SERVICE_NAME}-migrate ./
-COPY --from=build /${SERVICE_NAME}-init ./
-COPY --from=build /${SERVICE_NAME}-worker ./
-COPY --from=build /${SERVICE_NAME} ./
+COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-migrate ./
+COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-init ./
+COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-worker ./
+COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME} ./
 
-# Download vdp protocol YAML file
-ADD https://raw.githubusercontent.com/instill-ai/vdp/main/protocol/vdp_protocol.yaml /usr/local/vdp/vdp_protocol.yaml
+COPY --from=build --chown=nonroot:nonroot /etc/vdp /etc/vdp
+COPY --from=build --chown=nonroot:nonroot /vdp /vdp
+COPY --from=build --chown=nonroot:nonroot /airbyte /airbyte
+
+COPY --from=build --chown=nonroot:nonroot /etc/vdp/vdp_protocol.yaml /etc/vdp/vdp_protocol.yaml
