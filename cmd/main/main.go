@@ -124,7 +124,7 @@ func main() {
 		grpcServerOpts = append(grpcServerOpts, grpc.Creds(creds))
 	}
 
-	userServiceClient, userServiceClientConn := external.InitUserServiceClient()
+	userServiceClient, userServiceClientConn := external.InitMgmtAdminServiceClient()
 	defer userServiceClientConn.Close()
 
 	pipelineServiceClient, pipelineServiceClientConn := external.InitPipelineServiceClient()

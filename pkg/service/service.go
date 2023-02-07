@@ -50,13 +50,13 @@ type Service interface {
 
 type service struct {
 	repository            repository.Repository
-	userServiceClient     mgmtPB.UserServiceClient
+	userServiceClient     mgmtPB.MgmtAdminServiceClient
 	pipelineServiceClient pipelinePB.PipelineServiceClient
 	temporalClient        client.Client
 }
 
 // NewService initiates a service instance
-func NewService(r repository.Repository, u mgmtPB.UserServiceClient, p pipelinePB.PipelineServiceClient, t client.Client) Service {
+func NewService(r repository.Repository, u mgmtPB.MgmtAdminServiceClient, p pipelinePB.PipelineServiceClient, t client.Client) Service {
 	return &service{
 		repository:            r,
 		userServiceClient:     u,

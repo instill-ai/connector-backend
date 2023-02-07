@@ -27,13 +27,13 @@ type Usage interface {
 
 type usage struct {
 	repository        repository.Repository
-	userServiceClient mgmtPB.UserServiceClient
+	userServiceClient mgmtPB.MgmtAdminServiceClient
 	reporter          usageReporter.Reporter
 	version           string
 }
 
 // NewUsage initiates a usage instance
-func NewUsage(ctx context.Context, r repository.Repository, mu mgmtPB.UserServiceClient, usc usagePB.UsageServiceClient) Usage {
+func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtAdminServiceClient, usc usagePB.UsageServiceClient) Usage {
 	logger, _ := logger.GetZapLogger()
 
 	version, err := repo.ReadReleaseManifest("release-please/manifest.json")
@@ -50,7 +50,7 @@ func NewUsage(ctx context.Context, r repository.Repository, mu mgmtPB.UserServic
 
 	return &usage{
 		repository:        r,
-		userServiceClient: mu,
+		userServiceClient: ma,
 		reporter:          reporter,
 		version:           version,
 	}
