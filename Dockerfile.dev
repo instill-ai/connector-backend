@@ -20,19 +20,25 @@ RUN --mount=target=. --mount=type=cache,target=/root/.cache/go-build --mount=typ
 ADD https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERSION}-linux-$TARGETARCH.tar.gz k6-v${K6_VERSION}-linux-$TARGETARCH.tar.gz
 RUN tar -xf k6-v${K6_VERSION}-linux-$TARGETARCH.tar.gz --strip-components 1 -C /usr/bin
 
+RUN apt-get update && apt-get install -y \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
 # tools for integration test
-RUN apt-get update && apt-get install -y python3-pip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
 RUN pip install jsonschema pyyaml
 
 # -- set up Go
 
-RUN chown -R nobody:nogroup /go
-ENV GOCACHE /go/.cache/go-build
-ENV GOENV /go/.config/go/env
-
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+
+RUN chown -R nobody:nogroup /go
+ENV GOCACHE /go/.cache/go-build
+ENV GOENV /go/.config/go/env
 
 # -- set up mounting points
 

@@ -15,11 +15,10 @@ dev:							## Run dev container
 	@docker inspect --type container ${SERVICE_NAME} >/dev/null 2>&1 && echo "A container named ${SERVICE_NAME} is already running." || \
 		echo "Run dev container ${SERVICE_NAME}. To stop it, run \"make stop\"."
 	@docker run -d --rm \
-		-u $(id -u):$(id -g) \
+		-e DOCKER_HOST=${SOCAT_HOST}:${SOCAT_PORT} \
 		-v $(PWD):/${SERVICE_NAME} \
 		-v vdp:/vdp \
 		-v airbyte:/airbyte \
-		-v /var/run/docker.sock:/var/run/docker.sock \
 		-p ${SERVICE_PORT}:${SERVICE_PORT} \
 		--network instill-network \
 		--name ${SERVICE_NAME} \
