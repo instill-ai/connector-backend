@@ -33,7 +33,7 @@ pipelinebackend:
     cert:
     key:
 mgmtbackend:
-  host: mgmt-backend
+  adminhost: mgmt-backend-admin
   adminport: 3084
   https:
     cert:
