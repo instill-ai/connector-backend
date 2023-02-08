@@ -9,7 +9,7 @@ On the local machine, clone `vdp` repository in your workspace, move to the repo
 $ cd <your-workspace>
 $ git clone https://github.com/instill-ai/vdp.git
 $ cd vdp
-$ make dev PROFILE=connector
+$ make dev PROFILE=connector ITMODE=true
 ```
 
 Clone `connector-backend` repository in your workspace and move to the repository folder:
