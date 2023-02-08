@@ -26,10 +26,10 @@ type Usage interface {
 }
 
 type usage struct {
-	repository        repository.Repository
-	userServiceClient mgmtPB.MgmtAdminServiceClient
-	reporter          usageReporter.Reporter
-	version           string
+	repository             repository.Repository
+	mgmtAdminServiceClient mgmtPB.MgmtAdminServiceClient
+	reporter               usageReporter.Reporter
+	version                string
 }
 
 // NewUsage initiates a usage instance
@@ -49,10 +49,10 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtAdminS
 	}
 
 	return &usage{
-		repository:        r,
-		userServiceClient: ma,
-		reporter:          reporter,
-		version:           version,
+		repository:             r,
+		mgmtAdminServiceClient: ma,
+		reporter:               reporter,
+		version:                version,
 	}
 }
 
@@ -69,7 +69,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 	userPageToken := ""
 	userPageSizeMax := int64(repository.MaxPageSize)
 	for {
-		userResp, err := u.userServiceClient.ListUser(ctx, &mgmtPB.ListUserRequest{
+		userResp, err := u.mgmtAdminServiceClient.ListUser(ctx, &mgmtPB.ListUserRequest{
 			PageSize:  &userPageSizeMax,
 			PageToken: &userPageToken,
 		})

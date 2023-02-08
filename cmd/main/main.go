@@ -124,8 +124,8 @@ func main() {
 		grpcServerOpts = append(grpcServerOpts, grpc.Creds(creds))
 	}
 
-	userServiceClient, userServiceClientConn := external.InitMgmtAdminServiceClient()
-	defer userServiceClientConn.Close()
+	mgmtAdminServiceClient, mgmtAdminServiceClientConn := external.InitMgmtAdminServiceClient()
+	defer mgmtAdminServiceClientConn.Close()
 
 	pipelineServiceClient, pipelineServiceClientConn := external.InitPipelineServiceClient()
 	defer pipelineServiceClientConn.Close()
@@ -140,7 +140,7 @@ func main() {
 		handler.NewHandler(
 			service.NewService(
 				repository,
-				userServiceClient,
+				mgmtAdminServiceClient,
 				pipelineServiceClient,
 				temporalClient,
 			)))
@@ -169,7 +169,7 @@ func main() {
 	if !config.Config.Server.DisableUsage {
 		usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
 		defer usageServiceClientConn.Close()
-		usg = usage.NewUsage(ctx, repository, userServiceClient, usageServiceClient)
+		usg = usage.NewUsage(ctx, repository, mgmtAdminServiceClient, usageServiceClient)
 		if usg != nil {
 			usg.StartReporter(ctx)
 		}
