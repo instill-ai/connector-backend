@@ -72,7 +72,7 @@ type TemporalConfig struct {
 
 // MgmtBackendConfig related to mgmt-backend
 type MgmtBackendConfig struct {
-	AdminHost string `koanf:"adminhost"`
+	Host      string `koanf:"host"`
 	AdminPort int    `koanf:"adminport"`
 	HTTPS     struct {
 		Cert string `koanf:"cert"`
