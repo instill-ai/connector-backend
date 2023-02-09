@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -111,60 +115,95 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 		}
 	}()
 
-	runCmd := exec.Command(
-		"docker",
-		"inspect",
-		"--type=image",
-		param.ImageName,
-	)
-
-	// Check image existing or otherwise pull image
-	if err := runCmd.Run(); err != nil {
-
-		runCmd = exec.Command(
-			"docker",
-			"pull",
-			param.ImageName,
-		)
-
-		var out bytes.Buffer
-		runCmd.Stdout = &out
-		runCmd.Stderr = &out
-
-		if err := runCmd.Run(); err != nil {
-			return exitCodeError, err
-		}
-
-		if _, err := io.Copy(os.Stdout, &out); err != nil {
-			return exitCodeError, err
-		}
-
+	out, err := w.dockerClient.ImagePull(ctx, param.ImageName, types.ImagePullOptions{})
+	if err != nil {
+		return exitCodeError, err
 	}
+	defer out.Close()
 
-	runCmd = exec.Command(
-		"docker",
-		"run",
-		"-i",
-		"-v", fmt.Sprintf("%s:%s", w.mountSourceVDP, w.mountTargetVDP),
-		"--rm",
-		"--restart", "no",
-		"--name", param.ContainerName,
-		param.ImageName,
-		"check",
-		"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
-	)
-
-	var out bytes.Buffer
-	runCmd.Stdout = &out
-	runCmd.Stderr = &out
-
-	if err := runCmd.Run(); err != nil {
+	if _, err := io.Copy(os.Stdout, out); err != nil {
 		return exitCodeError, err
 	}
 
-	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "STDOUT", out.String())
+	resp, err := w.dockerClient.ContainerCreate(ctx,
+		&container.Config{
+			Image: param.ImageName,
+			Tty:   false,
+			Cmd: []string{
+				"check",
+				"--config",
+				fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
+			},
+		},
+		&container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeVolume,
+					Source: w.mountSourceVDP,
+					Target: w.mountTargetVDP,
+				},
+			},
+		},
+		nil, nil, param.ContainerName)
+	if err != nil {
+		return exitCodeError, err
+	}
 
-	scanner := bufio.NewScanner(&out)
+	if err := w.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return exitCodeError, err
+	}
+
+	statusCh, errCh := w.dockerClient.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return exitCodeError, err
+		}
+	case <-statusCh:
+	}
+
+	if out, err = w.dockerClient.ContainerLogs(ctx,
+		resp.ID,
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+		},
+	); err != nil {
+		return exitCodeError, err
+	}
+
+	if err := w.dockerClient.ContainerRemove(ctx, param.ContainerName,
+		types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		}); err != nil {
+		return exitCodeError, err
+	}
+
+	var bufStdOut, bufStdErr bytes.Buffer
+	if _, err := stdcopy.StdCopy(&bufStdOut, &bufStdErr, out); err != nil {
+		return exitCodeError, err
+	}
+
+	var teeStdOut io.Reader = strings.NewReader(bufStdOut.String())
+	var teeStdErr io.Reader = strings.NewReader(bufStdErr.String())
+	teeStdOut = io.TeeReader(teeStdOut, &bufStdOut)
+	teeStdErr = io.TeeReader(teeStdErr, &bufStdErr)
+
+	var byteStdOut, byteStdErr []byte
+	if byteStdOut, err = io.ReadAll(teeStdOut); err != nil {
+		return exitCodeError, err
+	}
+	if byteStdErr, err = io.ReadAll(teeStdErr); err != nil {
+		return exitCodeError, err
+	}
+
+	logger.Info("Activity",
+		"ImageName", param.ImageName,
+		"ContainerName", param.ContainerName,
+		"STDOUT", string(byteStdOut),
+		"STDERR", string(byteStdErr))
+
+	scanner := bufio.NewScanner(&bufStdOut)
 	for scanner.Scan() {
 
 		if err := scanner.Err(); err != nil {
@@ -180,11 +219,13 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 					return exitCodeOK, nil
 				case "FAILED":
 					return exitCodeError, nil
+				default:
+					return exitCodeError, fmt.Errorf("UNKNOWN STATUS")
 				}
 			}
 		}
 	}
 
-	return exitCodeError, fmt.Errorf("unable to scan container stdout")
+	return exitCodeError, fmt.Errorf("unable to scan container stdout and find the connection status successfully")
 
 }

@@ -108,5 +108,5 @@ protogen-go
 x
 
 # air related files and folders
-.air.toml
+.air*
 tmp

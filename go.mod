@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/allegro/bigcache v1.2.1
+	github.com/docker/docker v20.10.13+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -31,8 +32,13 @@ require (
 
 require (
 	cloud.google.com/go/longrunning v0.3.0 // indirect
+	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/catalinc/hashcash v0.0.0-20220723060415-5e3ec3e24f67 // indirect
+	github.com/containerd/containerd v1.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
@@ -52,10 +58,13 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron v1.2.0 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	go.temporal.io/api v1.16.0 // indirect

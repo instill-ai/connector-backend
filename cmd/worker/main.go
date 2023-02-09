@@ -7,6 +7,8 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 
+	dockerclient "github.com/docker/docker/client"
+
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -31,7 +33,13 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	cw := connWorker.NewWorker(repository.NewRepository(db))
+	dc, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	defer dc.Close()
+
+	cw := connWorker.NewWorker(repository.NewRepository(db), dc)
 
 	c, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed

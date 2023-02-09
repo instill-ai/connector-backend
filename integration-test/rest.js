@@ -61,30 +61,18 @@ export default function (data) {
 
 export function teardown(data) {
   group("Connector API: Delete all source connector created by this test", () => {
-    for (const srcConnector of http
-      .request("GET", `${connectorHost}/v1alpha/source-connectors`)
-      .json("source_connectors")) {
-      check(
-        http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${srcConnector.id}`),
-        {
-          [`DELETE /v1alpha/source-connectors/${srcConnector.id} response status is 204`]: (r) =>
-            r.status === 204,
-        }
-      );
+    for (const srcConnector of http.request("GET", `${connectorHost}/v1alpha/source-connectors`).json("source_connectors")) {
+      check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${srcConnector.id}`), {
+        [`DELETE /v1alpha/source-connectors/${srcConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
     }
   });
 
   group("Connector API: Delete all destination connector created by this test", () => {
-    for (const desConnector of http
-      .request("GET", `${connectorHost}/v1alpha/destination-connectors`)
-      .json("destination_connectors")) {
-      check(
-        http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${desConnector.id}`),
-        {
-          [`DELETE /v1alpha/destination-connectors/${desConnector.id} response status is 204`]: (r) =>
-            r.status === 204,
-        }
-      );
+    for (const desConnector of http.request("GET", `${connectorHost}/v1alpha/destination-connectors`).json("destination_connectors")) {
+      check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${desConnector.id}`), {
+        [`DELETE /v1alpha/destination-connectors/${desConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
     }
-  });  
+  });
 }

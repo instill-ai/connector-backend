@@ -21,7 +21,8 @@ ADD https://github.com/grafana/k6/releases/download/v${K6_VERSION}/k6-v${K6_VERS
 RUN tar -xf k6-v${K6_VERSION}-linux-$TARGETARCH.tar.gz --strip-components 1 -C /usr/bin
 
 RUN apt-get update && apt-get install -y \
-    gosu \
+    socat \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # tools for integration test

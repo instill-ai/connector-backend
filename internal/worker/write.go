@@ -1,13 +1,18 @@
 package worker
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -139,58 +144,85 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 		}
 	}()
 
-	// Check image existing or otherwise pull image
-	runCmd := exec.Command(
-		"docker",
-		"inspect",
-		"--type=image",
-		param.ImageName,
-	)
+	out, err := w.dockerClient.ImagePull(ctx, param.ImageName, types.ImagePullOptions{})
+	if err != nil {
+		return exitCodeError, err
+	}
+	defer out.Close()
 
-	if err := runCmd.Run(); err != nil {
-
-		runCmd = exec.CommandContext(ctx,
-			"docker",
-			"pull",
-			param.ImageName,
-		)
-
-		out, err := runCmd.CombinedOutput()
-		if err != nil {
-			return exitCodeError, err
-		}
-
-		logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "Pipeline", param.Pipeline, "Indices", param.Indices, "STDOUT", string(out))
-
+	if _, err := io.Copy(os.Stdout, out); err != nil {
+		return exitCodeError, err
 	}
 
-	// Launch airbyte container to write data in to the destination
-	runCmd = exec.CommandContext(ctx,
-		"docker",
-		"run",
-		"-i",
-		"-v", fmt.Sprintf("%s:%s", w.mountSourceVDP, w.mountTargetVDP),
-		"-v", fmt.Sprintf("%s:%s", w.mountSourceAirbyte, w.mountTargetAirbyte),
-		"--rm",
-		"--restart", "no",
-		"--name", param.ContainerName,
-		param.ImageName,
-		"write",
-		"--config", fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
-		"--catalog", fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTargetVDP, filepath.Base(catalogFilePath)),
-	)
-
-	stdin, err := runCmd.StdinPipe()
+	resp, err := w.dockerClient.ContainerCreate(ctx,
+		&container.Config{
+			Image:       param.ImageName,
+			Tty:         false,
+			AttachStdin: true,
+			Cmd: []string{
+				"write",
+				"--config",
+				fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
+				"--catalog",
+				fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTargetVDP, filepath.Base(catalogFilePath)), "--catalog",
+			},
+		},
+		&container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeVolume,
+					Source: "vdp",
+					Target: "/vdp",
+				},
+				{
+					Type:   mount.TypeVolume,
+					Source: "airbyte",
+					Target: "/airbyte",
+				},
+			},
+		},
+		nil, nil, param.ContainerName)
 	if err != nil {
 		return exitCodeError, err
 	}
 
-	param.AirbyteMessages = append(param.AirbyteMessages, 4)
-	if _, err := stdin.Write(param.AirbyteMessages); err != nil {
+	if err := w.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return exitCodeError, err
 	}
 
-	if err := stdin.Close(); err != nil {
+	statusCh, errCh := w.dockerClient.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return exitCodeError, err
+		}
+	case <-statusCh:
+	}
+
+	if out, err = w.dockerClient.ContainerLogs(ctx,
+		resp.ID,
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+		},
+	); err != nil {
+		return exitCodeError, err
+	}
+
+	if err := w.dockerClient.ContainerRemove(ctx, param.ContainerName,
+		types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		}); err != nil {
+		return exitCodeError, err
+	}
+
+	param.AirbyteMessages = append(param.AirbyteMessages, 4)
+	if _, err := os.Stdin.Write(param.AirbyteMessages); err != nil {
+		return exitCodeError, err
+	}
+
+	var bufStdOut, bufStdErr bytes.Buffer
+	if _, err := stdcopy.StdCopy(&bufStdOut, &bufStdErr, out); err != nil {
 		return exitCodeError, err
 	}
 
@@ -198,9 +230,6 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 	if err := w.cache.Set(param.ContainerName, []byte{}); err != nil {
 		logger.Error(err.Error())
 	}
-
-	// Run exec command and get the combined stdout and stderr
-	out, err := runCmd.CombinedOutput()
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return exitCodeError, fmt.Errorf("container run timed out")
@@ -210,7 +239,13 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 		return exitCodeError, err
 	}
 
-	logger.Info("Activity", "ImageName", param.ImageName, "ContainerName", param.ContainerName, "Pipeline", param.Pipeline, "Indices", param.Indices, "STDOUT", string(out))
+	logger.Info("Activity",
+		"ImageName", param.ImageName,
+		"ContainerName", param.ContainerName,
+		"Pipeline", param.Pipeline,
+		"Indices", param.Indices,
+		"STDOUT", bufStdOut.String(),
+		"STDERR", bufStdErr.String())
 
 	return exitCodeOK, nil
 

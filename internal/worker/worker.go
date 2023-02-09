@@ -5,10 +5,11 @@ import (
 	"time"
 
 	"github.com/allegro/bigcache"
-	"go.temporal.io/sdk/workflow"
-
+	"github.com/docker/docker/client"
 	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"go.temporal.io/sdk/workflow"
 )
 
 // TaskQueue is the task queue name for connector-backend
@@ -31,8 +32,9 @@ type Worker interface {
 
 // worker represents resources required to run Temporal workflow and activity
 type worker struct {
-	cache              *bigcache.BigCache
 	repository         repository.Repository
+	cache              *bigcache.BigCache
+	dockerClient       *client.Client
 	mountSourceVDP     string
 	mountTargetVDP     string
 	mountSourceAirbyte string
@@ -40,13 +42,19 @@ type worker struct {
 }
 
 // NewWorker initiates a temporal worker for workflow and activity definition
-func NewWorker(r repository.Repository) Worker {
+func NewWorker(r repository.Repository, dc *client.Client) Worker {
 
-	cache, _ := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
+	logger, _ := logger.GetZapLogger()
+
+	cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
+	if err != nil {
+		logger.Error(err.Error())
+	}
 
 	return &worker{
-		cache:              cache,
 		repository:         r,
+		cache:              cache,
+		dockerClient:       dc,
 		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
 		mountTargetVDP:     "/vdp",
 		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,

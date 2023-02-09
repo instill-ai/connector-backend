@@ -312,6 +312,18 @@ export function CheckGet() {
             headers: { "Content-Type": "application/json" },
         })
 
+        // Check connector state being updated in 120 secs
+        var currentTime = new Date().getTime();
+        var timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
