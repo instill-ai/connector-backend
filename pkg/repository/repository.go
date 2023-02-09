@@ -75,7 +75,7 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 		createdAt, uid, err := paginate.DecodeToken(pageToken)
 		if err != nil {
 			st, err := sterr.CreateErrorBadRequest(
-				"[db] list connector definition error",
+				fmt.Sprintf("[db] list connector definition error: %s", err.Error()),
 				[]*errdetails.BadRequest_FieldViolation{
 					{
 						Field:       "page_token",
@@ -101,7 +101,7 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 	if err != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] list connector definition error",
+			fmt.Sprintf("[db] list connector definition error: %s", err.Error()),
 			"connector_definition",
 			fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 			"",
@@ -118,7 +118,7 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 		if err = r.db.ScanRows(rows, &item); err != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
-				"[db] list connector definition error",
+				fmt.Sprintf("[db] list connector definition error: %s", err.Error()),
 				"connector_definition",
 				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 				"",
@@ -144,7 +144,7 @@ func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorTy
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
-				"[db] list connector definition error",
+				fmt.Sprintf("[db] list connector definition error: %s", result.Error.Error()),
 				"connector_definition",
 				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 				"",
@@ -178,7 +178,7 @@ func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamod
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] get connector definition by id error",
+			fmt.Sprintf("[db] get connector definition by id error: %s", result.Error.Error()),
 			"connector_definition",
 			id,
 			"",
@@ -205,7 +205,7 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 	if result := queryBuilder.First(&connectorDefinition); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] get connector definition by uid error",
+			fmt.Sprintf("[db] get connector definition by uid error: %s", result.Error.Error()),
 			"connector_definition",
 			uid.String(),
 			"",
@@ -229,7 +229,7 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 			if pgErr.Code == "23505" {
 				st, err := sterr.CreateErrorResourceInfo(
 					codes.AlreadyExists,
-					"[db] create connector error",
+					fmt.Sprintf("[db] create connector error: %s", pgErr.Message),
 					"connector",
 					fmt.Sprintf("id %s and connector_type %s", connector.ID, connectorPB.ConnectorType(connector.ConnectorType)),
 					connector.Owner,
@@ -265,7 +265,7 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 		createdAt, uid, err := paginate.DecodeToken(pageToken)
 		if err != nil {
 			st, err := sterr.CreateErrorBadRequest(
-				"[db] list connector error",
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
 				[]*errdetails.BadRequest_FieldViolation{
 					{
 						Field:       "page_token",
@@ -291,7 +291,7 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	if err != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] list connector error",
+			fmt.Sprintf("[db] list connector error: %s", err.Error()),
 			"connector",
 			fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -308,7 +308,7 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 		if err = r.db.ScanRows(rows, &item); err != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
-				"[db] list connector error",
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
 				"connector",
 				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 				ownerPermalink,
@@ -331,7 +331,7 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
-				"[db] list connector error",
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
 				"connector",
 				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
 				ownerPermalink,
@@ -368,7 +368,7 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	if result := queryBuilder.First(&connector); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] get connector by id error",
+			fmt.Sprintf("[db] get connector by id error: %s", result.Error.Error()),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -398,7 +398,7 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isB
 	if result := queryBuilder.First(&connector); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] get connector by uid error",
+			fmt.Sprintf("[db] get connector by uid error: %s", result.Error.Error()),
 			"connector",
 			uid.String(),
 			ownerPermalink,
@@ -421,7 +421,7 @@ func (r *repository) UpdateConnector(id string, ownerPermalink string, connector
 		Updates(connector); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] update connector error",
+			fmt.Sprintf("[db] update connector error: %s", result.Error.Error()),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -434,7 +434,7 @@ func (r *repository) UpdateConnector(id string, ownerPermalink string, connector
 	} else if result.RowsAffected == 0 {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] update connector error",
+			fmt.Sprintf("[db] update connector error: %s", "Not found"),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -459,7 +459,7 @@ func (r *repository) DeleteConnector(id string, ownerPermalink string, connector
 	if result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] delete connector error",
+			fmt.Sprintf("[db] delete connector error: %s", result.Error.Error()),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -474,7 +474,7 @@ func (r *repository) DeleteConnector(id string, ownerPermalink string, connector
 	if result.RowsAffected == 0 {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] delete connector error",
+			fmt.Sprintf("[db] delete connector error: %s", "Not found"),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -498,7 +498,7 @@ func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connect
 		Update("id", newID); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] update connector id error",
+			fmt.Sprintf("[db] update connector id error: %s", result.Error.Error()),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -511,7 +511,7 @@ func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connect
 	} else if result.RowsAffected == 0 {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] update connector id error",
+			fmt.Sprintf("[db] update connector id error: %s", "Not found"),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -534,7 +534,7 @@ func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, 
 		Update("state", state); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] update connector state by id error",
+			fmt.Sprintf("[db] update connector state by id error: %s", result.Error.Error()),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -547,7 +547,7 @@ func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, 
 	} else if result.RowsAffected == 0 {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] update connector state by id error",
+			fmt.Sprintf("[db] update connector state by id error: %s", "Not found"),
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
@@ -570,7 +570,7 @@ func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink str
 		Update("state", state); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.Internal,
-			"[db] update connector state by uid error",
+			fmt.Sprintf("[db] update connector state by uid error: %s", result.Error.Error()),
 			"connector",
 			uid.String(),
 			ownerPermalink,
@@ -583,7 +583,7 @@ func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink str
 	} else if result.RowsAffected == 0 {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.NotFound,
-			"[db] update connector state by uid error",
+			fmt.Sprintf("[db] update connector state by uid error: %s", "Not found"),
 			"connector",
 			uid.String(),
 			ownerPermalink,
@@ -594,5 +594,6 @@ func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink str
 		}
 		return st.Err()
 	}
+
 	return nil
 }
