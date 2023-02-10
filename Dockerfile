@@ -24,7 +24,7 @@ ADD https://raw.githubusercontent.com/instill-ai/vdp/main/protocol/vdp_protocol.
 
 FROM gcr.io/distroless/base:nonroot
 
-USER nonroot
+USER nonroot:nonroot
 
 ARG SERVICE_NAME
 
