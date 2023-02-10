@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.5-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.4-alpha...v0.7.5-alpha) (2023-02-10)
+
+
+### Bug Fixes
+
+* fix usage client nil issue when mgmt-backend not ready ([ab634a8](https://github.com/instill-ai/connector-backend/commit/ab634a8de5d8ed394536ddd9c7d990fc7bd55420))
+* use error logs for usage ([#61](https://github.com/instill-ai/connector-backend/issues/61)) ([2c03f57](https://github.com/instill-ai/connector-backend/commit/2c03f57e21b8c52fdfdb5e1ac84d6a91e25a5fef))
+
 ## [0.7.4-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.3-alpha...v0.7.4-alpha) (2023-01-18)
 
 
