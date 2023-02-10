@@ -125,10 +125,14 @@ func main() {
 	}
 
 	mgmtAdminServiceClient, mgmtAdminServiceClientConn := external.InitMgmtAdminServiceClient()
-	defer mgmtAdminServiceClientConn.Close()
+	if mgmtAdminServiceClientConn != nil {
+		defer mgmtAdminServiceClientConn.Close()
+	}
 
 	pipelineServiceClient, pipelineServiceClientConn := external.InitPipelineServiceClient()
-	defer pipelineServiceClientConn.Close()
+	if pipelineServiceClientConn != nil {
+		defer pipelineServiceClientConn.Close()
+	}
 
 	repository := repository.NewRepository(db)
 
@@ -168,7 +172,9 @@ func main() {
 	var usg usage.Usage
 	if !config.Config.Server.DisableUsage {
 		usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
-		defer usageServiceClientConn.Close()
+		if usageServiceClientConn != nil {
+			defer usageServiceClientConn.Close()
+		}
 		usg = usage.NewUsage(ctx, repository, mgmtAdminServiceClient, usageServiceClient)
 		if usg != nil {
 			usg.StartReporter(ctx)

@@ -2,12 +2,9 @@ package external
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -38,7 +35,8 @@ func InitMgmtAdminServiceClient() (mgmtPB.MgmtAdminServiceClient, *grpc.ClientCo
 
 	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.MgmtBackend.Host, config.Config.MgmtBackend.AdminPort), clientDialOpts)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		return nil, nil
 	}
 
 	return mgmtPB.NewMgmtAdminServiceClient(clientConn), clientConn
@@ -63,7 +61,8 @@ func InitPipelineServiceClient() (pipelinePB.PipelineServiceClient, *grpc.Client
 
 	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.PipelineBackend.Host, config.Config.PipelineBackend.Port), clientDialOpts)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		return nil, nil
 	}
 
 	return pipelinePB.NewPipelineServiceClient(clientConn), clientConn
@@ -75,37 +74,16 @@ func InitUsageServiceClient() (usagePB.UsageServiceClient, *grpc.ClientConn) {
 
 	var clientDialOpts grpc.DialOption
 	if config.Config.UsageBackend.TLSEnabled {
-		roots, err := x509.SystemCertPool()
-		if err != nil {
-			logger.Fatal(err.Error())
-		}
-
-		tlsConfig := tls.Config{
-			RootCAs:            roots,
-			InsecureSkipVerify: true,
-			NextProtos:         []string{"h2"},
-		}
-		clientDialOpts = grpc.WithTransportCredentials(credentials.NewTLS(&tlsConfig))
+		tlsConfig := &tls.Config{}
+		clientDialOpts = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 	} else {
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(
-		fmt.Sprintf("%v:%v", config.Config.UsageBackend.Host, config.Config.UsageBackend.Port),
-		clientDialOpts,
-		grpc.WithConnectParams(grpc.ConnectParams{
-			Backoff: backoff.Config{
-				BaseDelay:  500 * time.Millisecond,
-				Multiplier: 1.5,
-				Jitter:     0.2,
-				MaxDelay:   19 * time.Second,
-			},
-			MinConnectTimeout: 5 * time.Second,
-		}),
-	)
-
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.UsageBackend.Host, config.Config.UsageBackend.Port), clientDialOpts)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Error(err.Error())
+		return nil, nil
 	}
 
 	return usagePB.NewUsageServiceClient(clientConn), clientConn
