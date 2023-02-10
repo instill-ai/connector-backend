@@ -19,6 +19,7 @@ require (
 	github.com/mennanov/fieldmask-utils v1.0.0
 	github.com/rs/cors v1.8.3
 	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
+	go.temporal.io/api v1.16.0
 	go.temporal.io/sdk v1.21.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.5.0
@@ -67,7 +68,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
-	go.temporal.io/api v1.16.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect

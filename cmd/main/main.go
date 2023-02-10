@@ -36,6 +36,7 @@ import (
 	"github.com/instill-ai/x/zapadapter"
 
 	database "github.com/instill-ai/connector-backend/internal/db"
+	connWorker "github.com/instill-ai/connector-backend/internal/worker"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -77,6 +78,7 @@ func main() {
 	temporalClient, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
+		Namespace: connWorker.Namespace,
 		Logger:   zapadapter.NewZapAdapter(logger),
 		HostPort: config.Config.Temporal.ClientOptions.HostPort,
 	})

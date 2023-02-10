@@ -12,7 +12,10 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-// TaskQueue is the task queue name for connector-backend
+// Namespace is the Temporal namespace for connector-backend
+const Namespace = "connector-backend"
+
+// TaskQueue is the Temporal task queue name for connector-backend
 const TaskQueue = "connector-backend"
 
 type exitCode int64
