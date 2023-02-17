@@ -49,7 +49,10 @@ if __name__ == "__main__":
         "detection-multi-models",
         "keypoint",
         "ocr",
+        "semantic-segmentation",
         "instance-segmentation",
+        "text-to-image",
+        "text-generation",
         "unspecified"
     ]
 

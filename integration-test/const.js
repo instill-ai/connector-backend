@@ -247,6 +247,34 @@ export const ocrModelInstOutputs = [
   }
 ]
 
+export const semanticSegModelInstOutputs = [
+  {
+    "task": "TASK_SEMANTIC_SEGMENTATION",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "task_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+        "semantic_segmentation": {
+          "stuffs": [
+            {
+              "rle": "2918,12,382,33,...",
+              "category": "person"
+            },
+            {
+              "rle": "34,18,230,18,...",
+              "category": "sky"
+            },
+            {
+              "rle": "34,18,230,18,...",
+              "category": "dog"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]
+
 export const instSegModelInstOutputs = [
   {
     "task": "TASK_INSTANCE_SEGMENTATION",
@@ -257,7 +285,7 @@ export const instSegModelInstOutputs = [
         "instance_segmentation": {
           "objects": [
             {
-              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,19,254,19,278,21,303,21,328,21,353,21,377,23,402,23,427,23,452,23,477,23,501,24,526,24,551,549,1101,24,1126,24,1151,24,1176,24,1201,24,1226,23,1251,23,1276,23,1301,23,1326,23,1351,22,1377,21,1402,21,1427,20,1452,20,1478,19,1503,18,1528,18,1554,16,1580,15,1605,14,1631,13,1657,11,1684,9,1710,6,1735,6",
+              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
               "score": 0.9996394,
               "bounding_box": {
                 "top": 375,
@@ -265,10 +293,10 @@ export const instSegModelInstOutputs = [
                 "width": 25,
                 "height": 70
               },
-              "category": "stomata"
+              "category": "dog"
             },
             {
-              "rle": "29,4,55,7,82,9,109,10,136,12,164,12,192,12,220,12,248,12,276,12,304,12,332,12,360,11,388,11,416,11,443,12,472,10,500,10,528,10,556,9,585,8,613,7,641,7,669,6,697,5,726,3",
+              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
               "score": 0.9990727,
               "bounding_box": {
                 "top": 107,
@@ -276,9 +304,44 @@ export const instSegModelInstOutputs = [
                 "width": 27,
                 "height": 27
               },
-              "category": "stomata"
+              "category": "car"
             }
           ]
+        }
+      }
+    ]
+  }
+]
+
+export const textToImageModelInstOutputs = [
+  {
+    "task": "TASK_TEXT_TO_IMAGE",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "task_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+        "text_to_image": {
+          "images": [
+            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE"
+          ]
+        }
+      }
+    ]
+  }
+]
+
+export const textGenerationModelInstOutputs = [
+  {
+    "task": "TASK_TEXT_GENERATION",
+    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "task_outputs": [
+      {
+        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+        "text_generation": {
+          "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
         }
       }
     ]
