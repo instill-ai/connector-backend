@@ -632,510 +632,510 @@ export function CheckWrite() {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (classification)`]: (r) => r.status === 204,
         });
 
-        // // Write detection output (empty bounding_boxes)
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-detection-empty-bounding-boxes"
-        //         },
-        //     }
-        // }
+        // Write detection output (empty bounding_boxes)
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-detection-empty-bounding-boxes"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu",
-        //                 "models/dummy-model/instances/v2.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-        //         "model_instance_outputs": constant.detectionEmptyModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu",
+                        "models/dummy-model/instances/v2.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
+                "model_instance_outputs": constant.detectionEmptyModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
+        });
 
-        // // Write detection output (multiple models)
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-detection-multi-models"
-        //         },
-        //     }
-        // }
+        // Write detection output (multiple models)
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-detection-multi-models"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu",
-        //                 "models/dummy-model/instances/v2.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-        //         "model_instance_outputs": constant.detectionModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu",
+                        "models/dummy-model/instances/v2.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
+                "model_instance_outputs": constant.detectionModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
+        });
 
-        // // Write keypoint output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-keypoint"
-        //         },
-        //     }
-        // }
+        // Write keypoint output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-keypoint"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.keypointModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.keypointModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (keypoint)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (keypoint)`]: (r) => r.status === 204,
+        });
 
-        // // Write ocr output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-ocr"
-        //         },
-        //     }
-        // }
+        // Write ocr output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-ocr"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.ocrModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.ocrModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (ocr)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (ocr)`]: (r) => r.status === 204,
+        });
 
-        // // Write semantic segmentation output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-semantic-segmentation"
-        //         },
-        //     }
-        // }
+        // Write semantic segmentation output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-semantic-segmentation"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.semanticSegModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (semantic-segmentation)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.semanticSegModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (semantic-segmentation)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (semantic-segmentation)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (semantic-segmentation)`]: (r) => r.status === 204,
+        });
 
-        // // Write instance segmentation output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-instance-segmentation"
-        //         },
-        //     }
-        // }
+        // Write instance segmentation output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-instance-segmentation"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.instSegModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (instance-segmentation)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.instSegModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (instance-segmentation)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (instance-segmentation)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (instance-segmentation)`]: (r) => r.status === 204,
+        });
 
-        // // Write text-to-image output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-text-to-image"
-        //         },
-        //     }
-        // }
+        // Write text-to-image output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-text-to-image"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.textToImageModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-to-image)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.textToImageModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-to-image)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-to-image)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-to-image)`]: (r) => r.status === 204,
+        });
 
-        // // Write text-generation output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-text-generation"
-        //         },
-        //     }
-        // }
+        // Write text-generation output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-text-generation"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.textGenerationModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-generation)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.textGenerationModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-generation)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-generation)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-generation)`]: (r) => r.status === 204,
+        });
 
-        // // Write unspecified output
-        // csvDstConnector = {
-        //     "id": randomString(10),
-        //     "destination_connector_definition": constant.csvDstDefRscName,
-        //     "connector": {
-        //         "description": randomString(50),
-        //         "configuration": {
-        //             "destination_path": "/local/test-unspecified"
-        //         },
-        //     }
-        // }
+        // Write unspecified output
+        csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": {
+                    "destination_path": "/local/test-unspecified"
+                },
+            }
+        }
 
-        // resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
-        //     JSON.stringify(csvDstConnector), {
-        //     headers: { "Content-Type": "application/json" },
-        // })
+        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), {
+            headers: { "Content-Type": "application/json" },
+        })
 
-        // // Check connector state being updated in 120 secs
-        // currentTime = new Date().getTime();
-        // timeoutTime = new Date().getTime() + 120000;
-        // while (timeoutTime > currentTime) {
-        //     var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-        //     if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
-        //         break
-        //     }
-        //     sleep(1)
-        //     currentTime = new Date().getTime();
-        // }
+        // Check connector state being updated in 120 secs
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
-        // check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
-        //     JSON.stringify({
-        //         "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-        //         "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-        //         "pipeline": "pipelines/dummy-pipeline",
-        //         "recipe": {
-        //             "source": "source-connectors/dummy-source",
-        //             "model_instances": [
-        //                 "models/dummy-model/instances/v1.0-cpu"
-        //             ],
-        //             "destination": "destination-connectors/dummy-destination",
-        //         },
-        //         "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-        //         "model_instance_outputs": constant.unspecifiedModelInstOutputs
-        //     }), {
-        //     headers: { "Content-Type": "application/json" }
-        // }), {
-        //     [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (unspecified)`]: (r) => r.status === 200,
-        // });
+        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+            JSON.stringify({
+                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+                "pipeline": "pipelines/dummy-pipeline",
+                "recipe": {
+                    "source": "source-connectors/dummy-source",
+                    "model_instances": [
+                        "models/dummy-model/instances/v1.0-cpu"
+                    ],
+                    "destination": "destination-connectors/dummy-destination",
+                },
+                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+                "model_instance_outputs": constant.unspecifiedModelInstOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (unspecified)`]: (r) => r.status === 200,
+        });
 
-        // // Wait for 1 sec for the connector writing to the destination-csv before deleting it
-        // sleep(1)
+        // Wait for 1 sec for the connector writing to the destination-csv before deleting it
+        sleep(1)
 
-        // check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-        //     [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (unspecified)`]: (r) => r.status === 204,
-        // });
+        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (unspecified)`]: (r) => r.status === 204,
+        });
     });
 }

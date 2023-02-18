@@ -68,8 +68,8 @@ func main() {
 	c, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
-		Logger:   zapadapter.NewZapAdapter(logger),
-		HostPort: config.Config.Temporal.ClientOptions.HostPort,
+		Logger:    zapadapter.NewZapAdapter(logger),
+		HostPort:  config.Config.Temporal.ClientOptions.HostPort,
 		Namespace: connWorker.Namespace,
 	})
 
