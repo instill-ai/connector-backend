@@ -47,6 +47,10 @@ type WorkerConfig struct {
 		VDP     string `koanf:"vdp"`
 		Airbyte string `koanf:"airbyte"`
 	}
+	MountTarget struct {
+		VDP     string `koanf:"vdp"`
+		Airbyte string `koanf:"airbyte"`
+	}
 }
 
 // DatabaseConfig related to database

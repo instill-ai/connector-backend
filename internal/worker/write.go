@@ -17,7 +17,6 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/resource"
 )
 
@@ -173,14 +172,24 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 		&container.HostConfig{
 			Mounts: []mount.Mount{
 				{
-					Type:   mount.TypeVolume,
-					Source: config.Config.Worker.MountSource.VDP,
-					Target: "/vdp",
+					Type: func() mount.Type {
+						if string(w.mountSourceVDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
+					Source: w.mountSourceVDP,
+					Target: w.mountTargetVDP,
 				},
 				{
-					Type:   mount.TypeVolume,
-					Source: config.Config.Worker.MountSource.Airbyte,
-					Target: "/local",
+					Type: func() mount.Type {
+						if string(w.mountSourceVDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
+					Source: w.mountSourceAirbyte,
+					Target: w.mountTargetAirbyte,
 				},
 			},
 		},
