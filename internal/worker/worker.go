@@ -59,8 +59,8 @@ func NewWorker(r repository.Repository, dc *client.Client) Worker {
 		cache:              cache,
 		dockerClient:       dc,
 		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
-		mountTargetVDP:     "/vdp",
+		mountTargetVDP:     config.Config.Worker.MountTarget.VDP,
 		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,
-		mountTargetAirbyte: "/local",
+		mountTargetAirbyte: config.Config.Worker.MountTarget.Airbyte,
 	}
 }

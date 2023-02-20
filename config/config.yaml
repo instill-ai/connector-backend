@@ -9,8 +9,11 @@ server:
   debug: true
 worker:
   mountsource:
-    vdp: vdp # vdp volume name
-    airbyte: airbyte # airbyte volume name
+    vdp: vdp # vdp docker volume name by default
+    airbyte: airbyte # airbyte docker volume name by default
+  mounttarget:
+    vdp: /vdp
+    airbyte: /local
 database:
   username: postgres
   password: password

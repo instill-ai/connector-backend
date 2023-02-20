@@ -138,7 +138,12 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 		&container.HostConfig{
 			Mounts: []mount.Mount{
 				{
-					Type:   mount.TypeVolume,
+					Type: func() mount.Type {
+						if string(w.mountSourceVDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
 					Source: w.mountSourceVDP,
 					Target: w.mountTargetVDP,
 				},
