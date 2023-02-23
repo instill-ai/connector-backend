@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.6-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.5-alpha...v0.7.6-alpha) (2023-02-20)
+
+
+### Bug Fixes
+
+* fix airbyte destination conenctor ([a285180](https://github.com/instill-ai/connector-backend/commit/a28518000faf29e3f20cf27f70ac1cab86365ce4))
+
 ## [0.7.5-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.4-alpha...v0.7.5-alpha) (2023-02-10)
 
 
