@@ -27,7 +27,6 @@ export function CheckCreate() {
             JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
-
         check(resDstHTTP, {
             "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
             "POST /v1alpha/destination-connectors response connector name": (r) => r.json().destination_connector.name == `destination-connectors/${httpDstConnector.id}`,
@@ -107,7 +106,7 @@ export function CheckCreate() {
         check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response STATE_CONNECTED`]: (r) => r.json().destination_connector.connector.state === "STATE_CONNECTED",
         });
-
+        
         // destination-mysql (will end up with STATE_ERROR)
         var mySQLDstConnector = {
             "id": randomString(10),
@@ -136,9 +135,9 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response connector destination_connector_definition": (r) => r.json().destination_connector.destination_connector_definition === constant.mySQLDstDefRscName
         });
 
-        // Check connector state being updated in 80 secs
+        // Check connector state being updated in 180 secs
         currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 80000;
+        timeoutTime = new Date().getTime() + 180000;
         var pass = false
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)

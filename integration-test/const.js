@@ -25,6 +25,7 @@ if (__ENV.MODE == "api-gateway") {
 
 export const pipelineHost = `${proto}://${pHost}:${pPort}`;
 export const connectorHost = `${proto}://${cHost}:${cPort}`;
+export const connectorGRPCHost = `${cHost}:${cPort}`;
 export const modelHost = `${proto}://${mHost}:${mPort}`;
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
