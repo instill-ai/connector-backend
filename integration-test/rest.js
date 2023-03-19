@@ -5,8 +5,10 @@ import { connectorHost } from "./const.js"
 
 import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
-import * as sourceConnector from './rest-source-connector.js';
-import * as destinationConnector from './rest-destination-connector.js';
+import * as sourceConnector from './rest-source-connector-public.js';
+import * as destinationConnector from './rest-destination-connector-public.js';
+import * as sourceConnectorAdmin from './rest-source-connector-private.js';
+import * as destinationConnectorAdmin from './rest-destination-connector-private.js';
 
 export let options = {
   setupTimeout: '300s',
@@ -56,6 +58,19 @@ export default function (data) {
   destinationConnector.CheckState()
   destinationConnector.CheckRename()
   destinationConnector.CheckWrite()
+
+  // private API do not expose to public.
+  if (__ENV.MODE == "private") { 
+    // Source connectors
+    sourceConnectorAdmin.CheckList()
+    sourceConnectorAdmin.CheckGet()
+    sourceConnectorAdmin.CheckLookUp()
+
+    // Destination connectors
+    destinationConnectorAdmin.CheckList()
+    destinationConnectorAdmin.CheckGet()
+    destinationConnectorAdmin.CheckLookUp()
+  }
 
 }
 

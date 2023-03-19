@@ -41,6 +41,10 @@ type Service interface {
 	UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
 	DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error
 
+	ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
+
 	// Source connector custom service
 	ReadSourceConnector(id string, ownerRscName string) ([]byte, error)
 
@@ -190,6 +194,16 @@ func (s *service) ListConnector(ownerRscName string, connectorType datamodel.Con
 	return dbConnectors, pageSize, pageToken, nil
 }
 
+func (s *service) ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorAdmin(connectorType, pageSize, pageToken, isBasicView)
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	return dbConnectors, pageSize, pageToken, nil
+}
+
 func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
@@ -207,6 +221,16 @@ func (s *service) GetConnectorByID(id string, ownerRscName string, connectorType
 	return dbConnector, nil
 }
 
+func (s *service) GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+
+	dbConnector, err := s.repository.GetConnectorByIDAdmin(id, connectorType, isBasicView)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbConnector, nil
+}
+
 func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
@@ -220,6 +244,16 @@ func (s *service) GetConnectorByUID(uid uuid.UUID, ownerRscName string, isBasicV
 	}
 
 	dbConnector.Owner = ownerRscName
+
+	return dbConnector, nil
+}
+
+func (s *service) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
+
+	dbConnector, err := s.repository.GetConnectorByUIDAdmin(uid, isBasicView)
+	if err != nil {
+		return nil, err
+	}
 
 	return dbConnector, nil
 }

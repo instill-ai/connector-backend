@@ -5,10 +5,12 @@ import {
 } from 'k6';
 
 import * as constant from "./const.js"
-import * as sourceConnector from './grpc-source-connector.js';
-import * as destinationConnector from './grpc-destination-connector.js';
+import * as sourceConnector from './grpc-source-connector-public.js';
+import * as destinationConnector from './grpc-destination-connector-public.js';
 import * as sourceConnectorDefinition from './grpc-source-connector-definition.js';
 import * as destinationConnectorDefinition from './grpc-destination-connector-definition.js';
+import * as sourceConnectorAdmin from './grpc-source-connector-private.js';
+import * as destinationConnectorAdmin from './grpc-destination-connector-private.js';
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
@@ -67,6 +69,18 @@ export default function (data) {
   destinationConnector.CheckState()
   destinationConnector.CheckRename()
   destinationConnector.CheckWrite()
+
+  if (__ENV.MODE == "private") {
+    // Source connector Admin
+    sourceConnectorAdmin.CheckList()
+    sourceConnectorAdmin.CheckGet()
+    sourceConnectorAdmin.CheckLookUp()
+
+    // Destination connector Admin
+    destinationConnectorAdmin.CheckList()
+    destinationConnectorAdmin.CheckGet()
+    destinationConnectorAdmin.CheckLookUp()
+  }
 }
 
 export function teardown(data) {

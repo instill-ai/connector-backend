@@ -42,6 +42,10 @@ type Repository interface {
 	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
 	UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
 	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
+
+	ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 }
 
 type repository struct {
@@ -352,6 +356,113 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	return connectors, totalSize, nextPageToken, nil
 }
 
+func (r *repository) ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+
+	logger, _ := logger.GetZapLogger()
+
+	r.db.Model(&datamodel.Connector{}).Where("connector_type = ?", connectorType).Count(&totalSize)
+
+	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("connector_type = ?", connectorType)
+
+	if pageSize == 0 {
+		pageSize = DefaultPageSize
+	} else if pageSize > MaxPageSize {
+		pageSize = MaxPageSize
+	}
+
+	queryBuilder = queryBuilder.Limit(int(pageSize))
+
+	if pageToken != "" {
+		createdAt, uid, err := paginate.DecodeToken(pageToken)
+		if err != nil {
+			st, err := sterr.CreateErrorBadRequest(
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "page_token",
+						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
+		}
+
+		queryBuilder = queryBuilder.Where("(create_time,uid) < (?::timestamp, ?)", createdAt, uid)
+	}
+
+	if isBasicView {
+		queryBuilder.Omit("configuration")
+	}
+
+	var createTime time.Time // only using one for all loops, we only need the latest one in the end
+	rows, err := queryBuilder.Rows()
+	if err != nil {
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.Internal,
+			fmt.Sprintf("[db] list connector error: %s", err.Error()),
+			"connector",
+			fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+			"admin",
+			err.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, 0, "", st.Err()
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item datamodel.Connector
+		if err = r.db.ScanRows(rows, &item); err != nil {
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
+				"connector",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				"admin",
+				err.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
+		}
+		createTime = item.CreateTime
+		connectors = append(connectors, &item)
+	}
+
+	if len(connectors) > 0 {
+		lastUID := (connectors)[len(connectors)-1].UID
+		lastItem := &datamodel.Connector{}
+		if result := r.db.Model(&datamodel.Connector{}).
+			Where("connector_type = ?", connectorType).
+			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+			st, err := sterr.CreateErrorResourceInfo(
+				codes.Internal,
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
+				"connector",
+				fmt.Sprintf("connector_type %s", connectorPB.ConnectorType(connectorType)),
+				"admin",
+				result.Error.Error(),
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
+		}
+		if lastItem.UID.String() == lastUID.String() {
+			nextPageToken = ""
+		} else {
+			nextPageToken = paginate.EncodeToken(createTime, lastUID.String())
+		}
+	}
+
+	return connectors, totalSize, nextPageToken, nil
+}
+
 func (r *repository) GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger()
@@ -382,6 +493,36 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	return &connector, nil
 }
 
+func (r *repository) GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
+
+	var connector datamodel.Connector
+
+	queryBuilder := r.db.Model(&datamodel.Connector{}).
+		Where("id = ? AND connector_type = ?", id, connectorType)
+
+	if isBasicView {
+		queryBuilder.Omit("configuration")
+	}
+
+	if result := queryBuilder.First(&connector); result.Error != nil {
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			fmt.Sprintf("[db] get connector by id error: %s", result.Error.Error()),
+			"connector",
+			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+			"admin",
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
+	}
+	return &connector, nil
+}
+
 func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger()
@@ -402,6 +543,36 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isB
 			"connector",
 			uid.String(),
 			ownerPermalink,
+			result.Error.Error(),
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
+	}
+	return &connector, nil
+}
+
+func (r *repository) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
+
+	logger, _ := logger.GetZapLogger()
+
+	var connector datamodel.Connector
+
+	queryBuilder := r.db.Model(&datamodel.Connector{}).
+		Where("uid = ?", uid)
+
+	if isBasicView {
+		queryBuilder.Omit("configuration")
+	}
+
+	if result := queryBuilder.First(&connector); result.Error != nil {
+		st, err := sterr.CreateErrorResourceInfo(
+			codes.NotFound,
+			fmt.Sprintf("[db] get connector by uid error: %s", result.Error.Error()),
+			"connector",
+			uid.String(),
+			"admin",
 			result.Error.Error(),
 		)
 		if err != nil {

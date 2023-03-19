@@ -101,7 +101,7 @@ func main() {
 		grpc_zap.WithDecider(func(fullMethodName string, err error) bool {
 			// will not log gRPC calls if it was a call to liveness or readiness and no error was raised
 			if err == nil {
-				if match, _ := regexp.MatchString("vdp.connector.v1alpha.ConnectorService/.*ness$", fullMethodName); match {
+				if match, _ := regexp.MatchString("vdp.connector.v1alpha.ConnectorPublicService/.*ness$", fullMethodName); match {
 					return false
 				}
 			}
@@ -151,6 +151,16 @@ func main() {
 				temporalClient,
 			)))
 
+	connectorPB.RegisterConnectorPrivateServiceServer(
+		grpcS,
+		handler.NewPrivateHandler(
+			service.NewService(
+				repository,
+				mgmtAdminServiceClient,
+				pipelineServiceClient,
+				temporalClient,
+			)))
+
 	gwS := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(httpResponseModifier),
 		runtime.WithErrorHandler(errorHandler),
@@ -192,6 +202,10 @@ func main() {
 	}
 
 	if err := connectorPB.RegisterConnectorPublicServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	if err := connectorPB.RegisterConnectorPrivateServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
 		logger.Fatal(err.Error())
 	}
 
