@@ -8,10 +8,6 @@ import {
     randomString
 } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
-import {
-    connectorHost
-} from "./const.js"
-
 import * as constant from "./const.js"
 import * as helper from "./helper.js"
 
@@ -621,9 +617,7 @@ export function CheckState() {
         });
 
         client.close();
-
     });
-
 }
 
 export function CheckRename() {

@@ -80,9 +80,9 @@ export function CheckCreate() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resSrcGRPC.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
-    });
 
-    client.close();
+        client.close();
+    });
 }
 
 export function CheckList() {
@@ -195,9 +195,9 @@ export function CheckList() {
                 [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
-    });
 
-    client.close();
+        client.close();
+    });
 }
 
 export function CheckGet() {
@@ -490,9 +490,7 @@ export function CheckState() {
         });
 
         client.close();
-
     });
-
 }
 
 export function CheckRename() {
@@ -529,7 +527,5 @@ export function CheckRename() {
         });
 
         client.close();
-
     });
-
 }
