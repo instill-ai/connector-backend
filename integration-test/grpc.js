@@ -39,6 +39,7 @@ export default function (data) {
       'Status is OK': (r) => r && r.status === grpc.StatusOK,
       'Response status is SERVING_STATUS_SERVING': (r) => r && r.message.healthCheckResponse.status === "SERVING_STATUS_SERVING",
     });
+    client.close();
   });
 
   // Source connector Definitions
