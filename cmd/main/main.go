@@ -79,8 +79,8 @@ func main() {
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
 		Namespace: connWorker.Namespace,
-		Logger:   zapadapter.NewZapAdapter(logger),
-		HostPort: config.Config.Temporal.ClientOptions.HostPort,
+		Logger:    zapadapter.NewZapAdapter(logger),
+		HostPort:  config.Config.Temporal.ClientOptions.HostPort,
 	})
 	if err != nil {
 		logger.Fatal(err.Error())
@@ -141,9 +141,9 @@ func main() {
 	grpcS := grpc.NewServer(grpcServerOpts...)
 	reflection.Register(grpcS)
 
-	connectorPB.RegisterConnectorServiceServer(
+	connectorPB.RegisterConnectorPublicServiceServer(
 		grpcS,
-		handler.NewHandler(
+		handler.NewPublicHandler(
 			service.NewService(
 				repository,
 				mgmtAdminServiceClient,
@@ -191,7 +191,7 @@ func main() {
 		dialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
 
-	if err := connectorPB.RegisterConnectorServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
+	if err := connectorPB.RegisterConnectorPublicServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
 		logger.Fatal(err.Error())
 	}
 

@@ -6,9 +6,9 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-func (h *handler) ListDestinationConnectorDefinition(ctx context.Context, req *connectorPB.ListDestinationConnectorDefinitionRequest) (*connectorPB.ListDestinationConnectorDefinitionResponse, error) {
+func (h *handler) ListDestinationConnectorDefinitions(ctx context.Context, req *connectorPB.ListDestinationConnectorDefinitionsRequest) (*connectorPB.ListDestinationConnectorDefinitionsResponse, error) {
 	resp, err := h.listConnectorDefinition(ctx, req)
-	return resp.(*connectorPB.ListDestinationConnectorDefinitionResponse), err
+	return resp.(*connectorPB.ListDestinationConnectorDefinitionsResponse), err
 }
 
 func (h *handler) GetDestinationConnectorDefinition(ctx context.Context, req *connectorPB.GetDestinationConnectorDefinitionRequest) (*connectorPB.GetDestinationConnectorDefinitionResponse, error) {

@@ -17,7 +17,7 @@ import (
 )
 
 // InitMgmtAdminServiceClient initialises a MgmtAdminServiceClient instance
-func InitMgmtAdminServiceClient() (mgmtPB.MgmtAdminServiceClient, *grpc.ClientConn) {
+func InitMgmtAdminServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -39,11 +39,11 @@ func InitMgmtAdminServiceClient() (mgmtPB.MgmtAdminServiceClient, *grpc.ClientCo
 		return nil, nil
 	}
 
-	return mgmtPB.NewMgmtAdminServiceClient(clientConn), clientConn
+	return mgmtPB.NewMgmtPrivateServiceClient(clientConn), clientConn
 }
 
 // InitPipelineServiceClient initialises a PipelineServiceClient instance
-func InitPipelineServiceClient() (pipelinePB.PipelineServiceClient, *grpc.ClientConn) {
+func InitPipelineServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -65,7 +65,7 @@ func InitPipelineServiceClient() (pipelinePB.PipelineServiceClient, *grpc.Client
 		return nil, nil
 	}
 
-	return pipelinePB.NewPipelineServiceClient(clientConn), clientConn
+	return pipelinePB.NewPipelinePublicServiceClient(clientConn), clientConn
 }
 
 // InitUsageServiceClient initialises a UsageServiceClient instance

@@ -26,9 +26,9 @@ func (h *handler) CreateSourceConnector(ctx context.Context, req *connectorPB.Cr
 	return resp.(*connectorPB.CreateSourceConnectorResponse), nil
 }
 
-func (h *handler) ListSourceConnector(ctx context.Context, req *connectorPB.ListSourceConnectorRequest) (*connectorPB.ListSourceConnectorResponse, error) {
+func (h *handler) ListSourceConnectors(ctx context.Context, req *connectorPB.ListSourceConnectorsRequest) (*connectorPB.ListSourceConnectorsResponse, error) {
 	resp, err := h.listConnector(ctx, req)
-	return resp.(*connectorPB.ListSourceConnectorResponse), err
+	return resp.(*connectorPB.ListSourceConnectorsResponse), err
 }
 
 func (h *handler) GetSourceConnector(ctx context.Context, req *connectorPB.GetSourceConnectorRequest) (*connectorPB.GetSourceConnectorResponse, error) {

@@ -27,12 +27,12 @@ import (
 )
 
 type handler struct {
-	connectorPB.UnimplementedConnectorServiceServer
+	connectorPB.UnimplementedConnectorPublicServiceServer
 	service service.Service
 }
 
-// NewHandler initiates a handler instance
-func NewHandler(s service.Service) connectorPB.ConnectorServiceServer {
+// NewPublicHandler initiates a handler instance
+func NewPublicHandler(s service.Service) connectorPB.ConnectorPublicServiceServer {
 	datamodel.InitJSONSchema()
 	datamodel.InitAirbyteCatalog()
 	return &handler{
@@ -65,14 +65,14 @@ func (h *handler) listConnectorDefinition(ctx context.Context, req interface{}) 
 	var connType datamodel.ConnectorType
 
 	switch v := req.(type) {
-	case *connectorPB.ListSourceConnectorDefinitionRequest:
-		resp = &connectorPB.ListSourceConnectorDefinitionResponse{}
+	case *connectorPB.ListSourceConnectorDefinitionsRequest:
+		resp = &connectorPB.ListSourceConnectorDefinitionsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-	case *connectorPB.ListDestinationConnectorDefinitionRequest:
-		resp = &connectorPB.ListDestinationConnectorDefinitionResponse{}
+	case *connectorPB.ListDestinationConnectorDefinitionsRequest:
+		resp = &connectorPB.ListDestinationConnectorDefinitionsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -85,7 +85,7 @@ func (h *handler) listConnectorDefinition(ctx context.Context, req interface{}) 
 	}
 
 	switch v := resp.(type) {
-	case *connectorPB.ListSourceConnectorDefinitionResponse:
+	case *connectorPB.ListSourceConnectorDefinitionsResponse:
 		for _, dbDef := range dbDefs {
 			v.SourceConnectorDefinitions = append(
 				v.SourceConnectorDefinitions,
@@ -95,7 +95,7 @@ func (h *handler) listConnectorDefinition(ctx context.Context, req interface{}) 
 		}
 		v.NextPageToken = nextPageToken
 		v.TotalSize = totalSize
-	case *connectorPB.ListDestinationConnectorDefinitionResponse:
+	case *connectorPB.ListDestinationConnectorDefinitionsResponse:
 		for _, dbDef := range dbDefs {
 			v.DestinationConnectorDefinitions = append(
 				v.DestinationConnectorDefinitions,
@@ -490,15 +490,15 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 	var connDefColID string
 
 	switch v := req.(type) {
-	case *connectorPB.ListSourceConnectorRequest:
-		resp = &connectorPB.ListSourceConnectorResponse{}
+	case *connectorPB.ListSourceConnectorsRequest:
+		resp = &connectorPB.ListSourceConnectorsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 		connDefColID = "source-connector-definitions"
-	case *connectorPB.ListDestinationConnectorRequest:
-		resp = &connectorPB.ListDestinationConnectorResponse{}
+	case *connectorPB.ListDestinationConnectorsRequest:
+		resp = &connectorPB.ListDestinationConnectorsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -533,7 +533,7 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 	}
 
 	switch v := resp.(type) {
-	case *connectorPB.ListSourceConnectorResponse:
+	case *connectorPB.ListSourceConnectorsResponse:
 		var pbSrcConns []*connectorPB.SourceConnector
 		for _, pbConnector := range pbConnectors {
 			pbSrcConns = append(pbSrcConns, pbConnector.(*connectorPB.SourceConnector))
@@ -541,7 +541,7 @@ func (h *handler) listConnector(ctx context.Context, req interface{}) (resp inte
 		v.SourceConnectors = pbSrcConns
 		v.NextPageToken = nextPageToken
 		v.TotalSize = totalSize
-	case *connectorPB.ListDestinationConnectorResponse:
+	case *connectorPB.ListDestinationConnectorsResponse:
 		var pbDstConns []*connectorPB.DestinationConnector
 		for _, pbConnector := range pbConnectors {
 			pbDstConns = append(pbDstConns, pbConnector.(*connectorPB.DestinationConnector))

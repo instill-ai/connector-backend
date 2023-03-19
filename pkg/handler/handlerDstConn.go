@@ -32,9 +32,9 @@ func (h *handler) CreateDestinationConnector(ctx context.Context, req *connector
 	return resp.(*connectorPB.CreateDestinationConnectorResponse), nil
 }
 
-func (h *handler) ListDestinationConnector(ctx context.Context, req *connectorPB.ListDestinationConnectorRequest) (*connectorPB.ListDestinationConnectorResponse, error) {
+func (h *handler) ListDestinationConnectors(ctx context.Context, req *connectorPB.ListDestinationConnectorsRequest) (*connectorPB.ListDestinationConnectorsResponse, error) {
 	resp, err := h.listConnector(ctx, req)
-	return resp.(*connectorPB.ListDestinationConnectorResponse), err
+	return resp.(*connectorPB.ListDestinationConnectorsResponse), err
 }
 
 func (h *handler) GetDestinationConnector(ctx context.Context, req *connectorPB.GetDestinationConnectorRequest) (*connectorPB.GetDestinationConnectorResponse, error) {
