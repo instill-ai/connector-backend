@@ -6,12 +6,12 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-func (h *handler) ListSourceConnectorDefinition(ctx context.Context, req *connectorPB.ListSourceConnectorDefinitionRequest) (*connectorPB.ListSourceConnectorDefinitionResponse, error) {
+func (h *publicHandler) ListSourceConnectorDefinitions(ctx context.Context, req *connectorPB.ListSourceConnectorDefinitionsRequest) (*connectorPB.ListSourceConnectorDefinitionsResponse, error) {
 	resp, err := h.listConnectorDefinition(ctx, req)
-	return resp.(*connectorPB.ListSourceConnectorDefinitionResponse), err
+	return resp.(*connectorPB.ListSourceConnectorDefinitionsResponse), err
 }
 
-func (h *handler) GetSourceConnectorDefinition(ctx context.Context, req *connectorPB.GetSourceConnectorDefinitionRequest) (*connectorPB.GetSourceConnectorDefinitionResponse, error) {
+func (h *publicHandler) GetSourceConnectorDefinition(ctx context.Context, req *connectorPB.GetSourceConnectorDefinitionRequest) (*connectorPB.GetSourceConnectorDefinitionResponse, error) {
 	resp, err := h.getConnectorDefinition(ctx, req)
 	return resp.(*connectorPB.GetSourceConnectorDefinitionResponse), err
 }

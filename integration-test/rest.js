@@ -1,12 +1,14 @@
 import http from "k6/http";
 import { check, group } from "k6";
 
-import { connectorHost } from "./const.js"
+import { connectorPublicHost } from "./const.js"
 
 import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
-import * as sourceConnector from './rest-source-connector.js';
-import * as destinationConnector from './rest-destination-connector.js';
+import * as sourceConnectorPublic from './rest-source-connector-public.js';
+import * as destinationConnectorPublic from './rest-destination-connector-public.js';
+import * as sourceConnectorPrivate from './rest-source-connector-private.js';
+import * as destinationConnectorPrivate from './rest-destination-connector-private.js';
 
 export let options = {
   setupTimeout: '300s',
@@ -24,10 +26,23 @@ export default function (data) {
 
   // Health check
   group("Connector API: Health check", () => {
-    check(http.request("GET", `${connectorHost}/v1alpha/health/connector`), {
+    check(http.request("GET", `${connectorPublicHost}/v1alpha/health/connector`), {
       "GET /health/connector response status is 200": (r) => r.status === 200,
     });
   });
+
+  // private API do not expose to public.
+  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
+    // Source connectors
+    sourceConnectorPrivate.CheckList()
+    sourceConnectorPrivate.CheckGet()
+    sourceConnectorPrivate.CheckLookUp()
+
+    // Destination connectors
+    destinationConnectorPrivate.CheckList()
+    destinationConnectorPrivate.CheckGet()
+    destinationConnectorPrivate.CheckLookUp()
+  }
 
   // Source connector definitions
   sourceConnectorDefinition.CheckList()
@@ -38,39 +53,39 @@ export default function (data) {
   destinationConnectorDefinition.CheckGet()
 
   // Source connectors
-  sourceConnector.CheckCreate()
-  sourceConnector.CheckList()
-  sourceConnector.CheckGet()
-  sourceConnector.CheckUpdate()
-  sourceConnector.CheckDelete()
-  sourceConnector.CheckLookUp()
-  sourceConnector.CheckState()
-  sourceConnector.CheckRename()
+  sourceConnectorPublic.CheckCreate()
+  sourceConnectorPublic.CheckList()
+  sourceConnectorPublic.CheckGet()
+  sourceConnectorPublic.CheckUpdate()
+  sourceConnectorPublic.CheckDelete()
+  sourceConnectorPublic.CheckLookUp()
+  sourceConnectorPublic.CheckState()
+  sourceConnectorPublic.CheckRename()
 
   // Destination connectors
-  destinationConnector.CheckCreate()
-  destinationConnector.CheckList()
-  destinationConnector.CheckGet()
-  destinationConnector.CheckUpdate()
-  destinationConnector.CheckLookUp()
-  destinationConnector.CheckState()
-  destinationConnector.CheckRename()
-  destinationConnector.CheckWrite()
+  destinationConnectorPublic.CheckCreate()
+  destinationConnectorPublic.CheckList()
+  destinationConnectorPublic.CheckGet()
+  destinationConnectorPublic.CheckUpdate()
+  destinationConnectorPublic.CheckLookUp()
+  destinationConnectorPublic.CheckState()
+  destinationConnectorPublic.CheckRename()
+  destinationConnectorPublic.CheckWrite()
 
 }
 
 export function teardown(data) {
   group("Connector API: Delete all source connector created by this test", () => {
-    for (const srcConnector of http.request("GET", `${connectorHost}/v1alpha/source-connectors`).json("source_connectors")) {
-      check(http.request("DELETE", `${connectorHost}/v1alpha/source-connectors/${srcConnector.id}`), {
+    for (const srcConnector of http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`).json("source_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${srcConnector.id}`), {
         [`DELETE /v1alpha/source-connectors/${srcConnector.id} response status is 204`]: (r) => r.status === 204,
       });
     }
   });
 
   group("Connector API: Delete all destination connector created by this test", () => {
-    for (const desConnector of http.request("GET", `${connectorHost}/v1alpha/destination-connectors`).json("destination_connectors")) {
-      check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${desConnector.id}`), {
+    for (const desConnector of http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`).json("destination_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${desConnector.id}`), {
         [`DELETE /v1alpha/destination-connectors/${desConnector.id} response status is 204`]: (r) => r.status === 204,
       });
     }

@@ -1,5 +1,6 @@
 server:
-  port: 8082
+  privateport: 3082
+  publicport: 8082
   https:
     cert:
     key:
@@ -31,13 +32,13 @@ temporal:
     hostport: temporal:7233
 pipelinebackend:
   host: pipeline-backend
-  port: 8081
+  publicport: 8081
   https:
     cert:
     key:
 mgmtbackend:
   host: mgmt-backend
-  adminport: 3084
+  privateport: 3084
   https:
     cert:
     key:

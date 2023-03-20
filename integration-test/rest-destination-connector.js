@@ -2,7 +2,7 @@ import http from "k6/http";
 import { check, group, sleep } from "k6";
 import { randomString } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
-import { connectorHost } from "./const.js"
+import { connectorPublicHost } from "./const.js"
 
 import * as constant from "./const.js"
 import * as helper from "./helper.js"
@@ -23,7 +23,7 @@ export function CheckCreate() {
 
         var resDstHTTP = http.request(
             "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+            `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -37,7 +37,7 @@ export function CheckCreate() {
 
         check(http.request(
             "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+            `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         }), {
@@ -55,7 +55,7 @@ export function CheckCreate() {
 
         var resDstGRPC = http.request(
             "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+            `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(gRPCDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -66,7 +66,7 @@ export function CheckCreate() {
 
         check(http.request(
             "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+            `${connectorPublicHost}/v1alpha/destination-connectors`,
             {}, {
             headers: { "Content-Type": "application/json" },
         }), {
@@ -83,7 +83,7 @@ export function CheckCreate() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -92,7 +92,7 @@ export function CheckCreate() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -104,7 +104,7 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response status 201": (r) => r.status === 201,
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response STATE_CONNECTED`]: (r) => r.json().destination_connector.connector.state === "STATE_CONNECTED",
         });
 
@@ -124,7 +124,7 @@ export function CheckCreate() {
 
         var resDstMySQL = http.request(
             "POST",
-            `${connectorHost}/v1alpha/destination-connectors`,
+            `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(mySQLDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -141,7 +141,7 @@ export function CheckCreate() {
         timeoutTime = new Date().getTime() + 80000;
         var pass = false
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_ERROR") {
                 pass = true
                 break
@@ -164,7 +164,7 @@ export function CheckCreate() {
             }
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === 400,
@@ -184,23 +184,23 @@ export function CheckCreate() {
             }
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/destination-connectors response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === 400,
         });
 
         // Delete test records
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstHTTP.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstGRPC.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstGRPC.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstGRPC.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
@@ -211,7 +211,7 @@ export function CheckList() {
 
     group("Connector API: List destination connectors", () => {
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`), {
             [`GET /v1alpha/destination-connectors response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors response destination_connectors array is 0 length`]: (r) => r.json().destination_connectors.length === 0,
             [`GET /v1alpha/destination-connectors response next_page_token is empty`]: (r) => r.json().next_page_token === "",
@@ -233,7 +233,7 @@ export function CheckList() {
 
         // Create connectors
         for (const reqBody of reqBodies) {
-            var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+            var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
                 JSON.stringify(reqBody), {
                 headers: { "Content-Type": "application/json" },
             })
@@ -242,52 +242,52 @@ export function CheckList() {
             });
         }
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`), {
             [`GET /v1alpha/destination-connectors response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors response has destination_connectors array`]: (r) => Array.isArray(r.json().destination_connectors),
             [`GET /v1alpha/destination-connectors response has total_size = ${numConnectors}`]: (r) => r.json().total_size == numConnectors,
         });
 
-        var limitedRecords = http.request("GET", `${connectorHost}/v1alpha/destination-connectors`)
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=0`), {
+        var limitedRecords = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`)
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=0`), {
             "GET /v1alpha/destination-connectors?page_size=0 response status is 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=0 response all records": (r) => r.json().destination_connectors.length === limitedRecords.json().destination_connectors.length,
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1`), {
             "GET /v1alpha/destination-connectors?page_size=1 response status is 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors size 1": (r) => r.json().destination_connectors.length === 1,
         });
 
-        var pageRes = http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`)
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&page_token=${pageRes.json().next_page_token}`), {
+        var pageRes = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1`)
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1&page_token=${pageRes.json().next_page_token}`), {
             [`GET /v1alpha/destination-connectors?page_size=1&page_token=${pageRes.json().next_page_token} response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors?page_size=1&page_token=${pageRes.json().next_page_token} response destination_connectors size 1`]: (r) => r.json().destination_connectors.length === 1,
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_FULL`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors[0].connector.configuration is not null": (r) => r.json().destination_connectors[0].connector.configuration !== null
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=1`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=1`), {
             "GET /v1alpha/destination-connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/destination-connectors?page_size=1 response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
         });
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
             [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === ""
         });
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${reqBody.id}`), {
+            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${reqBody.id}`), {
                 [`DELETE /v1alpha/destination-connectors x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
@@ -307,7 +307,7 @@ export function CheckGet() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -316,7 +316,7 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -324,13 +324,13 @@ export function CheckGet() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
         });
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
@@ -349,7 +349,7 @@ export function CheckUpdate() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -366,7 +366,7 @@ export function CheckUpdate() {
             }
         }
 
-        var resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+        var resCSVDstUpdate = http.request("PATCH", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
             JSON.stringify(csvDstConnectorUpdate), {
             headers: { "Content-Type": "application/json" },
         })
@@ -387,7 +387,7 @@ export function CheckUpdate() {
             }
         }
 
-        resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+        resCSVDstUpdate = http.request("PATCH", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
             JSON.stringify(csvDstConnectorUpdate), {
             headers: { "Content-Type": "application/json" },
         })
@@ -405,7 +405,7 @@ export function CheckUpdate() {
             }
         }
 
-        resCSVDstUpdate = http.request("PATCH", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
+        resCSVDstUpdate = http.request("PATCH", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
             JSON.stringify(csvDstConnectorUpdate), {
             headers: { "Content-Type": "application/json" },
         })
@@ -414,7 +414,7 @@ export function CheckUpdate() {
             [`PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} with non-existing name field response status 200`]: (r) => r.status === 200,
         })
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${csvDstConnector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${csvDstConnector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
     });
@@ -433,18 +433,18 @@ export function CheckLookUp() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response connector uid`]: (r) => r.json().destination_connector.uid === resCSVDst.json().destination_connector.uid,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response connector destination_connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
         });
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
 
@@ -463,18 +463,18 @@ export function CheckState() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
@@ -484,7 +484,7 @@ export function CheckState() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -492,25 +492,25 @@ export function CheckState() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response status 200 (with STATE_CONNECTED)`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response status 200 (with STATE_CONNECTED)`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response status 200 (with STATE_DISCONNECTED)`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, {
             headers: { "Content-Type": "application/json" }
         }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response status 200 (with STATE_DISCONNECTED)`]: (r) => r.status === 200,
@@ -520,7 +520,7 @@ export function CheckState() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -528,7 +528,7 @@ export function CheckState() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
 
@@ -549,12 +549,12 @@ export function CheckRename() {
             }
         }
 
-        var resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/rename`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/rename`,
             JSON.stringify({
                 "new_destination_connector_id": `some-id-not-${resCSVDst.json().destination_connector.id}`
             }), {
@@ -564,7 +564,7 @@ export function CheckRename() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/rename response id is some-id-not-${resCSVDst.json().destination_connector.id}`]: (r) => r.json().destination_connector.id === `some-id-not-${resCSVDst.json().destination_connector.id}`,
         });
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/some-id-not-${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/some-id-not-${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/some-id-not-${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
@@ -588,7 +588,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -597,7 +597,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -605,7 +605,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -628,7 +628,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (classification)`]: (r) => r.status === 204,
         });
 
@@ -644,7 +644,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -653,7 +653,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -661,7 +661,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -685,7 +685,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
         });
 
@@ -701,7 +701,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -710,7 +710,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -718,7 +718,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -742,7 +742,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (detection)`]: (r) => r.status === 204,
         });
 
@@ -758,7 +758,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -767,7 +767,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -775,7 +775,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -798,7 +798,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (keypoint)`]: (r) => r.status === 204,
         });
 
@@ -814,7 +814,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -823,7 +823,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -831,7 +831,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -854,7 +854,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (ocr)`]: (r) => r.status === 204,
         });
 
@@ -870,7 +870,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -879,7 +879,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -887,7 +887,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -910,7 +910,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (semantic-segmentation)`]: (r) => r.status === 204,
         });
 
@@ -926,7 +926,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -935,7 +935,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -943,7 +943,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -966,7 +966,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (instance-segmentation)`]: (r) => r.status === 204,
         });
 
@@ -982,7 +982,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -991,7 +991,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -999,7 +999,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -1022,7 +1022,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-to-image)`]: (r) => r.status === 204,
         });
 
@@ -1038,7 +1038,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -1047,7 +1047,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -1055,7 +1055,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -1078,7 +1078,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (text-generation)`]: (r) => r.status === 204,
         });
 
@@ -1094,7 +1094,7 @@ export function CheckWrite() {
             }
         }
 
-        resCSVDst = http.request("POST", `${connectorHost}/v1alpha/destination-connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
@@ -1103,7 +1103,7 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
             if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
                 break
             }
@@ -1111,7 +1111,7 @@ export function CheckWrite() {
             currentTime = new Date().getTime();
         }
 
-        check(http.request("POST", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
                 "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
@@ -1134,7 +1134,7 @@ export function CheckWrite() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (unspecified)`]: (r) => r.status === 204,
         });
     });

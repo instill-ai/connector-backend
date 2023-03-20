@@ -16,8 +16,8 @@ import (
 	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
 )
 
-// InitMgmtAdminServiceClient initialises a MgmtAdminServiceClient instance
-func InitMgmtAdminServiceClient() (mgmtPB.MgmtAdminServiceClient, *grpc.ClientConn) {
+// InitMgmtPrivateServiceClient initialises a MgmtPrivateServiceClient instance
+func InitMgmtPrivateServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -33,17 +33,17 @@ func InitMgmtAdminServiceClient() (mgmtPB.MgmtAdminServiceClient, *grpc.ClientCo
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.MgmtBackend.Host, config.Config.MgmtBackend.AdminPort), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.MgmtBackend.Host, config.Config.MgmtBackend.PrivatePort), clientDialOpts)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, nil
 	}
 
-	return mgmtPB.NewMgmtAdminServiceClient(clientConn), clientConn
+	return mgmtPB.NewMgmtPrivateServiceClient(clientConn), clientConn
 }
 
-// InitPipelineServiceClient initialises a PipelineServiceClient instance
-func InitPipelineServiceClient() (pipelinePB.PipelineServiceClient, *grpc.ClientConn) {
+// InitPipelinePublicServiceClient initialises a PipelineServiceClient instance
+func InitPipelinePublicServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -59,13 +59,13 @@ func InitPipelineServiceClient() (pipelinePB.PipelineServiceClient, *grpc.Client
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.PipelineBackend.Host, config.Config.PipelineBackend.Port), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.PipelineBackend.Host, config.Config.PipelineBackend.PublicPort), clientDialOpts)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, nil
 	}
 
-	return pipelinePB.NewPipelineServiceClient(clientConn), clientConn
+	return pipelinePB.NewPipelinePublicServiceClient(clientConn), clientConn
 }
 
 // InitUsageServiceClient initialises a UsageServiceClient instance

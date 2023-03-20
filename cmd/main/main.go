@@ -79,8 +79,8 @@ func main() {
 		// ZapAdapter implements log.Logger interface and can be passed
 		// to the client constructor using client using client.Options.
 		Namespace: connWorker.Namespace,
-		Logger:   zapadapter.NewZapAdapter(logger),
-		HostPort: config.Config.Temporal.ClientOptions.HostPort,
+		Logger:    zapadapter.NewZapAdapter(logger),
+		HostPort:  config.Config.Temporal.ClientOptions.HostPort,
 	})
 	if err != nil {
 		logger.Fatal(err.Error())
@@ -101,7 +101,7 @@ func main() {
 		grpc_zap.WithDecider(func(fullMethodName string, err error) bool {
 			// will not log gRPC calls if it was a call to liveness or readiness and no error was raised
 			if err == nil {
-				if match, _ := regexp.MatchString("vdp.connector.v1alpha.ConnectorService/.*ness$", fullMethodName); match {
+				if match, _ := regexp.MatchString("vdp.connector.v1alpha.ConnectorPublicService/.*ness$", fullMethodName); match {
 					return false
 				}
 			}
@@ -126,32 +126,61 @@ func main() {
 		grpcServerOpts = append(grpcServerOpts, grpc.Creds(creds))
 	}
 
-	mgmtAdminServiceClient, mgmtAdminServiceClientConn := external.InitMgmtAdminServiceClient()
-	if mgmtAdminServiceClientConn != nil {
-		defer mgmtAdminServiceClientConn.Close()
+	mgmtPrivateServiceClient, mgmtPrivateServiceClientConn := external.InitMgmtPrivateServiceClient()
+	if mgmtPrivateServiceClientConn != nil {
+		defer mgmtPrivateServiceClientConn.Close()
 	}
 
-	pipelineServiceClient, pipelineServiceClientConn := external.InitPipelineServiceClient()
-	if pipelineServiceClientConn != nil {
-		defer pipelineServiceClientConn.Close()
+	pipelinePublicServiceClient, pipelinePublicServiceClientConn := external.InitPipelinePublicServiceClient()
+	if pipelinePublicServiceClientConn != nil {
+		defer pipelinePublicServiceClientConn.Close()
 	}
 
 	repository := repository.NewRepository(db)
 
-	grpcS := grpc.NewServer(grpcServerOpts...)
-	reflection.Register(grpcS)
+	privateGrpcS := grpc.NewServer(grpcServerOpts...)
+	reflection.Register(privateGrpcS)
 
-	connectorPB.RegisterConnectorServiceServer(
-		grpcS,
-		handler.NewHandler(
+	publicGrpcS := grpc.NewServer(grpcServerOpts...)
+	reflection.Register(publicGrpcS)
+
+	connectorPB.RegisterConnectorPrivateServiceServer(
+		privateGrpcS,
+		handler.NewPrivateHandler(
 			service.NewService(
 				repository,
-				mgmtAdminServiceClient,
-				pipelineServiceClient,
+				mgmtPrivateServiceClient,
+				pipelinePublicServiceClient,
 				temporalClient,
 			)))
 
-	gwS := runtime.NewServeMux(
+	connectorPB.RegisterConnectorPublicServiceServer(
+		publicGrpcS,
+		handler.NewPublicHandler(
+			service.NewService(
+				repository,
+				mgmtPrivateServiceClient,
+				pipelinePublicServiceClient,
+				temporalClient,
+			)))
+
+	privateServeMux := runtime.NewServeMux(
+		runtime.WithForwardResponseOption(httpResponseModifier),
+		runtime.WithErrorHandler(errorHandler),
+		runtime.WithIncomingHeaderMatcher(customMatcher),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames:   true,
+				EmitUnpopulated: true,
+				UseEnumNumbers:  false,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
+	)
+
+	publicServeMux := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(httpResponseModifier),
 		runtime.WithErrorHandler(errorHandler),
 		runtime.WithIncomingHeaderMatcher(customMatcher),
@@ -177,7 +206,7 @@ func main() {
 		if usageServiceClientConn != nil {
 			defer usageServiceClientConn.Close()
 		}
-		usg = usage.NewUsage(ctx, repository, mgmtAdminServiceClient, usageServiceClient)
+		usg = usage.NewUsage(ctx, repository, mgmtPrivateServiceClient, usageServiceClient)
 		if usg != nil {
 			usg.StartReporter(ctx)
 		}
@@ -191,13 +220,22 @@ func main() {
 		dialOpts = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
 
-	if err := connectorPB.RegisterConnectorServiceHandlerFromEndpoint(ctx, gwS, fmt.Sprintf(":%v", config.Config.Server.Port), dialOpts); err != nil {
+	if err := connectorPB.RegisterConnectorPrivateServiceHandlerFromEndpoint(ctx, privateServeMux, fmt.Sprintf(":%v", config.Config.Server.PrivatePort), dialOpts); err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	httpServer := &http.Server{
-		Addr:    fmt.Sprintf(":%v", config.Config.Server.Port),
-		Handler: grpcHandlerFunc(grpcS, gwS, config.Config.Server.CORSOrigins),
+	if err := connectorPB.RegisterConnectorPublicServiceHandlerFromEndpoint(ctx, publicServeMux, fmt.Sprintf(":%v", config.Config.Server.PublicPort), dialOpts); err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	privateHTTPServer := &http.Server{
+		Addr:    fmt.Sprintf(":%v", config.Config.Server.PrivatePort),
+		Handler: grpcHandlerFunc(privateGrpcS, privateServeMux, config.Config.Server.CORSOrigins),
+	}
+
+	publicHTTPServer := &http.Server{
+		Addr:    fmt.Sprintf(":%v", config.Config.Server.PublicPort),
+		Handler: grpcHandlerFunc(publicGrpcS, publicServeMux, config.Config.Server.CORSOrigins),
 	}
 
 	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 5 seconds.
@@ -205,13 +243,23 @@ func main() {
 	errSig := make(chan error)
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
 		go func() {
-			if err := httpServer.ListenAndServeTLS(config.Config.Server.HTTPS.Cert, config.Config.Server.HTTPS.Key); err != nil {
+			if err := privateHTTPServer.ListenAndServeTLS(config.Config.Server.HTTPS.Cert, config.Config.Server.HTTPS.Key); err != nil {
+				errSig <- err
+			}
+		}()
+		go func() {
+			if err := publicHTTPServer.ListenAndServeTLS(config.Config.Server.HTTPS.Cert, config.Config.Server.HTTPS.Key); err != nil {
 				errSig <- err
 			}
 		}()
 	} else {
 		go func() {
-			if err := httpServer.ListenAndServe(); err != nil {
+			if err := privateHTTPServer.ListenAndServe(); err != nil {
+				errSig <- err
+			}
+		}()
+		go func() {
+			if err := publicHTTPServer.ListenAndServe(); err != nil {
 				errSig <- err
 			}
 		}()
@@ -231,6 +279,7 @@ func main() {
 			usg.TriggerSingleReporter(ctx)
 		}
 		logger.Info("Shutting down server...")
-		grpcS.GracefulStop()
+		privateGrpcS.GracefulStop()
+		publicGrpcS.GracefulStop()
 	}
 }
