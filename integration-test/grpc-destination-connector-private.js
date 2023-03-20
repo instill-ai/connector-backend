@@ -10,20 +10,24 @@ import {
 
 import * as constant from "./const.js"
 
-const client = new grpc.Client();
-client.load(['proto/vdp/connector/v1alpha'], 'connector_private_service.proto');
-client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
-
+const clientPrivate = new grpc.Client();
+const clientPublic = new grpc.Client();
+clientPrivate.load(['proto/vdp/connector/v1alpha'], 'connector_private_service.proto');
+clientPublic.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
 
 export function CheckList() {
 
     group("Connector API: List destination connectors by admin", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        clientPrivate.connect(constant.connectorGRPCPrivateHost, {
             plaintext: true
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {}), {
+        clientPublic.connect(constant.connectorGRPCPublicHost, {
+            plaintext: true
+        });
+
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin response destinationConnectors array is 0 length`]: (r) => r.message.destinationConnectors.length === 0,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
@@ -45,7 +49,7 @@ export function CheckList() {
 
         // Create connectors
         for (const reqBody of reqBodies) {
-            var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            var resDstHTTP = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
                 destination_connector: reqBody
             })
 
@@ -54,32 +58,32 @@ export function CheckList() {
             });
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {}), {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response has destinationConnectors array`]: (r) => Array.isArray(r.message.destinationConnectors),
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin response has totalSize = ${reqBodies.length}`]: (r) => r.message.totalSize == reqBodies.length,
         });
 
-        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        var limitedRecords = clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {}, {})
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 0
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=0 response all records`]: (r) => r.message.destinationConnectors.length === limitedRecords.message.destinationConnectors.length,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response size 1`]: (r) => r.message.destinationConnectors.length === 1,
         });
 
-        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        var pageRes = clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1
         }, {})
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1,
             pageToken: `${pageRes.message.nextPageToken}`
         }, {}), {
@@ -87,7 +91,7 @@ export function CheckList() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 pageToken=${pageRes.message.nextPageToken} response size 1`]: (r) => r.message.destinationConnectors.length === 1,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1,
             view: "VIEW_BASIC"
         }, {}), {
@@ -95,7 +99,7 @@ export function CheckList() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1,
             view: "VIEW_FULL"
         }, {}), {
@@ -104,14 +108,14 @@ export function CheckList() {
         });
 
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: 1,
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
             pageSize: `${limitedRecords.message.totalSize}`,
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -120,14 +124,15 @@ export function CheckList() {
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
+            check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
                 name: `destination-connectors/${reqBody.id}`
             }), {
                 [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
 
-        client.close();
+        clientPrivate.close();
+        clientPublic.close();
     });
 }
 
@@ -135,7 +140,11 @@ export function CheckGet() {
 
     group("Connector API: Get destination connectors by ID by admin", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        clientPrivate.connect(constant.connectorGRPCPrivateHost, {
+            plaintext: true
+        });
+
+        clientPublic.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -148,7 +157,7 @@ export function CheckGet() {
             }
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+        var resCSVDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: csvDstConnector
         })
 
@@ -156,7 +165,7 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
+            var res = clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
                 name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
@@ -166,7 +175,7 @@ export function CheckGet() {
             currentTime = new Date().getTime();
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
             name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -174,13 +183,13 @@ export function CheckGet() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
+        check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        client.close();
+        clientPublic.close();
     });
 }
 
@@ -188,7 +197,11 @@ export function CheckLookUp() {
 
     group("Connector API: Look up destination connectors by UID by admin", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        clientPrivate.connect(constant.connectorGRPCPrivateHost, {
+            plaintext: true
+        });
+
+        clientPublic.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -201,11 +214,11 @@ export function CheckLookUp() {
             }
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+        var resCSVDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin', {
+        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin', {
             permalink: `destination_connector/${resCSVDst.message.destinationConnector.uid}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -213,12 +226,12 @@ export function CheckLookUp() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
+        check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
             name: `destination-connectors/${csvDstConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        client.close();
+        clientPublic.close();
     });
 }

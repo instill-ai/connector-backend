@@ -5,12 +5,12 @@ import {
 } from 'k6';
 
 import * as constant from "./const.js"
-import * as sourceConnector from './grpc-source-connector-public.js';
-import * as destinationConnector from './grpc-destination-connector-public.js';
 import * as sourceConnectorDefinition from './grpc-source-connector-definition.js';
 import * as destinationConnectorDefinition from './grpc-destination-connector-definition.js';
-import * as sourceConnectorAdmin from './grpc-source-connector-private.js';
-import * as destinationConnectorAdmin from './grpc-destination-connector-private.js';
+import * as sourceConnectorPublic from './grpc-source-connector-public.js';
+import * as destinationConnectorPublic from './grpc-destination-connector-public.js';
+import * as sourceConnectorPrivate from './grpc-source-connector-private.js';
+import * as destinationConnectorPrivate from './grpc-destination-connector-private.js';
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
@@ -31,7 +31,7 @@ export default function (data) {
 
   // Health check
   group("Connector API: Health check", () => {
-    client.connect(constant.connectorGRPCHost, {
+    client.connect(constant.connectorGRPCPublicHost, {
       plaintext: true
     });
     const response = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/Liveness', {});
@@ -42,6 +42,18 @@ export default function (data) {
     client.close();
   });
 
+  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
+    // Source connector private
+    sourceConnectorPrivate.CheckList()
+    sourceConnectorPrivate.CheckGet()
+    sourceConnectorPrivate.CheckLookUp()
+
+    // Destination connector Admin
+    destinationConnectorPrivate.CheckList()
+    destinationConnectorPrivate.CheckGet()
+    destinationConnectorPrivate.CheckLookUp()
+  }
+
   // Source connector Definitions
   sourceConnectorDefinition.CheckList()
   sourceConnectorDefinition.CheckGet()
@@ -50,42 +62,30 @@ export default function (data) {
   destinationConnectorDefinition.CheckList()
   destinationConnectorDefinition.CheckGet()
 
-
   // Source connector
-  sourceConnector.CheckCreate()
-  sourceConnector.CheckList()
-  sourceConnector.CheckGet()
-  sourceConnector.CheckUpdate()
-  sourceConnector.CheckDelete()
-  sourceConnector.CheckLookUp()
-  sourceConnector.CheckState()
-  sourceConnector.CheckRename()
+  sourceConnectorPublic.CheckCreate()
+  sourceConnectorPublic.CheckList()
+  sourceConnectorPublic.CheckGet()
+  sourceConnectorPublic.CheckUpdate()
+  sourceConnectorPublic.CheckDelete()
+  sourceConnectorPublic.CheckLookUp()
+  sourceConnectorPublic.CheckState()
+  sourceConnectorPublic.CheckRename()
 
   // Destination connectors
-  destinationConnector.CheckCreate()
-  destinationConnector.CheckList()
-  destinationConnector.CheckGet()
-  destinationConnector.CheckUpdate()
-  destinationConnector.CheckLookUp()
-  destinationConnector.CheckState()
-  destinationConnector.CheckRename()
-  destinationConnector.CheckWrite()
+  destinationConnectorPublic.CheckCreate()
+  destinationConnectorPublic.CheckList()
+  destinationConnectorPublic.CheckGet()
+  destinationConnectorPublic.CheckUpdate()
+  destinationConnectorPublic.CheckLookUp()
+  destinationConnectorPublic.CheckState()
+  destinationConnectorPublic.CheckRename()
+  destinationConnectorPublic.CheckWrite()
 
-  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
-    // Source connector Admin
-    sourceConnectorAdmin.CheckList()
-    sourceConnectorAdmin.CheckGet()
-    sourceConnectorAdmin.CheckLookUp()
-
-    // Destination connector Admin
-    destinationConnectorAdmin.CheckList()
-    destinationConnectorAdmin.CheckGet()
-    destinationConnectorAdmin.CheckLookUp()
-  }
 }
 
 export function teardown(data) {
-  client.connect(constant.connectorGRPCHost, {
+  client.connect(constant.connectorGRPCPublicHost, {
     plaintext: true
   });
   group("Connector API: Delete all source connector created by this test", () => {

@@ -18,7 +18,7 @@ export function CheckCreate() {
 
     group("Connector API: Create destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -224,7 +224,7 @@ export function CheckList() {
 
     group("Connector API: List destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -340,7 +340,7 @@ export function CheckGet() {
 
     group("Connector API: Get destination connectors by ID", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -393,7 +393,7 @@ export function CheckUpdate() {
 
     group("Connector API: Update destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -484,7 +484,7 @@ export function CheckLookUp() {
 
     group("Connector API: Look up destination connectors by UID", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -523,7 +523,7 @@ export function CheckState() {
 
     group("Connector API: Change state destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -624,7 +624,7 @@ export function CheckRename() {
 
     group("Connector API: Rename destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -664,7 +664,7 @@ export function CheckWrite() {
 
     group("Connector API: Write destination connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 

@@ -30,8 +30,9 @@ type AppConfig struct {
 
 // ServerConfig defines HTTP server configurations
 type ServerConfig struct {
-	Port  int `koanf:"port"`
-	HTTPS struct {
+	PrivatePort int `koanf:"privateport"`
+	PublicPort  int `koanf:"publicport"`
+	HTTPS       struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}
@@ -76,9 +77,9 @@ type TemporalConfig struct {
 
 // MgmtBackendConfig related to mgmt-backend
 type MgmtBackendConfig struct {
-	Host      string `koanf:"host"`
-	AdminPort int    `koanf:"adminport"`
-	HTTPS     struct {
+	Host        string `koanf:"host"`
+	PrivatePort int    `koanf:"privateport"`
+	HTTPS       struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}
@@ -86,9 +87,9 @@ type MgmtBackendConfig struct {
 
 // PipelineBackendConfig related to pipeline-backend
 type PipelineBackendConfig struct {
-	Host  string `koanf:"host"`
-	Port  int    `koanf:"port"`
-	HTTPS struct {
+	Host       string `koanf:"host"`
+	PublicPort int    `koanf:"publicport"`
+	HTTPS      struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}

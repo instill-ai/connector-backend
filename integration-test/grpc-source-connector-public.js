@@ -18,7 +18,7 @@ client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
 export function CheckCreate() {
 
     group("Connector API: vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector", () => {
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -88,7 +88,7 @@ export function CheckCreate() {
 export function CheckList() {
 
     group("Connector API: List source connectors", () => {
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -203,7 +203,7 @@ export function CheckList() {
 export function CheckGet() {
 
     group("Connector API: Get source connectors by ID", () => {
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -241,7 +241,7 @@ export function CheckUpdate() {
 
     group("Connector API: Update source connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -281,7 +281,7 @@ export function CheckDelete() {
 
     group("Connector API: Delete source connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -310,7 +310,7 @@ export function CheckDelete() {
         });
 
 
-        var createClsModelRes = http.request("POST", `${constant.modelHost}/v1alpha/models`, JSON.stringify({
+        var createClsModelRes = http.request("POST", `${constant.modelPublicHost}/v1alpha/models`, JSON.stringify({
             "id": "dummy-cls",
             "model_definition": "model-definitions/github",
             "configuration": {
@@ -328,7 +328,7 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${constant.modelHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
+            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -350,17 +350,17 @@ export function CheckDelete() {
 
         // Create a pipeline
         const pipelineID = randomString(5)
-        check(http.request("POST", `${constant.pipelineHost}/v1alpha/pipelines`,
+        check(http.request("POST", `${constant.pipelinePublicHost}/v1alpha/pipelines`,
             JSON.stringify(Object.assign({
-                    id: pipelineID,
-                    description: randomString(10),
-                },
+                id: pipelineID,
+                description: randomString(10),
+            },
                 detSyncRecipe
             )), {
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }), {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        }), {
             "POST /v1alpha/pipelines response status is 201": (r) => r.status === 201,
         })
 
@@ -381,12 +381,12 @@ export function CheckDelete() {
         });
 
         // Cannot delete model due to pipeline occupancy
-        check(http.request("DELETE", `${constant.modelHost}/v1alpha/models/dummy-cls`), {
+        check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {
             [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 422,
             [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
         });
 
-        check(http.request("DELETE", `${constant.pipelineHost}/v1alpha/pipelines/${pipelineID}`), {
+        check(http.request("DELETE", `${constant.pipelinePublicHost}/v1alpha/pipelines/${pipelineID}`), {
             [`DELETE /v1alpha/pipelines/${pipelineID} response status is 204`]: (r) => r.status === 204,
         });
 
@@ -405,7 +405,7 @@ export function CheckDelete() {
         });
 
         // Can delete model now
-        check(http.request("DELETE", `${constant.modelHost}/v1alpha/models/dummy-cls`), {
+        check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {
             [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 204,
         });
 
@@ -417,7 +417,7 @@ export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -455,7 +455,7 @@ export function CheckState() {
 
     group("Connector API: Change state source connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -497,7 +497,7 @@ export function CheckRename() {
 
     group("Connector API: Rename source connectors", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 

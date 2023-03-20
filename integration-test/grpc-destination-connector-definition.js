@@ -17,7 +17,7 @@ export function CheckList() {
 
     group("Connector API: List destination connector definitions", () => {
 
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -89,7 +89,7 @@ export function CheckList() {
 
 export function CheckGet() {
     group("Connector API: Get destination connector definition", () => {
-        client.connect(constant.connectorGRPCHost, {
+        client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
@@ -100,7 +100,7 @@ export function CheckGet() {
             name: `destination-connector-definitions/${def.id}`
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response has the exact record`]: (r) =>  deepEqual(r.message.destinationConnectorDefinition, def),
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response has the exact record`]: (r) => deepEqual(r.message.destinationConnectorDefinition, def),
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} has the non-empty resource name ${def.name}`]: (r) => r.message.destinationConnectorDefinition.name != "",
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} has the resource name ${def.name}`]: (r) => r.message.destinationConnectorDefinition.name === def.name,
         });
@@ -110,7 +110,7 @@ export function CheckGet() {
             view: "VIEW_BASIC"
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_BASIC response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) =>  r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_BASIC response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
@@ -118,14 +118,14 @@ export function CheckGet() {
             view: "VIEW_FULL"
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_FULL response destinationConnectorDefinition.connectorDefinition.spec is not null`]: (r) =>  r.message.destinationConnectorDefinition.connectorDefinition.spec !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_FULL response destinationConnectorDefinition.connectorDefinition.spec is not null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec !== null,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
             name: `destination-connector-definitions/${def.id}`,
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) =>  r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
         });
 
         client.close();

@@ -16,8 +16,8 @@ import (
 	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
 )
 
-// InitMgmtAdminServiceClient initialises a MgmtAdminServiceClient instance
-func InitMgmtAdminServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
+// InitMgmtPrivateServiceClient initialises a MgmtPrivateServiceClient instance
+func InitMgmtPrivateServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -33,7 +33,7 @@ func InitMgmtAdminServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.Client
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.MgmtBackend.Host, config.Config.MgmtBackend.AdminPort), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.MgmtBackend.Host, config.Config.MgmtBackend.PrivatePort), clientDialOpts)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, nil
@@ -42,8 +42,8 @@ func InitMgmtAdminServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.Client
 	return mgmtPB.NewMgmtPrivateServiceClient(clientConn), clientConn
 }
 
-// InitPipelineServiceClient initialises a PipelineServiceClient instance
-func InitPipelineServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
+// InitPipelinePublicServiceClient initialises a PipelineServiceClient instance
+func InitPipelinePublicServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
@@ -59,7 +59,7 @@ func InitPipelineServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.PipelineBackend.Host, config.Config.PipelineBackend.Port), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.PipelineBackend.Host, config.Config.PipelineBackend.PublicPort), clientDialOpts)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, nil

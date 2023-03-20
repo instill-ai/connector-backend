@@ -1,32 +1,37 @@
 let proto
 let pHost, cHost, mHost
-let pPort, cPort, mPort
+let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
 
 if (__ENV.MODE == "api-gateway") {
   // api-gateway mode
   proto = "http"
   pHost = cHost = mHost = "api-gateway"
-  pPort = cPort = mPort = 8080
+  cPrivatePort = 3082
+  pPublicPort = cPublicPort = mPublicPort = 8080
 } else if (__ENV.MODE == "localhost") {
   // localhost mode for GitHub Actions
   proto = "http"
   pHost = cHost = mHost = "localhost"
-  pPort = cPort = mPort = 8080
+  cPrivatePort = 3082
+  pPublicPort = cPublicPort = mPublicPort = 8080
 } else {
   // direct microservice mode
   proto = "http"
   pHost = "pipeline-backend"
   cHost = "connector-backend"
   mHost = "model-backend"
-  pPort = 8081
-  cPort = 8082
-  mPort = 8083
+  cPrivatePort = 3082
+  cPublicPort = 8082
+  pPublicPort = 8081
+  mPublicPort = 8083
 }
 
-export const pipelineHost = `${proto}://${pHost}:${pPort}`;
-export const connectorHost = `${proto}://${cHost}:${cPort}`;
-export const connectorGRPCHost = `${cHost}:${cPort}`;
-export const modelHost = `${proto}://${mHost}:${mPort}`;
+export const connectorPrivateHost = `${proto}://${cHost}:${cPrivatePort}`;
+export const connectorPublicHost = `${proto}://${cHost}:${cPublicPort}`;
+export const connectorGRPCPrivateHost = `${cHost}:${cPrivatePort}`;
+export const connectorGRPCPublicHost = `${cHost}:${cPublicPort}`;
+export const pipelinePublicHost = `${proto}://${pHost}:${pPublicPort}`;
+export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
 export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"

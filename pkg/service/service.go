@@ -53,19 +53,19 @@ type Service interface {
 }
 
 type service struct {
-	repository             repository.Repository
-	mgmtAdminServiceClient mgmtPB.MgmtPrivateServiceClient
-	pipelineServiceClient  pipelinePB.PipelinePublicServiceClient
-	temporalClient         client.Client
+	repository                  repository.Repository
+	mgmtPrivateServiceClient    mgmtPB.MgmtPrivateServiceClient
+	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
+	temporalClient              client.Client
 }
 
 // NewService initiates a service instance
 func NewService(r repository.Repository, u mgmtPB.MgmtPrivateServiceClient, p pipelinePB.PipelinePublicServiceClient, t client.Client) Service {
 	return &service{
-		repository:             r,
-		mgmtAdminServiceClient: u,
-		pipelineServiceClient:  p,
-		temporalClient:         t,
+		repository:                  r,
+		mgmtPrivateServiceClient:    u,
+		pipelinePublicServiceClient: p,
+		temporalClient:              t,
 	}
 }
 
@@ -336,7 +336,7 @@ func (s *service) DeleteConnector(id string, ownerRscName string, connectorType 
 		filter = fmt.Sprintf("recipe.destination:\"%s\"", dbConnector.UID)
 	}
 
-	pipeResp, err := s.pipelineServiceClient.ListPipelines(context.Background(), &pipelinePB.ListPipelinesRequest{
+	pipeResp, err := s.pipelinePublicServiceClient.ListPipelines(context.Background(), &pipelinePB.ListPipelinesRequest{
 		Filter: &filter,
 	})
 	if err != nil {
