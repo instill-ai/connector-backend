@@ -7,7 +7,7 @@ import (
 )
 
 func (h *privateHandler) ListDestinationConnectorsAdmin(ctx context.Context, req *connectorPB.ListDestinationConnectorsAdminRequest) (*connectorPB.ListDestinationConnectorsAdminResponse, error) {
-	resp, err := h.listConnector(ctx, req)
+	resp, err := h.listConnectors(ctx, req)
 	return resp.(*connectorPB.ListDestinationConnectorsAdminResponse), err
 }
 

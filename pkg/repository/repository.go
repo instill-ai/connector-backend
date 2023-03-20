@@ -28,13 +28,13 @@ const MaxPageSize = 100
 // Repository interface
 type Repository interface {
 	// ConnectorDefinition
-	ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
+	ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
 	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector
 	CreateConnector(connector *datamodel.Connector) error
-	ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	ListConnectors(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
@@ -43,7 +43,7 @@ type Repository interface {
 	UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
 	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
 
-	ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 }
@@ -59,7 +59,7 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -249,7 +249,7 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	return nil
 }
 
-func (r *repository) ListConnector(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectors(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -356,7 +356,7 @@ func (r *repository) ListConnector(ownerPermalink string, connectorType datamode
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger()
 

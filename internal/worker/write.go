@@ -164,9 +164,9 @@ func (w *worker) WriteActivity(ctx context.Context, param *WriteActivityParam) (
 			Cmd: []string{
 				"write",
 				"--config",
-				fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
+				configFilePath,
 				"--catalog",
-				fmt.Sprintf("%s/connector-data/catalog/%s", w.mountTargetVDP, filepath.Base(catalogFilePath)),
+				catalogFilePath,
 			},
 		},
 		&container.HostConfig{

@@ -33,7 +33,7 @@ func (h *publicHandler) CreateDestinationConnector(ctx context.Context, req *con
 }
 
 func (h *publicHandler) ListDestinationConnectors(ctx context.Context, req *connectorPB.ListDestinationConnectorsRequest) (*connectorPB.ListDestinationConnectorsResponse, error) {
-	resp, err := h.listConnector(ctx, req)
+	resp, err := h.listConnectors(ctx, req)
 	return resp.(*connectorPB.ListDestinationConnectorsResponse), err
 }
 

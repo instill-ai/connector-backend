@@ -87,7 +87,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 			srcConnDisconnectedStateNum := int64(0)
 			srcConnDefSet := make(map[string]struct{})
 			for {
-				dbSrcConns, _, connNextPageToken, err := u.repository.ListConnector(
+				dbSrcConns, _, connNextPageToken, err := u.repository.ListConnectors(
 					fmt.Sprintf("users/%s", user.GetUid()),
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
 					int64(repository.MaxPageSize),
@@ -130,7 +130,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 			dstConnDisconnectedStateNum := int64(0)
 			dstConnDefSet := make(map[string]struct{})
 			for {
-				dbDstConns, _, connNextPageToken, err := u.repository.ListConnector(
+				dbDstConns, _, connNextPageToken, err := u.repository.ListConnectors(
 					fmt.Sprintf("users/%s", user.GetUid()),
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
 					int64(repository.MaxPageSize),

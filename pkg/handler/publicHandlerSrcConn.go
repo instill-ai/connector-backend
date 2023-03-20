@@ -27,7 +27,7 @@ func (h *publicHandler) CreateSourceConnector(ctx context.Context, req *connecto
 }
 
 func (h *publicHandler) ListSourceConnectors(ctx context.Context, req *connectorPB.ListSourceConnectorsRequest) (*connectorPB.ListSourceConnectorsResponse, error) {
-	resp, err := h.listConnector(ctx, req)
+	resp, err := h.listConnectors(ctx, req)
 	return resp.(*connectorPB.ListSourceConnectorsResponse), err
 }
 

@@ -27,13 +27,13 @@ import (
 // Service interface
 type Service interface {
 	// ConnectorDefinition
-	ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
+	ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
 	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector common
 	CreateConnector(connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	ListConnectors(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByID(id string, ownerRscName string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUID(uid uuid.UUID, ownerRscName string, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
@@ -41,7 +41,7 @@ type Service interface {
 	UpdateConnectorState(id string, ownerRscName string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
 	DeleteConnector(id string, ownerRscName string, connectorType datamodel.ConnectorType) error
 
-	ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
@@ -69,8 +69,8 @@ func NewService(r repository.Repository, u mgmtPB.MgmtPrivateServiceClient, p pi
 	}
 }
 
-func (s *service) ListConnectorDefinition(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
-	return s.repository.ListConnectorDefinition(connectorType, pageSize, pageToken, isBasicView)
+func (s *service) ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
+	return s.repository.ListConnectorDefinitions(connectorType, pageSize, pageToken, isBasicView)
 }
 
 func (s *service) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
@@ -175,14 +175,14 @@ func (s *service) CreateConnector(connector *datamodel.Connector) (*datamodel.Co
 
 }
 
-func (s *service) ListConnector(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectors(ownerRscName string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
 	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
 	if err != nil {
 		return nil, 0, "", err
 	}
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnector(ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -194,9 +194,9 @@ func (s *service) ListConnector(ownerRscName string, connectorType datamodel.Con
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) ListConnectorAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorAdmin(connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorsAdmin(connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
 	}

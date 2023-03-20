@@ -31,7 +31,7 @@ func NewPrivateHandler(s service.Service) connectorPB.ConnectorPrivateServiceSer
 	}
 }
 
-func (h *privateHandler) listConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *privateHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	var pageSize int64
 	var pageToken string
 	var isBasicView bool
@@ -57,7 +57,7 @@ func (h *privateHandler) listConnector(ctx context.Context, req interface{}) (re
 		connDefColID = "destination-connector-definitions"
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorAdmin(connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorsAdmin(connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}

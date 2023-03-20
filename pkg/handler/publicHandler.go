@@ -56,7 +56,7 @@ func (h *publicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 	}, nil
 }
 
-func (h *publicHandler) listConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *publicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -79,7 +79,7 @@ func (h *publicHandler) listConnectorDefinition(ctx context.Context, req interfa
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	}
 
-	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinition(connType, pageSize, pageToken, isBasicView)
+	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -479,7 +479,7 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) listConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -511,7 +511,7 @@ func (h *publicHandler) listConnector(ctx context.Context, req interface{}) (res
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnector(ownerRscName, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(ownerRscName, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}

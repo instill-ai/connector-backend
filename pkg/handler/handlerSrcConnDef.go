@@ -7,7 +7,7 @@ import (
 )
 
 func (h *publicHandler) ListSourceConnectorDefinitions(ctx context.Context, req *connectorPB.ListSourceConnectorDefinitionsRequest) (*connectorPB.ListSourceConnectorDefinitionsResponse, error) {
-	resp, err := h.listConnectorDefinition(ctx, req)
+	resp, err := h.listConnectorDefinitions(ctx, req)
 	return resp.(*connectorPB.ListSourceConnectorDefinitionsResponse), err
 }
 

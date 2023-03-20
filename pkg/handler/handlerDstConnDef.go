@@ -7,7 +7,7 @@ import (
 )
 
 func (h *publicHandler) ListDestinationConnectorDefinitions(ctx context.Context, req *connectorPB.ListDestinationConnectorDefinitionsRequest) (*connectorPB.ListDestinationConnectorDefinitionsResponse, error) {
-	resp, err := h.listConnectorDefinition(ctx, req)
+	resp, err := h.listConnectorDefinitions(ctx, req)
 	return resp.(*connectorPB.ListDestinationConnectorDefinitionsResponse), err
 }
 

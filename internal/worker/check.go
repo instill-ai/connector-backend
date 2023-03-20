@@ -132,7 +132,7 @@ func (w *worker) CheckActivity(ctx context.Context, param *CheckActivityParam) (
 			Cmd: []string{
 				"check",
 				"--config",
-				fmt.Sprintf("%s/connector-data/config/%s", w.mountTargetVDP, filepath.Base(configFilePath)),
+				configFilePath,
 			},
 		},
 		&container.HostConfig{
