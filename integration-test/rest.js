@@ -60,7 +60,7 @@ export default function (data) {
   destinationConnector.CheckWrite()
 
   // private API do not expose to public.
-  if (__ENV.MODE == "private") { 
+  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
     // Source connectors
     sourceConnectorAdmin.CheckList()
     sourceConnectorAdmin.CheckGet()

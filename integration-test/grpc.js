@@ -71,7 +71,7 @@ export default function (data) {
   destinationConnector.CheckRename()
   destinationConnector.CheckWrite()
 
-  if (__ENV.MODE == "private") {
+  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
     // Source connector Admin
     sourceConnectorAdmin.CheckList()
     sourceConnectorAdmin.CheckGet()
