@@ -88,6 +88,7 @@ func main() {
 	w.RegisterActivity(cw.CheckActivity)
 	w.RegisterWorkflow(cw.WriteWorkflow)
 	w.RegisterActivity(cw.WriteActivity)
+	w.RegisterWorkflow(cw.AddSearchAttributeWorkflow)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

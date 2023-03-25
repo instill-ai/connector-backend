@@ -26,6 +26,7 @@ type AppConfig struct {
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
 	UsageBackend    UsageBackendConfig    `koanf:"usagebackend"`
+	Controller      ControllerConfig      `koanf:"controller"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -100,6 +101,16 @@ type UsageBackendConfig struct {
 	TLSEnabled bool   `koanf:"tlsenabled"`
 	Host       string `koanf:"host"`
 	Port       int    `koanf:"port"`
+}
+
+// ControllerConfig related to controller
+type ControllerConfig struct {
+	Host  string `koanf:"host"`
+	Port  int    `koanf:"port"`
+	HTTPS struct {
+		Cert string `koanf:"cert"`
+		Key  string `koanf:"key"`
+	}
 }
 
 // Init - Assign global config to decoded config struct

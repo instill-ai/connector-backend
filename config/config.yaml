@@ -46,3 +46,10 @@ usagebackend:
   tlsenabled: true
   host: usage.instill.tech
   port: 443
+controller:
+  tlsenabled: true
+  host: controller
+  port: 8085
+  https:
+    cert:
+    key:

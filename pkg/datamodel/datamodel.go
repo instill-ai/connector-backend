@@ -70,6 +70,12 @@ type Connector struct {
 	State                  ConnectorState `sql:"type:valid_state_type"`
 }
 
+type ResourceState struct {
+	Name     string
+	State    connectorPB.Connector_State
+	Progress *int32
+}
+
 // ConnectorType is an alias type for Protobuf enum ConnectorType
 type ConnectorType connectorPB.ConnectorType
 

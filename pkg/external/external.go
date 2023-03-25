@@ -11,6 +11,7 @@ import (
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 
+	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
@@ -87,4 +88,29 @@ func InitUsageServiceClient() (usagePB.UsageServiceClient, *grpc.ClientConn) {
 	}
 
 	return usagePB.NewUsageServiceClient(clientConn), clientConn
+}
+
+// InitControllerPrivateServiceClient initialises a ControllerPrivateServiceClient instance
+func InitControllerPrivateServiceClient() (controllerPB.ControllerPrivateServiceClient, *grpc.ClientConn) {
+	logger, _ := logger.GetZapLogger()
+
+	var clientDialOpts grpc.DialOption
+	var creds credentials.TransportCredentials
+	var err error
+	if config.Config.Controller.HTTPS.Cert != "" && config.Config.Controller.HTTPS.Key != "" {
+		creds, err = credentials.NewServerTLSFromFile(config.Config.Controller.HTTPS.Cert, config.Config.Controller.HTTPS.Key)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+		clientDialOpts = grpc.WithTransportCredentials(creds)
+	} else {
+		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
+	}
+
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.Controller.Host, config.Config.Controller.Port), clientDialOpts)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
+	return controllerPB.NewControllerPrivateServiceClient(clientConn), clientConn
 }

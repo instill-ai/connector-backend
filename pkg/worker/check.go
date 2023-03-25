@@ -21,6 +21,7 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
+	"github.com/instill-ai/connector-backend/internal/util"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -49,6 +50,19 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	logger := workflow.GetLogger(ctx)
 	logger.Info("CheckWorkflow started")
 
+	logger.Info(fmt.Sprintf("ConnUID: %v, Owner: %v", param.ConnUID, strings.TrimPrefix(param.OwnerPermalink, "users/")))
+
+	// Upsert search attributes.
+	attributes := map[string]interface{}{
+		"Type":          util.OperationTypeCheck,
+		"ConnectorUID":  param.ConnUID,
+		"Owner":         strings.TrimPrefix(param.OwnerPermalink, "users/"),
+	}
+
+	if err := workflow.UpsertSearchAttributes(ctx, attributes); err != nil {
+		return err
+	}
+
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Minute,
 	}
@@ -74,16 +88,28 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 		return err
 	}
 
+	res := connectorPB.Connector_STATE_UNSPECIFIED
+
 	switch result {
 	case exitCodeOK:
+		res = connectorPB.Connector_STATE_CONNECTED
 		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
 	case exitCodeError:
+		res = connectorPB.Connector_STATE_ERROR
 		logger.Error("connector container exited with errors")
 		if err := w.repository.UpdateConnectorStateByUID(connUID, param.OwnerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR)); err != nil {
 			return temporal.NewNonRetryableApplicationError("cannot update connector state by UUID", "RepositoryError", err)
 		}
+	}
+
+	memo := map[string]interface{}{
+		"Result": res,
+	}
+
+	if err := workflow.UpsertMemo(ctx, memo); err != nil {
+		return err
 	}
 
 	logger.Info("CheckWorkflow completed")

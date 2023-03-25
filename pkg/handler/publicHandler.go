@@ -16,6 +16,7 @@ import (
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
+	"github.com/instill-ai/connector-backend/internal/util"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
@@ -59,11 +60,19 @@ func (h *PublicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRe
 }
 
 func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
-	return &connectorPB.ReadinessResponse{
-		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
-			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
-		},
-	}, nil
+	if err := h.service.SearchAttributeReady(); err != nil {
+		return &connectorPB.ReadinessResponse{
+			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_NOT_SERVING,
+			},
+		}, nil
+	} else {
+		return &connectorPB.ReadinessResponse{
+			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
+			},
+		}, nil
+	}
 }
 
 func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
@@ -1462,4 +1471,75 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 	}
 
 	return resp, nil
+}
+
+// func (h *publicHandler) WatchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+// }
+
+func (h *publicHandler) GetOperation(ctx context.Context, req *connectorPB.GetOperationRequest) (*connectorPB.GetOperationResponse, error) {
+	wfId := strings.TrimPrefix(req.Name, "operations/")
+	operation, _, operationType, err := h.service.GetOperation(wfId)
+
+	if err != nil {
+		return &connectorPB.GetOperationResponse{}, err
+	}
+
+	if !operation.Done {
+		return &connectorPB.GetOperationResponse{
+			Operation: operation,
+		}, nil
+	}
+
+	// connectorUID, err := uuid.FromString(workflowParam.ConnectorUID)
+
+	// if err != nil {
+	// 	return &connectorPB.GetOperationResponse{}, temporal.NewNonRetryableApplicationError(
+	// 		fmt.Sprintf("unable to get the connector UUID: %v", workflowParam.ConnectorUID),
+	// 		"ParsingError",
+	// 		err)
+	// }
+
+	// isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+
+	// dbConnector, err := h.service.GetConnectorByUID(connectorUID, workflowParam.Owner, isBasicView)
+	// if err != nil {
+	// 	return &connectorPB.GetOperationResponse{}, err
+	// }
+
+	// var connDefColID string
+
+	// switch dbConnector.ConnectorType {
+	// case datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE):
+	// 	connDefColID = "source-connector-definitions"
+	// case datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION):
+	// 	connDefColID = "destination-connector-definitions"
+	// }
+
+	// dbDef, err := h.service.GetConnectorDefinitionByID(dbConnector.ConnectorDefinitionUID.String(), dbConnector.ConnectorType, isBasicView)
+
+	// if err != nil {
+	// 	return &connectorPB.GetOperationResponse{}, err
+	// }
+
+	switch *operationType {
+	case string(util.OperationTypeCheck):
+		// pbConnector := DBToPBConnector(dbConnector, dbConnector.ConnectorType, workflowParam.Owner, fmt.Sprintf("%s/%s", connDefColID, dbDef.ID))
+		// res, err := anypb.New(pbConnector.(*connectorPB.Connector))
+		// if err != nil {
+		// 	return &connectorPB.GetOperationResponse{}, err
+		// }
+
+		// operation.Result = &longrunningpb.Operation_Response{
+		// 	Response: res,
+		// }
+		return &connectorPB.GetOperationResponse{
+			Operation: operation,
+		}, nil
+	case string(util.OperationTypeWrite):
+		// TODO: to be implemented
+		return nil, nil
+	default:
+		return &connectorPB.GetOperationResponse{}, fmt.Errorf("operation type not supported")
+	}
 }
