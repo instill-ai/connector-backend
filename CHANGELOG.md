@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.6-alpha...v0.8.0-alpha) (2023-03-26)
+
+
+### Features
+
+* adopt private public apis for connector ([#64](https://github.com/instill-ai/connector-backend/issues/64)) ([4162b4b](https://github.com/instill-ai/connector-backend/commit/4162b4b7c1cf12cecffa775b6501ababe3a2f235))
+
 ## [0.7.6-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.5-alpha...v0.7.6-alpha) (2023-02-20)
 
 
