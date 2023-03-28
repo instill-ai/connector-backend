@@ -1473,9 +1473,41 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-// func (h *publicHandler) WatchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *publicHandler) watchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-// }
+	var connID string
+	var connType datamodel.ConnectorType
+
+	switch v := req.(type) {
+	case *connectorPB.WatchSourceConnectorRequest:
+		resp = &connectorPB.WatchSourceConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+	case *connectorPB.WatchDestinationConnectorRequest:
+		resp = &connectorPB.WatchDestinationConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+	}
+
+	state, err := h.service.GetResourceState(connID, connType)
+
+	if err != nil {
+		return nil, err
+	}
+
+	switch v := resp.(type) {
+	case *connectorPB.WatchSourceConnectorResponse:
+		v.State = state.State
+	case *connectorPB.WatchDestinationConnectorResponse:
+		v.State = state.State
+	}
+
+	return resp, nil
+}
 
 func (h *publicHandler) GetOperation(ctx context.Context, req *connectorPB.GetOperationRequest) (*connectorPB.GetOperationResponse, error) {
 	wfId := strings.TrimPrefix(req.Name, "operations/")

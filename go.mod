@@ -3,6 +3,7 @@ module github.com/instill-ai/connector-backend
 go 1.19
 
 require (
+	cloud.google.com/go/longrunning v0.3.0
 	github.com/allegro/bigcache v1.2.1
 	github.com/docker/docker v20.10.13+incompatible
 	github.com/ghodss/yaml v1.0.0
@@ -33,7 +34,6 @@ require (
 )
 
 require (
-	cloud.google.com/go/longrunning v0.3.0 // indirect
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/catalinc/hashcash v0.0.0-20220723060415-5e3ec3e24f67 // indirect
 	github.com/containerd/containerd v1.6.1 // indirect

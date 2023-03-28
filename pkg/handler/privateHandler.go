@@ -269,7 +269,7 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 	return resp, nil
 }
 
-func (h *privateHandler) CheckConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *privateHandler) checkConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	var isBasicView = true
 
 	var connID string
