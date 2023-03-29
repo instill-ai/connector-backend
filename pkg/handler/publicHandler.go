@@ -1474,7 +1474,6 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 }
 
 func (h *publicHandler) watchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
-
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -1496,82 +1495,42 @@ func (h *publicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	state, err := h.service.GetResourceState(connID, connType)
 
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
 	switch v := resp.(type) {
 	case *connectorPB.WatchSourceConnectorResponse:
-		v.State = state.State
+		v.State = *state
 	case *connectorPB.WatchDestinationConnectorResponse:
-		v.State = state.State
+		v.State = *state
 	}
 
 	return resp, nil
 }
 
-func (h *publicHandler) GetOperation(ctx context.Context, req *connectorPB.GetOperationRequest) (*connectorPB.GetOperationResponse, error) {
+func (h *publicHandler) GetOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
 	wfId := strings.TrimPrefix(req.Name, "operations/")
 	operation, _, operationType, err := h.service.GetOperation(wfId)
 
 	if err != nil {
-		return &connectorPB.GetOperationResponse{}, err
+		return &connectorPB.GetConnectorOperationResponse{}, err
 	}
 
 	if !operation.Done {
-		return &connectorPB.GetOperationResponse{
+		return &connectorPB.GetConnectorOperationResponse{
 			Operation: operation,
 		}, nil
 	}
 
-	// connectorUID, err := uuid.FromString(workflowParam.ConnectorUID)
-
-	// if err != nil {
-	// 	return &connectorPB.GetOperationResponse{}, temporal.NewNonRetryableApplicationError(
-	// 		fmt.Sprintf("unable to get the connector UUID: %v", workflowParam.ConnectorUID),
-	// 		"ParsingError",
-	// 		err)
-	// }
-
-	// isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-
-	// dbConnector, err := h.service.GetConnectorByUID(connectorUID, workflowParam.Owner, isBasicView)
-	// if err != nil {
-	// 	return &connectorPB.GetOperationResponse{}, err
-	// }
-
-	// var connDefColID string
-
-	// switch dbConnector.ConnectorType {
-	// case datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE):
-	// 	connDefColID = "source-connector-definitions"
-	// case datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION):
-	// 	connDefColID = "destination-connector-definitions"
-	// }
-
-	// dbDef, err := h.service.GetConnectorDefinitionByID(dbConnector.ConnectorDefinitionUID.String(), dbConnector.ConnectorType, isBasicView)
-
-	// if err != nil {
-	// 	return &connectorPB.GetOperationResponse{}, err
-	// }
-
 	switch *operationType {
 	case string(util.OperationTypeCheck):
-		// pbConnector := DBToPBConnector(dbConnector, dbConnector.ConnectorType, workflowParam.Owner, fmt.Sprintf("%s/%s", connDefColID, dbDef.ID))
-		// res, err := anypb.New(pbConnector.(*connectorPB.Connector))
-		// if err != nil {
-		// 	return &connectorPB.GetOperationResponse{}, err
-		// }
-
-		// operation.Result = &longrunningpb.Operation_Response{
-		// 	Response: res,
-		// }
-		return &connectorPB.GetOperationResponse{
+		return &connectorPB.GetConnectorOperationResponse{
 			Operation: operation,
 		}, nil
 	case string(util.OperationTypeWrite):
 		// TODO: to be implemented
 		return nil, nil
 	default:
-		return &connectorPB.GetOperationResponse{}, fmt.Errorf("operation type not supported")
+		return &connectorPB.GetConnectorOperationResponse{}, fmt.Errorf("operation type not supported")
 	}
 }

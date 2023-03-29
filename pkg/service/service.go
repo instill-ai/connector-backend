@@ -61,7 +61,7 @@ type Service interface {
 	CheckConnectorByUID(connID string, ownerRscName string, connDef *datamodel.ConnectorDefinition) (*string, error)
 
 	// Controller custom service
-	GetResourceState(connectorName string, connectorType datamodel.ConnectorType) (*datamodel.ResourceState, error)
+	GetResourceState(connectorName string, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
 	UpdateResourceState(connectorName string, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error
 	DeleteResourceState(connectorName string, connectorType datamodel.ConnectorType) error
 }
@@ -381,6 +381,10 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 			logger.Error(err.Error())
 		}
 		return st.Err()
+	}
+
+	if err := s.DeleteResourceState(id, connectorType); err != nil {
+		return err
 	}
 
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)

@@ -303,14 +303,14 @@ func (h *privateHandler) checkConnector(ctx context.Context, req interface{}) (r
 	ownerRscName, err := resource.GetOwner(ctx)
 
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
 
 	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), ownerRscName, dbConnDef)
 
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
 	switch v := resp.(type) {
