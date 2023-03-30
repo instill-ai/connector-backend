@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/instill-ai/connector-backend/internal/util"
+	"github.com/instill-ai/connector-backend/pkg/util"
 )
 
 func (w *worker) AddSearchAttributeWorkflow(ctx workflow.Context) error {

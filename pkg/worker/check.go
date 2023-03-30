@@ -21,7 +21,7 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/instill-ai/connector-backend/internal/util"
+	"github.com/instill-ai/connector-backend/pkg/util"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
