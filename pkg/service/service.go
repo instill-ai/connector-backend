@@ -14,8 +14,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/sterr"
 

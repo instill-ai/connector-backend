@@ -27,16 +27,17 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/external"
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
+	"github.com/instill-ai/connector-backend/pkg/logger"
+	"github.com/instill-ai/connector-backend/pkg/middleware"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/usage"
 	"github.com/instill-ai/x/zapadapter"
 
-	database "github.com/instill-ai/connector-backend/internal/db"
-	connWorker "github.com/instill-ai/connector-backend/internal/worker"
+	database "github.com/instill-ai/connector-backend/pkg/db"
+	connWorker "github.com/instill-ai/connector-backend/pkg/worker"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -112,14 +113,14 @@ func main() {
 
 	grpcServerOpts := []grpc.ServerOption{
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			streamAppendMetadataInterceptor,
+			middleware.StreamAppendMetadataInterceptor,
 			grpc_zap.StreamServerInterceptor(logger, opts...),
-			grpc_recovery.StreamServerInterceptor(recoveryInterceptorOpt()),
+			grpc_recovery.StreamServerInterceptor(middleware.RecoveryInterceptorOpt()),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			unaryAppendMetadataInterceptor,
+			middleware.UnaryAppendMetadataInterceptor,
 			grpc_zap.UnaryServerInterceptor(logger, opts...),
-			grpc_recovery.UnaryServerInterceptor(recoveryInterceptorOpt()),
+			grpc_recovery.UnaryServerInterceptor(middleware.RecoveryInterceptorOpt()),
 		)),
 	}
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
@@ -165,9 +166,9 @@ func main() {
 			)))
 
 	privateServeMux := runtime.NewServeMux(
-		runtime.WithForwardResponseOption(httpResponseModifier),
-		runtime.WithErrorHandler(errorHandler),
-		runtime.WithIncomingHeaderMatcher(customMatcher),
+		runtime.WithForwardResponseOption(middleware.HttpResponseModifier),
+		runtime.WithErrorHandler(middleware.ErrorHandler),
+		runtime.WithIncomingHeaderMatcher(middleware.CustomMatcher),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames:   true,
@@ -181,9 +182,9 @@ func main() {
 	)
 
 	publicServeMux := runtime.NewServeMux(
-		runtime.WithForwardResponseOption(httpResponseModifier),
-		runtime.WithErrorHandler(errorHandler),
-		runtime.WithIncomingHeaderMatcher(customMatcher),
+		runtime.WithForwardResponseOption(middleware.HttpResponseModifier),
+		runtime.WithErrorHandler(middleware.ErrorHandler),
+		runtime.WithIncomingHeaderMatcher(middleware.CustomMatcher),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				UseProtoNames:   true,

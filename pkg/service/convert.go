@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/x/sterr"
 
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"

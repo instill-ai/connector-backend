@@ -7,7 +7,7 @@ import (
 	"github.com/allegro/bigcache"
 	"github.com/docker/docker/client"
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"go.temporal.io/sdk/workflow"
 )

@@ -14,12 +14,12 @@ import (
 	dockerclient "github.com/docker/docker/client"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/zapadapter"
 
-	database "github.com/instill-ai/connector-backend/internal/db"
-	connWorker "github.com/instill-ai/connector-backend/internal/worker"
+	database "github.com/instill-ai/connector-backend/pkg/db"
+	connWorker "github.com/instill-ai/connector-backend/pkg/worker"
 )
 
 func main() {
