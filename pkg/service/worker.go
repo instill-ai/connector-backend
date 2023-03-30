@@ -7,8 +7,8 @@ import (
 
 	"go.temporal.io/sdk/client"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
-	"github.com/instill-ai/connector-backend/internal/worker"
+	"github.com/instill-ai/connector-backend/pkg/logger"
+	"github.com/instill-ai/connector-backend/pkg/worker"
 )
 
 func (s *service) startCheckWorkflow(ownerPermalink string, connUID string, dockerRepo string, dockerImgTag string) error {

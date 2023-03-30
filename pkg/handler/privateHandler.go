@@ -7,9 +7,9 @@ import (
 	"github.com/gofrs/uuid"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"

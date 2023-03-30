@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/ghodss/yaml"
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/encoding/protojson"
 

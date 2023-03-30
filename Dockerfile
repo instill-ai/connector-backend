@@ -34,14 +34,13 @@ COPY --from=docker:dind-rootless --chown=nonroot:nonroot /usr/local/bin/docker /
 
 COPY --from=build --chown=nonroot:nonroot /src/config ./config
 COPY --from=build --chown=nonroot:nonroot /src/release-please ./release-please
-COPY --from=build --chown=nonroot:nonroot /src/internal/db/migration ./internal/db/migration
+COPY --from=build --chown=nonroot:nonroot /src/pkg/db/migration ./pkg/db/migration
 
 COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-migrate ./
 COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-init ./
 COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME}-worker ./
 COPY --from=build --chown=nonroot:nonroot /${SERVICE_NAME} ./
 
-COPY --from=build --chown=nonroot:nonroot /etc/vdp /etc/vdp
 COPY --from=build --chown=nonroot:nonroot /vdp /vdp
 COPY --from=build --chown=nonroot:nonroot /airbyte /airbyte
 

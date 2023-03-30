@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/logger"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"

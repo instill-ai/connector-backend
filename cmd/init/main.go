@@ -4,10 +4,10 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 
-	database "github.com/instill-ai/connector-backend/internal/db"
+	database "github.com/instill-ai/connector-backend/pkg/db"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 

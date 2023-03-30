@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 

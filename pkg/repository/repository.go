@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"gorm.io/gorm"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 

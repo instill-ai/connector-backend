@@ -11,8 +11,8 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
-	"github.com/instill-ai/connector-backend/internal/logger"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"github.com/instill-ai/connector-backend/pkg/logger"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
