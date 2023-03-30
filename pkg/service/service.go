@@ -18,6 +18,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/connector-backend/pkg/worker"
 	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
