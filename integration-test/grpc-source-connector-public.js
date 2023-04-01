@@ -316,11 +316,7 @@ export function CheckDelete() {
             "configuration": {
                 "repository": "instill-ai/model-dummy-cls"
             },
-        }), {
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
+        }), params)
         check(createClsModelRes, {
             "POST /v1alpha/models cls response status": (r) => r.status === 201,
         })
@@ -328,11 +324,7 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-            })
+            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, params)
             if (res.json().operation.done === true) {
                 break
             }
@@ -356,11 +348,7 @@ export function CheckDelete() {
                 description: randomString(10),
             },
                 detSyncRecipe
-            )), {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }), {
+            )), params), {
             "POST /v1alpha/pipelines response status is 201": (r) => r.status === 201,
         })
 

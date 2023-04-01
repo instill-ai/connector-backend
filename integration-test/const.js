@@ -55,6 +55,12 @@ export const csvDstConfig = {
   "destination_path": "/local/test"
 };
 
+export const params = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
+
 export const clsModelInstOutputs = [
   {
     "task": "TASK_CLASSIFICATION",
