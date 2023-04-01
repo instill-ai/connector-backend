@@ -26,7 +26,7 @@ import (
 	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
 
-type publicHandler struct {
+type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
 	service service.Service
 }
@@ -35,12 +35,22 @@ type publicHandler struct {
 func NewPublicHandler(s service.Service) connectorPB.ConnectorPublicServiceServer {
 	datamodel.InitJSONSchema()
 	datamodel.InitAirbyteCatalog()
-	return &publicHandler{
+	return &PublicHandler{
 		service: s,
 	}
 }
 
-func (h *publicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRequest) (*connectorPB.LivenessResponse, error) {
+// GetService returns the service
+func (h *PublicHandler) GetService() service.Service {
+	return h.service
+}
+
+// SetService sets the service
+func (h *PublicHandler) SetService(s service.Service) {
+	h.service = s
+}
+
+func (h *PublicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRequest) (*connectorPB.LivenessResponse, error) {
 	return &connectorPB.LivenessResponse{
 		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
@@ -48,7 +58,7 @@ func (h *publicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRe
 	}, nil
 }
 
-func (h *publicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
+func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
 	return &connectorPB.ReadinessResponse{
 		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
@@ -56,7 +66,7 @@ func (h *publicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 	}, nil
 }
 
-func (h *publicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -110,7 +120,7 @@ func (h *publicHandler) listConnectorDefinitions(ctx context.Context, req interf
 	return resp, nil
 }
 
-func (h *publicHandler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var connID string
 	var isBasicView bool
@@ -150,7 +160,7 @@ func (h *publicHandler) getConnectorDefinition(ctx context.Context, req interfac
 
 }
 
-func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -479,7 +489,7 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -555,7 +565,7 @@ func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (re
 
 }
 
-func (h *publicHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var isBasicView bool
 
@@ -615,7 +625,7 @@ func (h *publicHandler) getConnector(ctx context.Context, req interface{}) (resp
 	return resp, nil
 }
 
-func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -891,7 +901,7 @@ func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var connID string
 	var connType datamodel.ConnectorType
@@ -924,7 +934,7 @@ func (h *publicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1032,7 +1042,7 @@ func (h *publicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1166,7 +1176,7 @@ func (h *publicHandler) connectConnector(ctx context.Context, req interface{}) (
 	return resp, nil
 }
 
-func (h *publicHandler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1300,7 +1310,7 @@ func (h *publicHandler) disconnectConnector(ctx context.Context, req interface{}
 	return resp, nil
 }
 
-func (h *publicHandler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 

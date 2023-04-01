@@ -17,7 +17,7 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-type privateHandler struct {
+type PrivateHandler struct {
 	connectorPB.UnimplementedConnectorPrivateServiceServer
 	service service.Service
 }
@@ -26,12 +26,22 @@ type privateHandler struct {
 func NewPrivateHandler(s service.Service) connectorPB.ConnectorPrivateServiceServer {
 	datamodel.InitJSONSchema()
 	datamodel.InitAirbyteCatalog()
-	return &privateHandler{
+	return &PrivateHandler{
 		service: s,
 	}
 }
 
-func (h *privateHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
+// GetService returns the service
+func (h *PrivateHandler) GetService() service.Service {
+	return h.service
+}
+
+// SetService sets the service
+func (h *PrivateHandler) SetService(s service.Service) {
+	h.service = s
+}
+
+func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	var pageSize int64
 	var pageToken string
 	var isBasicView bool
@@ -101,7 +111,7 @@ func (h *privateHandler) listConnectors(ctx context.Context, req interface{}) (r
 
 }
 
-func (h *privateHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PrivateHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var isBasicView bool
 
@@ -156,7 +166,7 @@ func (h *privateHandler) getConnector(ctx context.Context, req interface{}) (res
 	return resp, nil
 }
 
-func (h *privateHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
