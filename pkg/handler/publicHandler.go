@@ -453,14 +453,14 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		return resp, st.Err()
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
 	dbConnector := &datamodel.Connector{
 		ID:                     connID,
-		Owner:                  ownerRscName,
+		Owner:                  owner.GetName(),
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
@@ -468,7 +468,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		Description:            connDesc,
 	}
 
-	dbConnector, err = h.service.CreateConnector(dbConnector)
+	dbConnector, err = h.service.CreateConnector(owner, dbConnector)
 	if err != nil {
 		return resp, err
 	}
@@ -476,7 +476,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		ownerRscName,
+		owner.GetName(),
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -516,12 +516,12 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(ownerRscName, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(owner, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -593,12 +593,12 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, ownerRscName, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -869,7 +869,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		connDefUID = dbConnDef.UID
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
@@ -880,7 +880,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnector(connID, ownerRscName, connType, PBToDBConnector(pbConnectorToUpdate, connType, ownerRscName, connDefUID))
+	dbConnector, err := h.service.UpdateConnector(connID, owner, connType, PBToDBConnector(pbConnectorToUpdate, connType, owner.GetName(), connDefUID))
 	if err != nil {
 		return resp, err
 	}
@@ -888,7 +888,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		ownerRscName,
+		owner.GetName(),
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -922,12 +922,12 @@ func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(connID, ownerRscName, connType); err != nil {
+	if err := h.service.DeleteConnector(connID, owner, connType); err != nil {
 		return resp, err
 	}
 
@@ -1010,12 +1010,12 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUID(connUID, ownerRscName, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUID(connUID, owner, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -1149,12 +1149,12 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
 	if err != nil {
 		return resp, err
 	}
@@ -1283,12 +1283,12 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
 	if err != nil {
 		return resp, err
 	}
@@ -1437,12 +1437,12 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 		return resp, st.Err()
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorID(connID, ownerRscName, connType, connNewID)
+	dbConnector, err := h.service.UpdateConnectorID(connID, owner, connType, connNewID)
 	if err != nil {
 		return resp, err
 	}

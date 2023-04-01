@@ -107,7 +107,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		return resp, err
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
@@ -155,7 +155,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		dstSyncMode = "append_dedup"
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
+	if err := h.service.WriteDestinationConnector(dstConnID, owner,
 		datamodel.WriteDestinationConnectorParam{
 			SyncMode:             syncMode,
 			DstSyncMode:          dstSyncMode,
