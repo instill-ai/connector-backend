@@ -16,6 +16,7 @@ import * as destinationConnectorPrivate from './grpc-destination-connector-priva
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
+client.load(['proto/vdp/pipeline/v1alpha'], 'pipeline_public_service.proto');
 
 export let options = {
   setupTimeout: '10s',
