@@ -9,6 +9,8 @@ import * as sourceConnectorDefinition from './grpc-source-connector-definition.j
 import * as destinationConnectorDefinition from './grpc-destination-connector-definition.js';
 import * as sourceConnectorPublic from './grpc-source-connector-public.js';
 import * as destinationConnectorPublic from './grpc-destination-connector-public.js';
+import * as sourceConnectorPublicWithJwt from './grpc-source-connector-public-with-jwt.js';
+import * as destinationConnectorPublicWithJwt from './grpc-destination-connector-public-with-jwt.js';
 import * as sourceConnectorPrivate from './grpc-source-connector-private.js';
 import * as destinationConnectorPrivate from './grpc-destination-connector-private.js';
 
@@ -75,10 +77,30 @@ export default function (data) {
     sourceConnectorPrivate.CheckGet()
     sourceConnectorPrivate.CheckLookUp()
 
-    // Destination connector Admin
+    // Destination connector private
     destinationConnectorPrivate.CheckList()
     destinationConnectorPrivate.CheckGet()
     destinationConnectorPrivate.CheckLookUp()
+
+    // Source public with jwt-sub
+    sourceConnectorPublicWithJwt.CheckCreate()
+    sourceConnectorPublicWithJwt.CheckList()
+    sourceConnectorPublicWithJwt.CheckGet()
+    sourceConnectorPublicWithJwt.CheckUpdate()
+    sourceConnectorPublicWithJwt.CheckDelete()
+    sourceConnectorPublicWithJwt.CheckLookUp()
+    sourceConnectorPublicWithJwt.CheckState()
+    sourceConnectorPublicWithJwt.CheckRename()
+
+    // Destination public with jwt-sub
+    destinationConnectorPublicWithJwt.CheckCreate()
+    destinationConnectorPublicWithJwt.CheckList()
+    destinationConnectorPublicWithJwt.CheckGet()
+    destinationConnectorPublicWithJwt.CheckUpdate()
+    destinationConnectorPublicWithJwt.CheckLookUp()
+    destinationConnectorPublicWithJwt.CheckState()
+    destinationConnectorPublicWithJwt.CheckRename()
+    destinationConnectorPublicWithJwt.CheckWrite()
   }
 
   // Source connector Definitions

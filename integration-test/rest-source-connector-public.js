@@ -29,19 +29,6 @@ export function CheckCreate() {
             }
         }
 
-        check(http.request("POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/source-connectors response status for HTTP source connector is 500`]: (r) => r.status === 500,
-        });
-
-        // Cannot create grpc source connector of a non-exist user
-        check(http.request("POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(gRPCSrcConnector), constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/source-connectors response status for gRPC source connector is 500`]: (r) => r.status === 500,
-        });
-
         var resSrcHTTP = http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
@@ -90,11 +77,6 @@ export function CheckCreate() {
 export function CheckList() {
 
     group("Connector API: List source connectors", () => {
-
-        // Cannot list source connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/source-connectors response status is 500`]: (r) => r.status === 500,
-        });
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`), {
             [`GET /v1alpha/source-connectors response status is 200`]: (r) => r.status === 200,
@@ -198,11 +180,6 @@ export function CheckGet() {
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        // Cannot get a source connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status is 500`]: (r) => r.status === 500,
-        });
-
         check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector id`]: (r) => r.json().source_connector.id === httpSrcConnector.id,
@@ -236,14 +213,6 @@ export function CheckUpdate() {
         });
 
         gRPCSrcConnector.connector.description = randomString(20)
-
-        // Cannot patch a source connector of a non-exist user
-        check(http.request(
-            "PATCH",
-            `${connectorPublicHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`,
-            JSON.stringify(gRPCSrcConnector), constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] PATCH /v1alpha/source-connectors/${gRPCSrcConnector.id} response status for updating gRPC source connector 500`]: (r) => r.status === 500,
-        });
 
         check(http.request(
             "PATCH",
@@ -350,16 +319,6 @@ export function CheckDelete() {
             [`DELETE /v1alpha/pipelines/${pipelineID} response status is 204`]: (r) => r.status === 204,
         });
 
-        // Cannot delete source connector of a non-exist user
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/source-http`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] DELETE /v1alpha/source-connectors/source-http response status 500`]: (r) => r.status === 500,
-        });
-
-        // Cannot delete destination connector of a non-exist user
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/destination-http`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] DELETE /v1alpha/destination-connectors/destination-http response status 500`]: (r) => r.status === 500,
-        });
-
         // Can delete source connector now
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/source-http`), {
             [`DELETE /v1alpha/source-connectors/source-http response status 204`]: (r) => r.status === 204,
@@ -393,11 +352,6 @@ export function CheckLookUp() {
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        // Cannot look up source connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 500`]: (r) => r.status === 500,
-        });
-
         check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`), {
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector uid`]: (r) => r.json().source_connector.uid === resHTTP.json().source_connector.uid,
@@ -424,11 +378,6 @@ export function CheckState() {
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
-
-        // Cannot check source connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect response status 500`]: (r) => r.status === 500,
-        });
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, constant.params), {
             [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect response status 200`]: (r) => r.status === 200,
@@ -459,14 +408,6 @@ export function CheckRename() {
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
-
-        // Cannot rename source connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename`,
-            JSON.stringify({
-                "new_source_connector_id": "some-id-not-http"
-            }), constant.paramsWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename response status 500`]: (r) => r.status === 500,
-        });
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename`,
             JSON.stringify({
