@@ -9,7 +9,8 @@ import {
 } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
 import {
-    connectorPublicHost
+    connectorPublicHost,
+    connectorPrivateHost
 } from "./const.js"
 
 import * as constant from "./const.js"
@@ -41,7 +42,7 @@ export function CheckList() {
         // Create connectors
         for (const reqBody of reqBodies) {
             var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
-                JSON.stringify(reqBody), params)
+                JSON.stringify(reqBody), constant.params)
             check(resCSVDst, {
                 [`POST /v1alpha/destination-connectors x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
@@ -113,7 +114,7 @@ export function CheckGet() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
-            JSON.stringify(csvDstConnector), params)
+            JSON.stringify(csvDstConnector), constant.params)
 
         // Check connector state being updated in 120 secs
         var currentTime = new Date().getTime();
@@ -153,7 +154,7 @@ export function CheckLookUp() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
-            JSON.stringify(csvDstConnector), params)
+            JSON.stringify(csvDstConnector), constant.params)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp`), {
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,

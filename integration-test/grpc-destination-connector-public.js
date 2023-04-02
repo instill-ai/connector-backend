@@ -32,6 +32,13 @@ export function CheckCreate() {
             }
         }
 
+        // Cannot create http destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            destination_connector: httpDstConnector
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: httpDstConnector
         })
@@ -58,6 +65,13 @@ export function CheckCreate() {
             }
         }
 
+        // Cannot create grpc destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            destination_connector: gRPCDstConnector
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector gRPC response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         var resDstGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: gRPCDstConnector
         })
@@ -81,6 +95,13 @@ export function CheckCreate() {
             }
         }
 
+        // Cannot create csv destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            destination_connector: csvDstConnector
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: csvDstConnector
         })
@@ -90,7 +111,7 @@ export function CheckCreate() {
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${csvDstConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -104,7 +125,7 @@ export function CheckCreate() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response STATE_CONNECTED`]: (r) => r.message.destinationConnector.connector.state === "STATE_CONNECTED",
         });
@@ -123,6 +144,13 @@ export function CheckCreate() {
             }
         }
 
+        // Cannot create MySQL destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            destination_connector: mySQLDstConnector
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         var resDstMySQL = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: mySQLDstConnector
         })
@@ -140,7 +168,7 @@ export function CheckCreate() {
         var pass = false
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resDstMySQL.message.destinationConnector.id}`
+                name: `destination-connectors/${resDstMySQL.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_ERROR") {
                 pass = true
@@ -259,6 +287,11 @@ export function CheckList() {
             });
         }
 
+        // Cannot list destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response has destinationConnectors array`]: (r) => Array.isArray(r.message.destinationConnectors),
@@ -362,7 +395,7 @@ export function CheckGet() {
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -371,8 +404,15 @@ export function CheckGet() {
             currentTime = new Date().getTime();
         }
 
+        // Cannot get destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,
@@ -422,6 +462,14 @@ export function CheckUpdate() {
                 }
             }
         }
+
+        // Cannot update destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector', {
+            destination_connector: csvDstConnectorUpdate,
+            update_mask: "connector.description,connector.configuration",
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${csvDstConnectorUpdate.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
 
         var resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector', {
             destination_connector: csvDstConnectorUpdate,
@@ -501,6 +549,13 @@ export function CheckLookUp() {
             destination_connector: csvDstConnector
         })
 
+        // Cannot look up destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector', {
+            permalink: `destination_connector/${resCSVDst.message.destinationConnector.uid}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector', {
             permalink: `destination_connector/${resCSVDst.message.destinationConnector.uid}`
         }), {
@@ -540,20 +595,34 @@ export function CheckState() {
             destination_connector: csvDstConnector
         })
 
+        // Cannot connect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        // Cannot disconnect destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -563,7 +632,7 @@ export function CheckState() {
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -572,26 +641,54 @@ export function CheckState() {
             currentTime = new Date().getTime();
         }
 
+        // Cannot connect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        // Cannot disconnect destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
+        // Cannot connect destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        // Cannot disconnect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -601,7 +698,7 @@ export function CheckState() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -642,6 +739,15 @@ export function CheckRename() {
         })
 
         let new_id = `some-id-not-${resCSVDst.message.destinationConnector.id}`
+
+        // Cannot rename destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector', {
+            name: resCSVDst.message.destinationConnector.id,
+            new_destination_connector_id: new_id
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        })
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector', {
             name: resCSVDst.message.destinationConnector.id,
             new_destination_connector_id: new_id
@@ -691,7 +797,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -699,6 +805,25 @@ export function CheckWrite() {
             sleep(1)
             currentTime = new Date().getTime();
         }
+
+        // Cannot write destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
+            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
+            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
+            "pipeline": "pipelines/dummy-pipeline",
+            "recipe": {
+                "source": "source-connectors/dummy-source",
+                "model_instances": [
+                    "models/dummy-model/instances/v1.0-cpu"
+                ],
+                "destination": "destination-connectors/dummy-destination",
+            },
+            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
+            "model_instance_outputs": constant.clsModelInstOutputs
+        }, constant.paramsWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+        });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
@@ -748,7 +873,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -806,7 +931,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -865,7 +990,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -923,7 +1048,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -979,7 +1104,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -1036,7 +1161,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -1093,7 +1218,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -1150,7 +1275,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -1207,7 +1332,7 @@ export function CheckWrite() {
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break

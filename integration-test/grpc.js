@@ -23,6 +23,33 @@ export let options = {
   },
 };
 
+export function setup() {
+  client.connect(constant.connectorGRPCPublicHost, {
+    plaintext: true
+  });
+
+  group("Connector API: Pre delete all source connector", () => {
+    for (const srcConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {}).message.sourceConnectors) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
+        name: `source-connectors/${srcConnector.id}`
+      }), {
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${srcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+      });
+    }
+  });
+
+  group("Connector API: Pre delete all destination connector", () => {
+    for (const desConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}).message.destinationConnectors) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
+        name: `destination-connectors/${desConnector.id}`
+      }), {
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${desConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+      });
+    }
+  });
+  client.close();
+}
+
 export default function (data) {
 
   /*

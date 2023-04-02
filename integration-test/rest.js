@@ -18,6 +18,25 @@ export let options = {
   },
 };
 
+export function setup() {
+
+  group("Connector API: Pre delete all source connector", () => {
+    for (const srcConnector of http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`).json("source_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${srcConnector.id}`), {
+        [`DELETE /v1alpha/source-connectors/${srcConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
+    }
+  });
+
+  group("Connector API: Pre delete all destination connector", () => {
+    for (const desConnector of http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`).json("destination_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${desConnector.id}`), {
+        [`DELETE /v1alpha/destination-connectors/${desConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
+    }
+  });
+}
+
 export default function (data) {
 
   /*
