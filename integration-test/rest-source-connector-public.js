@@ -259,7 +259,8 @@ export function CheckDelete() {
             "id": "dummy-cls",
             "model_definition": "model-definitions/github",
             "configuration": {
-                "repository": "instill-ai/model-dummy-cls"
+                "repository": "instill-ai/model-dummy-cls",
+                "tag": "v1.0-cpu"
             },
         }), constant.params)
         check(createClsModelRes, {
@@ -280,7 +281,7 @@ export function CheckDelete() {
         const detSyncRecipe = {
             recipe: {
                 source: "source-connectors/source-http",
-                model_instances: [`models/dummy-cls/instances/v1.0-cpu`],
+                models: [`models/dummy-cls`],
                 destination: "destination-connectors/destination-http"
             },
         };

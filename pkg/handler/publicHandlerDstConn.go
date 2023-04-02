@@ -113,8 +113,8 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 	}
 
 	// Validate batch outputs of each model
-	for _, modelInstanceOutput := range req.ModelInstanceOutputs {
-		taskOutputs := modelInstanceOutput.TaskOutputs
+	for _, modelOutput := range req.ModelOutputs {
+		taskOutputs := modelOutput.TaskOutputs
 		if len(req.DataMappingIndices) != len(taskOutputs) {
 			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(req.DataMappingIndices), len(taskOutputs))
 		}
@@ -157,12 +157,12 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 
 	if err := h.service.WriteDestinationConnector(dstConnID, owner,
 		datamodel.WriteDestinationConnectorParam{
-			SyncMode:             syncMode,
-			DstSyncMode:          dstSyncMode,
-			Pipeline:             req.Pipeline,
-			Recipe:               req.Recipe,
-			DataMappingIndices:   req.DataMappingIndices,
-			ModelInstanceOutputs: req.ModelInstanceOutputs,
+			SyncMode:           syncMode,
+			DstSyncMode:        dstSyncMode,
+			Pipeline:           req.Pipeline,
+			Recipe:             req.Recipe,
+			DataMappingIndices: req.DataMappingIndices,
+			ModelOutputs:       req.ModelOutputs,
 		}); err != nil {
 		return resp, err
 	}

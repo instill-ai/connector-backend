@@ -60,7 +60,6 @@ export function CheckCreate() {
         var resSrcGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
             source_connector: gRPCSrcConnector
         })
-
         check(resSrcGRPC, {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response gRPCSrcConnector StatusOK": (r) => r.status === grpc.StatusOK,
         });
@@ -315,7 +314,8 @@ export function CheckDelete() {
             "id": "dummy-cls",
             "model_definition": "model-definitions/github",
             "configuration": {
-                "repository": "instill-ai/model-dummy-cls"
+                "repository": "instill-ai/model-dummy-cls",
+                "tag": "v1.0-cpu"
             },
         }), constant.params)
         check(createClsModelRes, {
@@ -336,7 +336,7 @@ export function CheckDelete() {
         const detSyncRecipe = {
             recipe: {
                 source: "source-connectors/source-http",
-                model_instances: [`models/dummy-cls/instances/v1.0-cpu`],
+                models: [`models/dummy-cls`],
                 destination: "destination-connectors/destination-http"
             },
         };
@@ -371,7 +371,7 @@ export function CheckDelete() {
 
         // Cannot delete model due to pipeline occupancy
         check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/models/dummy-cls response status is 422`]: (r) => r.status === 422,
             [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
         });
 

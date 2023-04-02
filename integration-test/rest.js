@@ -1,7 +1,7 @@
 import http from "k6/http";
 import { check, group } from "k6";
 
-import { connectorPublicHost } from "./const.js"
+import { connectorPublicHost, pipelinePublicHost } from "./const.js"
 
 import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
@@ -116,6 +116,14 @@ export default function (data) {
 }
 
 export function teardown(data) {
+  group("Connector API: Delete all pipelines created by this test", () => {
+    for (const pipeline of http.request("GET", `${pipelinePublicHost}/v1alpha/pipelines?page_size=100`).json("pipelines")) {
+      check(http.request("DELETE", `${pipelinePublicHost}/v1alpha/pipelines/${pipeline.id}`), {
+        [`DELETE /v1alpha/pipelines response status is 204`]: (r) => r.status === 204,
+      });
+    }
+  });
+
   group("Connector API: Delete all source connector created by this test", () => {
     for (const srcConnector of http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`).json("source_connectors")) {
       check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${srcConnector.id}`), {
