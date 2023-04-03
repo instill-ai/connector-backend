@@ -270,12 +270,12 @@ export function CheckWrite() {
                 "recipe": {
                     "source": "source-connectors/dummy-source",
                     "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.clsModelInstOutputs
+                "model_outputs": constant.clsModelOutputs
             }), constant.paramsWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 500 (classification)`]: (r) => r.status === 500,
         });

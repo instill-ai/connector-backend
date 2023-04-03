@@ -72,7 +72,7 @@ export const paramsWithJwt = {
   },
 }
 
-export const clsModelInstOutputs = [
+export const clsModelOutputs = [
   {
     "task": "TASK_CLASSIFICATION",
     "model": "models/dummy-model",
@@ -88,7 +88,7 @@ export const clsModelInstOutputs = [
   }
 ]
 
-export const detectionModelInstOutputs = [
+export const detectionModelOutputs = [
   {
     "task": "TASK_DETECTION",
     "model": "models/dummy-model",
@@ -205,7 +205,7 @@ export const detectionModelInstOutputs = [
   }
 ]
 
-export const detectionEmptyModelInstOutputs = [
+export const detectionEmptyModelOutputs = [
   {
     "task": "TASK_DETECTION",
     "model": "models/dummy-model",
@@ -220,7 +220,7 @@ export const detectionEmptyModelInstOutputs = [
   }
 ]
 
-export const keypointModelInstOutputs = [
+export const keypointModelOutputs = [
   {
     "task": "TASK_KEYPOINT",
     "model": "models/dummy-model",
@@ -244,7 +244,7 @@ export const keypointModelInstOutputs = [
   }
 ]
 
-export const ocrModelInstOutputs = [
+export const ocrModelOutputs = [
   {
     "task": "TASK_OCR",
     "model": "models/dummy-model",
@@ -270,7 +270,7 @@ export const ocrModelInstOutputs = [
   }
 ]
 
-export const semanticSegModelInstOutputs = [
+export const semanticSegModelOutputs = [
   {
     "task": "TASK_SEMANTIC_SEGMENTATION",
     "model": "models/dummy-model",
@@ -298,7 +298,7 @@ export const semanticSegModelInstOutputs = [
   }
 ]
 
-export const instSegModelInstOutputs = [
+export const instSegModelOutputs = [
   {
     "task": "TASK_INSTANCE_SEGMENTATION",
     "model": "models/dummy-model",
@@ -336,7 +336,7 @@ export const instSegModelInstOutputs = [
   }
 ]
 
-export const textToImageModelInstOutputs = [
+export const textToImageModelOutputs = [
   {
     "task": "TASK_TEXT_TO_IMAGE",
     "model": "models/dummy-model",
@@ -356,7 +356,7 @@ export const textToImageModelInstOutputs = [
   }
 ]
 
-export const textGenerationModelInstOutputs = [
+export const textGenerationModelOutputs = [
   {
     "task": "TASK_TEXT_GENERATION",
     "model": "models/dummy-model",
@@ -371,7 +371,7 @@ export const textGenerationModelInstOutputs = [
   }
 ]
 
-export const unspecifiedModelInstOutputs = [
+export const unspecifiedModelOutputs = [
   {
     "task": "TASK_UNSPECIFIED",
     "model": "models/dummy-model",

@@ -567,7 +567,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.clsModelInstOutputs
+                "model_outputs": constant.clsModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -622,7 +622,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-                "model_outputs": constant.detectionEmptyModelInstOutputs
+                "model_outputs": constant.detectionEmptyModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -677,7 +677,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-                "model_outputs": constant.detectionModelInstOutputs
+                "model_outputs": constant.detectionModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -731,7 +731,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.keypointModelInstOutputs
+                "model_outputs": constant.keypointModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -785,7 +785,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.ocrModelInstOutputs
+                "model_outputs": constant.ocrModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -839,7 +839,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.semanticSegModelInstOutputs
+                "model_outputs": constant.semanticSegModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -893,7 +893,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.instSegModelInstOutputs
+                "model_outputs": constant.instSegModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -947,7 +947,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.textToImageModelInstOutputs
+                "model_outputs": constant.textToImageModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -1001,7 +1001,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.textGenerationModelInstOutputs
+                "model_outputs": constant.textGenerationModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -1055,7 +1055,7 @@ export function CheckWrite() {
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.unspecifiedModelInstOutputs
+                "model_outputs": constant.unspecifiedModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
