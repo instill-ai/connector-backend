@@ -59,7 +59,7 @@ type Service interface {
 	// Longrunning operation
 	SearchAttributeReady() error
 	GetOperation(workflowId string) (*longrunningpb.Operation, *worker.WorkflowParam, *string, error)
-	CheckConnectorByUID(connID string, ownerRscName string, connDef *datamodel.ConnectorDefinition) (*string, error)
+	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
 
 	// Controller custom service
 	GetResourceState(connectorName string, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
@@ -650,11 +650,8 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	return nil
 }
 
-func (s *service) CheckConnectorByUID(connUID string, ownerRscName string, connDef *datamodel.ConnectorDefinition) (*string, error) {
-	ownerPermalink, err := s.ownerRscNameToPermalink(ownerRscName)
-	if err != nil {
-		return nil, err
-	}
+func (s *service) CheckConnectorByUID(connUID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error) {
+	ownerPermalink := "users/" + owner.GetUid()
 
 	var wfId string
 
@@ -663,7 +660,7 @@ func (s *service) CheckConnectorByUID(connUID string, ownerRscName string, connD
 		return &wfId, nil
 	}
 
-	wfId, err = s.startCheckWorkflow(ownerPermalink, connUID, connDef.DockerRepository, connDef.DockerImageTag)
+	wfId, err := s.startCheckWorkflow(ownerPermalink, connUID, connDef.DockerRepository, connDef.DockerImageTag)
 
 	if err != nil {
 		return nil, err

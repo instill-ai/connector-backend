@@ -77,7 +77,7 @@ func (h *PublicHandler) ReadSourceConnector(context.Context, *connectorPB.ReadSo
 	return nil, status.Errorf(codes.Unimplemented, "method ReadSourceConnector not implemented")
 }
 
-func (h *publicHandler) WatchSourceConnector(ctx context.Context, req *connectorPB.WatchSourceConnectorRequest) (*connectorPB.WatchSourceConnectorResponse, error) {
+func (h *PublicHandler) WatchSourceConnector(ctx context.Context, req *connectorPB.WatchSourceConnectorRequest) (*connectorPB.WatchSourceConnectorResponse, error) {
 	resp, err := h.watchConnector(ctx, req)
 	return resp.(*connectorPB.WatchSourceConnectorResponse), err
 }

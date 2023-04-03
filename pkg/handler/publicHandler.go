@@ -1473,7 +1473,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) watchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -1508,7 +1508,7 @@ func (h *publicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	return resp, nil
 }
 
-func (h *publicHandler) GetOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
+func (h *PublicHandler) GetOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
 	wfId := strings.TrimPrefix(req.Name, "operations/")
 	operation, _, operationType, err := h.service.GetOperation(wfId)
 

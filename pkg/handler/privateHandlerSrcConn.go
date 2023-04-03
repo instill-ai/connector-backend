@@ -21,7 +21,7 @@ func (h *PrivateHandler) LookUpSourceConnectorAdmin(ctx context.Context, req *co
 	return resp.(*connectorPB.LookUpSourceConnectorAdminResponse), err
 }
 
-func (h *privateHandler) CheckSourceConnector(ctx context.Context, req *connectorPB.CheckSourceConnectorRequest) (*connectorPB.CheckSourceConnectorResponse, error) {
+func (h *PrivateHandler) CheckSourceConnector(ctx context.Context, req *connectorPB.CheckSourceConnectorRequest) (*connectorPB.CheckSourceConnectorResponse, error) {
 	resp, err := h.checkConnector(ctx, req)
 	return resp.(*connectorPB.CheckSourceConnectorResponse), err
 }

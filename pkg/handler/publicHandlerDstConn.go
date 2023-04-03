@@ -170,7 +170,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 	return resp, nil
 }
 
-func (h *publicHandler) WatchDestinationConnector(ctx context.Context, req *connectorPB.WatchDestinationConnectorRequest) (*connectorPB.WatchDestinationConnectorResponse, error) {
+func (h *PublicHandler) WatchDestinationConnector(ctx context.Context, req *connectorPB.WatchDestinationConnectorRequest) (*connectorPB.WatchDestinationConnectorResponse, error) {
 	resp, err := h.watchConnector(ctx, req)
 	return resp.(*connectorPB.WatchDestinationConnectorResponse), err
 }
