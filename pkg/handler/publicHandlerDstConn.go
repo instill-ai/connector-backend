@@ -19,7 +19,7 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-func (h *publicHandler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
+func (h *PublicHandler) CreateDestinationConnector(ctx context.Context, req *connectorPB.CreateDestinationConnectorRequest) (*connectorPB.CreateDestinationConnectorResponse, error) {
 	resp, err := h.createConnector(ctx, req)
 	if err != nil {
 		return resp.(*connectorPB.CreateDestinationConnectorResponse), err
@@ -32,22 +32,22 @@ func (h *publicHandler) CreateDestinationConnector(ctx context.Context, req *con
 	return resp.(*connectorPB.CreateDestinationConnectorResponse), nil
 }
 
-func (h *publicHandler) ListDestinationConnectors(ctx context.Context, req *connectorPB.ListDestinationConnectorsRequest) (*connectorPB.ListDestinationConnectorsResponse, error) {
+func (h *PublicHandler) ListDestinationConnectors(ctx context.Context, req *connectorPB.ListDestinationConnectorsRequest) (*connectorPB.ListDestinationConnectorsResponse, error) {
 	resp, err := h.listConnectors(ctx, req)
 	return resp.(*connectorPB.ListDestinationConnectorsResponse), err
 }
 
-func (h *publicHandler) GetDestinationConnector(ctx context.Context, req *connectorPB.GetDestinationConnectorRequest) (*connectorPB.GetDestinationConnectorResponse, error) {
+func (h *PublicHandler) GetDestinationConnector(ctx context.Context, req *connectorPB.GetDestinationConnectorRequest) (*connectorPB.GetDestinationConnectorResponse, error) {
 	resp, err := h.getConnector(ctx, req)
 	return resp.(*connectorPB.GetDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) UpdateDestinationConnector(ctx context.Context, req *connectorPB.UpdateDestinationConnectorRequest) (*connectorPB.UpdateDestinationConnectorResponse, error) {
+func (h *PublicHandler) UpdateDestinationConnector(ctx context.Context, req *connectorPB.UpdateDestinationConnectorRequest) (*connectorPB.UpdateDestinationConnectorResponse, error) {
 	resp, err := h.updateConnector(ctx, req)
 	return resp.(*connectorPB.UpdateDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) DeleteDestinationConnector(ctx context.Context, req *connectorPB.DeleteDestinationConnectorRequest) (*connectorPB.DeleteDestinationConnectorResponse, error) {
+func (h *PublicHandler) DeleteDestinationConnector(ctx context.Context, req *connectorPB.DeleteDestinationConnectorRequest) (*connectorPB.DeleteDestinationConnectorResponse, error) {
 	resp, err := h.deleteConnector(ctx, req)
 	if err != nil {
 		return resp.(*connectorPB.DeleteDestinationConnectorResponse), err
@@ -59,27 +59,27 @@ func (h *publicHandler) DeleteDestinationConnector(ctx context.Context, req *con
 	return resp.(*connectorPB.DeleteDestinationConnectorResponse), nil
 }
 
-func (h *publicHandler) LookUpDestinationConnector(ctx context.Context, req *connectorPB.LookUpDestinationConnectorRequest) (*connectorPB.LookUpDestinationConnectorResponse, error) {
+func (h *PublicHandler) LookUpDestinationConnector(ctx context.Context, req *connectorPB.LookUpDestinationConnectorRequest) (*connectorPB.LookUpDestinationConnectorResponse, error) {
 	resp, err := h.lookUpConnector(ctx, req)
 	return resp.(*connectorPB.LookUpDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) ConnectDestinationConnector(ctx context.Context, req *connectorPB.ConnectDestinationConnectorRequest) (*connectorPB.ConnectDestinationConnectorResponse, error) {
+func (h *PublicHandler) ConnectDestinationConnector(ctx context.Context, req *connectorPB.ConnectDestinationConnectorRequest) (*connectorPB.ConnectDestinationConnectorResponse, error) {
 	resp, err := h.connectConnector(ctx, req)
 	return resp.(*connectorPB.ConnectDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) DisconnectDestinationConnector(ctx context.Context, req *connectorPB.DisconnectDestinationConnectorRequest) (*connectorPB.DisconnectDestinationConnectorResponse, error) {
+func (h *PublicHandler) DisconnectDestinationConnector(ctx context.Context, req *connectorPB.DisconnectDestinationConnectorRequest) (*connectorPB.DisconnectDestinationConnectorResponse, error) {
 	resp, err := h.disconnectConnector(ctx, req)
 	return resp.(*connectorPB.DisconnectDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) RenameDestinationConnector(ctx context.Context, req *connectorPB.RenameDestinationConnectorRequest) (*connectorPB.RenameDestinationConnectorResponse, error) {
+func (h *PublicHandler) RenameDestinationConnector(ctx context.Context, req *connectorPB.RenameDestinationConnectorRequest) (*connectorPB.RenameDestinationConnectorResponse, error) {
 	resp, err := h.renameConnector(ctx, req)
 	return resp.(*connectorPB.RenameDestinationConnectorResponse), err
 }
 
-func (h *publicHandler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
+func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -107,7 +107,7 @@ func (h *publicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		return resp, err
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
@@ -155,7 +155,7 @@ func (h *publicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		dstSyncMode = "append_dedup"
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, ownerRscName,
+	if err := h.service.WriteDestinationConnector(dstConnID, owner,
 		datamodel.WriteDestinationConnectorParam{
 			SyncMode:             syncMode,
 			DstSyncMode:          dstSyncMode,

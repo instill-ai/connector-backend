@@ -26,7 +26,7 @@ import (
 	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
 
-type publicHandler struct {
+type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
 	service service.Service
 }
@@ -35,12 +35,22 @@ type publicHandler struct {
 func NewPublicHandler(s service.Service) connectorPB.ConnectorPublicServiceServer {
 	datamodel.InitJSONSchema()
 	datamodel.InitAirbyteCatalog()
-	return &publicHandler{
+	return &PublicHandler{
 		service: s,
 	}
 }
 
-func (h *publicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRequest) (*connectorPB.LivenessResponse, error) {
+// GetService returns the service
+func (h *PublicHandler) GetService() service.Service {
+	return h.service
+}
+
+// SetService sets the service
+func (h *PublicHandler) SetService(s service.Service) {
+	h.service = s
+}
+
+func (h *PublicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRequest) (*connectorPB.LivenessResponse, error) {
 	return &connectorPB.LivenessResponse{
 		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
@@ -48,7 +58,7 @@ func (h *publicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRe
 	}, nil
 }
 
-func (h *publicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
+func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
 	return &connectorPB.ReadinessResponse{
 		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
@@ -56,7 +66,7 @@ func (h *publicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 	}, nil
 }
 
-func (h *publicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -110,7 +120,7 @@ func (h *publicHandler) listConnectorDefinitions(ctx context.Context, req interf
 	return resp, nil
 }
 
-func (h *publicHandler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var connID string
 	var isBasicView bool
@@ -150,7 +160,7 @@ func (h *publicHandler) getConnectorDefinition(ctx context.Context, req interfac
 
 }
 
-func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -443,14 +453,14 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 		return resp, st.Err()
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
 	dbConnector := &datamodel.Connector{
 		ID:                     connID,
-		Owner:                  ownerRscName,
+		Owner:                  owner.GetName(),
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
@@ -458,7 +468,7 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 		Description:            connDesc,
 	}
 
-	dbConnector, err = h.service.CreateConnector(dbConnector)
+	dbConnector, err = h.service.CreateConnector(owner, dbConnector)
 	if err != nil {
 		return resp, err
 	}
@@ -466,7 +476,7 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		ownerRscName,
+		owner.GetName(),
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -479,7 +489,7 @@ func (h *publicHandler) createConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -506,12 +516,12 @@ func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (re
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(ownerRscName, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(owner, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -555,7 +565,7 @@ func (h *publicHandler) listConnectors(ctx context.Context, req interface{}) (re
 
 }
 
-func (h *publicHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var isBasicView bool
 
@@ -583,12 +593,12 @@ func (h *publicHandler) getConnector(ctx context.Context, req interface{}) (resp
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, ownerRscName, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -615,7 +625,7 @@ func (h *publicHandler) getConnector(ctx context.Context, req interface{}) (resp
 	return resp, nil
 }
 
-func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -859,7 +869,7 @@ func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		connDefUID = dbConnDef.UID
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
@@ -870,7 +880,7 @@ func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnector(connID, ownerRscName, connType, PBToDBConnector(pbConnectorToUpdate, connType, ownerRscName, connDefUID))
+	dbConnector, err := h.service.UpdateConnector(connID, owner, connType, PBToDBConnector(pbConnectorToUpdate, connType, owner.GetName(), connDefUID))
 	if err != nil {
 		return resp, err
 	}
@@ -878,7 +888,7 @@ func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		ownerRscName,
+		owner.GetName(),
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -891,7 +901,7 @@ func (h *publicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	var connID string
 	var connType datamodel.ConnectorType
@@ -912,19 +922,19 @@ func (h *publicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(connID, ownerRscName, connType); err != nil {
+	if err := h.service.DeleteConnector(connID, owner, connType); err != nil {
 		return resp, err
 	}
 
 	return resp, nil
 }
 
-func (h *publicHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1000,12 +1010,12 @@ func (h *publicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 		connDefColID = "destination-connector-definitions"
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUID(connUID, ownerRscName, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUID(connUID, owner, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -1032,7 +1042,7 @@ func (h *publicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 	return resp, nil
 }
 
-func (h *publicHandler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1139,12 +1149,12 @@ func (h *publicHandler) connectConnector(ctx context.Context, req interface{}) (
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
 	if err != nil {
 		return resp, err
 	}
@@ -1166,7 +1176,7 @@ func (h *publicHandler) connectConnector(ctx context.Context, req interface{}) (
 	return resp, nil
 }
 
-func (h *publicHandler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1273,12 +1283,12 @@ func (h *publicHandler) disconnectConnector(ctx context.Context, req interface{}
 		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, ownerRscName, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
 	if err != nil {
 		return resp, err
 	}
@@ -1300,7 +1310,7 @@ func (h *publicHandler) disconnectConnector(ctx context.Context, req interface{}
 	return resp, nil
 }
 
-func (h *publicHandler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -1427,12 +1437,12 @@ func (h *publicHandler) renameConnector(ctx context.Context, req interface{}) (r
 		return resp, st.Err()
 	}
 
-	ownerRscName, err := resource.GetOwner(ctx)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorID(connID, ownerRscName, connType, connNewID)
+	dbConnector, err := h.service.UpdateConnectorID(connID, owner, connType, connNewID)
 	if err != nil {
 		return resp, err
 	}

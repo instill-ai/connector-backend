@@ -1,3 +1,5 @@
+import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
+
 let proto
 let pHost, cHost, mHost
 let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
@@ -54,6 +56,20 @@ export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee
 export const csvDstConfig = {
   "destination_path": "/local/test"
 };
+
+export const params = {
+  headers: {
+    "Content-Type": "application/json",
+  },
+};
+
+const randomUUID = uuidv4();
+export const paramsWithJwt = {
+  headers: {
+    "Content-Type": "application/json",
+    "Jwt-Sub": randomUUID,
+  },
+}
 
 export const clsModelInstOutputs = [
   {

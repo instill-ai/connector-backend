@@ -17,7 +17,7 @@ client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
 
 export function CheckCreate() {
 
-    group("Connector API: vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector", () => {
+    group("Connector API: Create source connector", () => {
         client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
@@ -260,6 +260,7 @@ export function CheckUpdate() {
         });
 
         gRPCSrcConnector.connector.description = randomString(20)
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateSourceConnector', {
             source_connector: gRPCSrcConnector
         }), {
@@ -316,11 +317,7 @@ export function CheckDelete() {
             "configuration": {
                 "repository": "instill-ai/model-dummy-cls"
             },
-        }), {
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
+        }), constant.params)
         check(createClsModelRes, {
             "POST /v1alpha/models cls response status": (r) => r.status === 201,
         })
@@ -328,11 +325,7 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-            })
+            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, constant.params)
             if (res.json().operation.done === true) {
                 break
             }
@@ -356,11 +349,7 @@ export function CheckDelete() {
                 description: randomString(10),
             },
                 detSyncRecipe
-            )), {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }), {
+            )), constant.params), {
             "POST /v1alpha/pipelines response status is 201": (r) => r.status === 201,
         })
 

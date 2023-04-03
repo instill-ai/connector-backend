@@ -5,7 +5,8 @@ import {
 } from "k6";
 
 import {
-    connectorPublicHost
+    connectorPublicHost,
+    connectorPrivateHost
 } from "./const.js"
 
 import * as constant from "./const.js"
@@ -43,11 +44,7 @@ export function CheckList() {
             check(http.request(
                 "POST",
                 `${connectorPublicHost}/v1alpha/source-connectors`,
-                JSON.stringify(reqBody), {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-            }), {
+                JSON.stringify(reqBody), constant.params), {
                 [`POST /v1alpha/source-connectors x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
         }
@@ -118,11 +115,7 @@ export function CheckGet() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: {
-                "Content-Type": "application/json"
-            },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
@@ -150,11 +143,7 @@ export function CheckLookUp() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: {
-                "Content-Type": "application/json"
-            },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`), {
             [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,

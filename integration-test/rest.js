@@ -7,6 +7,8 @@ import * as sourceConnectorDefinition from './rest-source-connector-definition.j
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
 import * as sourceConnectorPublic from './rest-source-connector-public.js';
 import * as destinationConnectorPublic from './rest-destination-connector-public.js';
+import * as sourceConnectorPublicWithJwt from './rest-source-connector-public-with-jwt.js';
+import * as destinationConnectorPublicWithJwt from './rest-destination-connector-public-with-jwt.js';
 import * as sourceConnectorPrivate from './rest-source-connector-private.js';
 import * as destinationConnectorPrivate from './rest-destination-connector-private.js';
 
@@ -17,6 +19,25 @@ export let options = {
     checks: ["rate == 1.0"],
   },
 };
+
+export function setup() {
+
+  group("Connector API: Pre delete all source connector", () => {
+    for (const srcConnector of http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`).json("source_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${srcConnector.id}`), {
+        [`DELETE /v1alpha/source-connectors/${srcConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
+    }
+  });
+
+  group("Connector API: Pre delete all destination connector", () => {
+    for (const desConnector of http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`).json("destination_connectors")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${desConnector.id}`), {
+        [`DELETE /v1alpha/destination-connectors/${desConnector.id} response status is 204`]: (r) => r.status === 204,
+      });
+    }
+  });
+}
 
 export default function (data) {
 
@@ -42,6 +63,26 @@ export default function (data) {
     destinationConnectorPrivate.CheckList()
     destinationConnectorPrivate.CheckGet()
     destinationConnectorPrivate.CheckLookUp()
+
+    // Source public with jwt-sub
+    sourceConnectorPublicWithJwt.CheckCreate()
+    sourceConnectorPublicWithJwt.CheckList()
+    sourceConnectorPublicWithJwt.CheckGet()
+    sourceConnectorPublicWithJwt.CheckUpdate()
+    sourceConnectorPublicWithJwt.CheckDelete()
+    sourceConnectorPublicWithJwt.CheckLookUp()
+    sourceConnectorPublicWithJwt.CheckState()
+    sourceConnectorPublicWithJwt.CheckRename()
+
+    // Destination public with jwt-sub
+    destinationConnectorPublicWithJwt.CheckCreate()
+    destinationConnectorPublicWithJwt.CheckList()
+    destinationConnectorPublicWithJwt.CheckGet()
+    destinationConnectorPublicWithJwt.CheckUpdate()
+    destinationConnectorPublicWithJwt.CheckLookUp()
+    destinationConnectorPublicWithJwt.CheckState()
+    destinationConnectorPublicWithJwt.CheckRename()
+    destinationConnectorPublicWithJwt.CheckWrite()
   }
 
   // Source connector definitions

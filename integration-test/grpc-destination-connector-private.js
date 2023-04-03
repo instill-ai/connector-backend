@@ -166,7 +166,7 @@ export function CheckGet() {
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
-                name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
             if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
                 break
@@ -176,7 +176,7 @@ export function CheckGet() {
         }
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
-            name: `destination_connector/${resCSVDst.message.destinationConnector.id}`
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,

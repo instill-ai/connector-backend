@@ -32,9 +32,7 @@ export function CheckCreate() {
         var resSrcHTTP = http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(resSrcHTTP, {
             "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
@@ -46,18 +44,14 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        }), {
+            JSON.stringify(httpSrcConnector), constant.params), {
             "POST /v1alpha/source-connectors response duplicate HTTP source connector status 409": (r) => r.status === 409
         });
 
         var resSrcGRPC = http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(gRPCSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(gRPCSrcConnector), constant.params)
 
         check(resSrcGRPC, {
             "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
@@ -66,9 +60,7 @@ export function CheckCreate() {
         check(http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
-            {}, {
-            headers: { "Content-Type": "application/json" },
-        }), {
+            {}, constant.params), {
             "POST /v1alpha/source-connectors response status for creating empty body 400": (r) => r.status === 400,
         });
 
@@ -115,9 +107,7 @@ export function CheckList() {
             check(http.request(
                 "POST",
                 `${connectorPublicHost}/v1alpha/source-connectors`,
-                JSON.stringify(reqBody), {
-                headers: { "Content-Type": "application/json" },
-            }), {
+                JSON.stringify(reqBody), constant.params), {
                 [`POST /v1alpha/source-connectors x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
         }
@@ -188,9 +178,7 @@ export function CheckGet() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
@@ -220,19 +208,16 @@ export function CheckUpdate() {
         check(http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(gRPCSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        }), {
+            JSON.stringify(gRPCSrcConnector), constant.params), {
             "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
         gRPCSrcConnector.connector.description = randomString(20)
+
         check(http.request(
             "PATCH",
             `${connectorPublicHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`,
-            JSON.stringify(gRPCSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        }), {
+            JSON.stringify(gRPCSrcConnector), constant.params), {
             [`PATCH /v1alpha/source-connectors/${gRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
         });
 
@@ -255,7 +240,7 @@ export function CheckDelete() {
                 "connector": {
                     "configuration": {}
                 }
-            }), { headers: { "Content-Type": "application/json" } }), {
+            }), constant.params), {
             "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
         })
 
@@ -266,7 +251,7 @@ export function CheckDelete() {
                 "connector": {
                     "configuration": {}
                 }
-            }), { headers: { "Content-Type": "application/json" } }), {
+            }), constant.params), {
             "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
         })
 
@@ -276,7 +261,7 @@ export function CheckDelete() {
             "configuration": {
                 "repository": "instill-ai/model-dummy-cls"
             },
-        }), { headers: { "Content-Type": "application/json" } })
+        }), constant.params)
         check(createClsModelRes, {
             "POST /v1alpha/models cls response status": (r) => r.status === 201,
         })
@@ -284,9 +269,7 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
-                headers: { "Content-Type": "application/json" },
-            })
+            let res = http.get(`${modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, constant.params)
             if (res.json().operation.done === true) {
                 break
             }
@@ -310,11 +293,7 @@ export function CheckDelete() {
                 description: randomString(10),
             },
                 detSyncRecipe
-            )), {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }), {
+            )), constant.params), {
             "POST /v1alpha/pipelines response status is 201": (r) => r.status === 201,
         })
 
@@ -371,9 +350,7 @@ export function CheckLookUp() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`), {
             [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
@@ -400,19 +377,13 @@ export function CheckState() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, {
-            headers: { "Content-Type": "application/json" }
-        }), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, constant.params), {
             [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect response status 200`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect`, null, {
-            headers: { "Content-Type": "application/json" }
-        }), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect`, null, constant.params), {
             [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect response status 422`]: (r) => r.status === 422,
         });
 
@@ -436,16 +407,12 @@ export function CheckRename() {
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
+            JSON.stringify(httpSrcConnector), constant.params)
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename`,
             JSON.stringify({
                 "new_source_connector_id": "some-id-not-http"
-            }), {
-            headers: { "Content-Type": "application/json" }
-        }), {
+            }), constant.params), {
             [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename response status 422`]: (r) => r.status === 422,
         });
 
