@@ -708,13 +708,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.clsModelInstOutputs
+            "model_outputs": constant.clsModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -765,14 +765,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu",
-                    "models/dummy-model/instances/v2.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-            "model_instance_outputs": constant.detectionEmptyModelInstOutputs
+            "model_outputs": constant.detectionEmptyModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -823,14 +822,14 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu",
-                    "models/dummy-model/instances/v2.0-cpu"
+                "models": [
+                    "models/dummy-model",
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-            "model_instance_outputs": constant.detectionModelInstOutputs
+            "model_outputs": constant.detectionModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -882,13 +881,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.keypointModelInstOutputs
+            "model_outputs": constant.keypointModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -940,13 +939,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.ocrModelInstOutputs
+            "model_outputs": constant.ocrModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -996,13 +995,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.semanticSegModelInstOutputs
+            "model_outputs": constant.semanticSegModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -1053,13 +1052,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.instSegModelInstOutputs
+            "model_outputs": constant.instSegModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -1110,13 +1109,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.textToImageModelInstOutputs
+            "model_outputs": constant.textToImageModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -1167,13 +1166,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.textGenerationModelInstOutputs
+            "model_outputs": constant.textGenerationModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
@@ -1224,13 +1223,13 @@ export function CheckWrite() {
             "pipeline": "pipelines/dummy-pipeline",
             "recipe": {
                 "source": "source-connectors/dummy-source",
-                "model_instances": [
-                    "models/dummy-model/instances/v1.0-cpu"
+                "models": [
+                    "models/dummy-model"
                 ],
                 "destination": "destination-connectors/dummy-destination",
             },
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_instance_outputs": constant.unspecifiedModelInstOutputs
+            "model_outputs": constant.unspecifiedModelOutputs
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });

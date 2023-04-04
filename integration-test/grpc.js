@@ -16,6 +16,7 @@ import * as destinationConnectorPrivate from './grpc-destination-connector-priva
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
+client.load(['proto/vdp/pipeline/v1alpha'], 'pipeline_public_service.proto');
 
 export let options = {
   setupTimeout: '10s',
@@ -134,6 +135,25 @@ export default function (data) {
 }
 
 export function teardown(data) {
+
+  group("Connector API: Delete all pipelines created by this test", () => {
+    client.connect(constant.pipelineGRPCPublicHost, {
+      plaintext: true
+    });
+
+    for (const pipeline of client.invoke('vdp.pipeline.v1alpha.PipelinePublicService/ListPipelines', {
+      pageSize: 1000
+    }, {}).message.pipelines) {
+      check(client.invoke(`vdp.pipeline.v1alpha.PipelinePublicService/DeletePipeline`, {
+        name: `pipelines/${pipeline.id}`
+      }), {
+        [`vdp.pipeline.v1alpha.PipelinePublicService/DeletePipeline response StatusOK`]: (r) => r.status === grpc.StatusOK,
+      });
+    }
+
+    client.close();
+  });
+
   client.connect(constant.connectorGRPCPublicHost, {
     plaintext: true
   });

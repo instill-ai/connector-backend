@@ -561,14 +561,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.clsModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.clsModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (classification)`]: (r) => r.status === 200,
         });
 
@@ -613,15 +615,17 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu",
-                        "models/dummy-model/instances/v2.0-cpu"
+                    "models": [
+                        "models/dummy-model",
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-                "model_instance_outputs": constant.detectionEmptyModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.detectionEmptyModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
         });
 
@@ -666,15 +670,17 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu",
-                        "models/dummy-model/instances/v2.0-cpu"
+                    "models": [
+                        "models/dummy-model",
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-                "model_instance_outputs": constant.detectionModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.detectionModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
         });
 
@@ -719,14 +725,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.keypointModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.keypointModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
         });
 
@@ -771,14 +779,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.ocrModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.ocrModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
         });
 
@@ -823,14 +833,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.semanticSegModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.semanticSegModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (semantic-segmentation)`]: (r) => r.status === 200,
         });
 
@@ -875,14 +887,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.instSegModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.instSegModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (instance-segmentation)`]: (r) => r.status === 200,
         });
 
@@ -927,14 +941,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.textToImageModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.textToImageModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-to-image)`]: (r) => r.status === 200,
         });
 
@@ -979,14 +995,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.textGenerationModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.textGenerationModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (text-generation)`]: (r) => r.status === 200,
         });
 
@@ -1031,14 +1049,16 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
-                        "models/dummy-model/instances/v1.0-cpu"
+                    "models": [
+                        "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_instance_outputs": constant.unspecifiedModelInstOutputs
-            }), constant.params), {
+                "model_outputs": constant.unspecifiedModelOutputs
+            }), {
+            headers: { "Content-Type": "application/json" }
+        }), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (unspecified)`]: (r) => r.status === 200,
         });
 

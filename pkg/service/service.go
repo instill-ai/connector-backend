@@ -529,9 +529,9 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	// Create AirbyteMessage RECORD type, i.e., AirbyteRecordMessage in JSON Line format
 	var byteAbMsgs []byte
 
-	for _, modelInstanceOutput := range param.ModelInstanceOutputs {
+	for _, modelOutput := range param.ModelOutputs {
 
-		for idx, taskOutput := range modelInstanceOutput.TaskOutputs {
+		for idx, taskOutput := range modelOutput.TaskOutputs {
 
 			b, err := protojson.MarshalOptions{
 				UseProtoNames:   true,
@@ -567,7 +567,7 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 			pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
 
 			dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
-			dataStruct.GetFields()["model_instance"] = structpb.NewStringValue(modelInstanceOutput.ModelInstance)
+			dataStruct.GetFields()["model"] = structpb.NewStringValue(modelOutput.Model)
 			dataStruct.GetFields()["index"] = structpb.NewStringValue(param.DataMappingIndices[idx])
 
 			b, err = protojson.Marshal(&dataStruct)

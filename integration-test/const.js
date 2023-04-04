@@ -33,6 +33,7 @@ export const connectorPublicHost = `${proto}://${cHost}:${cPublicPort}`;
 export const connectorGRPCPrivateHost = `${cHost}:${cPrivatePort}`;
 export const connectorGRPCPublicHost = `${cHost}:${cPublicPort}`;
 export const pipelinePublicHost = `${proto}://${pHost}:${pPublicPort}`;
+export const pipelineGRPCPublicHost = `${pHost}:${pPublicPort}`;
 export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 
 export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
@@ -71,10 +72,10 @@ export const paramsWithJwt = {
   },
 }
 
-export const clsModelInstOutputs = [
+export const clsModelOutputs = [
   {
     "task": "TASK_CLASSIFICATION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPS",
@@ -87,10 +88,10 @@ export const clsModelInstOutputs = [
   }
 ]
 
-export const detectionModelInstOutputs = [
+export const detectionModelOutputs = [
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -147,7 +148,7 @@ export const detectionModelInstOutputs = [
   },
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v2.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -204,10 +205,10 @@ export const detectionModelInstOutputs = [
   }
 ]
 
-export const detectionEmptyModelInstOutputs = [
+export const detectionEmptyModelOutputs = [
   {
     "task": "TASK_DETECTION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
@@ -219,10 +220,10 @@ export const detectionEmptyModelInstOutputs = [
   }
 ]
 
-export const keypointModelInstOutputs = [
+export const keypointModelOutputs = [
   {
     "task": "TASK_KEYPOINT",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
@@ -243,10 +244,10 @@ export const keypointModelInstOutputs = [
   }
 ]
 
-export const ocrModelInstOutputs = [
+export const ocrModelOutputs = [
   {
     "task": "TASK_OCR",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -269,10 +270,10 @@ export const ocrModelInstOutputs = [
   }
 ]
 
-export const semanticSegModelInstOutputs = [
+export const semanticSegModelOutputs = [
   {
     "task": "TASK_SEMANTIC_SEGMENTATION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -297,10 +298,10 @@ export const semanticSegModelInstOutputs = [
   }
 ]
 
-export const instSegModelInstOutputs = [
+export const instSegModelOutputs = [
   {
     "task": "TASK_INSTANCE_SEGMENTATION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -335,10 +336,10 @@ export const instSegModelInstOutputs = [
   }
 ]
 
-export const textToImageModelInstOutputs = [
+export const textToImageModelOutputs = [
   {
     "task": "TASK_TEXT_TO_IMAGE",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -355,10 +356,10 @@ export const textToImageModelInstOutputs = [
   }
 ]
 
-export const textGenerationModelInstOutputs = [
+export const textGenerationModelOutputs = [
   {
     "task": "TASK_TEXT_GENERATION",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
@@ -370,10 +371,10 @@ export const textGenerationModelInstOutputs = [
   }
 ]
 
-export const unspecifiedModelInstOutputs = [
+export const unspecifiedModelOutputs = [
   {
     "task": "TASK_UNSPECIFIED",
-    "model_instance": "models/dummy-model/instances/v1.0-cpu",
+    "model": "models/dummy-model",
     "task_outputs": [
       {
         "index": "01GB5T5ZK9W9C2VXMWWRYM8WPV",
