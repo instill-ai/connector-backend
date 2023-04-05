@@ -1508,7 +1508,7 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	return resp, nil
 }
 
-func (h *PublicHandler) GetOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
+func (h *PublicHandler) GetConnectorOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
 	wfId := strings.TrimPrefix(req.Name, "operations/")
 	operation, _, operationType, err := h.service.GetOperation(wfId)
 

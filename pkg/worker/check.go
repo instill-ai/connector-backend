@@ -104,6 +104,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 		}
 	}
 
+	// result as memo for getOperation to parse
 	memo := map[string]interface{}{
 		"Result": res,
 	}

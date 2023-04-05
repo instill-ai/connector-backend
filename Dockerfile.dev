@@ -43,6 +43,7 @@ ENV GOENV /go/.config/go/env
 
 # -- set up mounting points
 
+RUN mkdir /etc/vdp && chown -R nobody:nogroup /etc/vdp
 RUN mkdir /vdp && chown -R nobody:nogroup /vdp
 RUN mkdir /airbyte && chown -R nobody:nogroup /airbyte
 

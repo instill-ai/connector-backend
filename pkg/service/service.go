@@ -469,7 +469,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
-		if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_DISCONNECTED, nil, nil); err != nil {
+		if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_State(state), nil, nil); err != nil {
 			return nil, err
 		}
 	}

@@ -269,7 +269,7 @@ export function CheckWrite() {
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
                     "source": "source-connectors/dummy-source",
-                    "model_instances": [
+                    "models": [
                         "models/dummy-model"
                     ],
                     "destination": "destination-connectors/dummy-destination",
