@@ -78,8 +78,8 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -253,8 +253,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)

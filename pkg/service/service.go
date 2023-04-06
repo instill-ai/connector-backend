@@ -171,12 +171,14 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 		return nil, err
 	}
 
-	// Check connector state
+	// User desire state = CONNECTED
+	if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		return nil, err
+	}
+
+	// Check connector state and update resource state in etcd
 	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
 		// HTTP and gRPC connector is always with STATE_CONNECTED
-		if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
-			return nil, err
-		}
 		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil, nil); err != nil {
 			return nil, err
 		}
@@ -409,8 +411,13 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		return nil, err
 	}
 
-	switch conn.State {
-	case datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR):
+	connState, err := s.GetResourceState(id, connectorType)
+	if err != nil {
+		return nil, err
+	}
+
+	switch *connState {
+	case connectorPB.Connector_STATE_ERROR:
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector state",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -418,6 +425,20 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 					Type:        "STATE",
 					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 					Description: "The connector is in STATE_ERROR",
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
+	case connectorPB.Connector_STATE_UNSPECIFIED:
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector state",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "STATE",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: "The connector is in STATE_UNSPECIFIED",
 				},
 			})
 		if err != nil {
@@ -433,19 +454,22 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 			break
 		}
 
-		// Set connector state to STATE_UNSPECIFIED when it is set to STATE_CONNECTED from STATE_DISCONNECTED
-		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
+		// Set connector state to user desire state
+		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 
-		wfId, err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
+		// Set resource state to STATE_UNSPECIFIED
+		if datamodel.ConnectorState(*connState) != state {
+			wfId, err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
 
-		if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
-			return nil, err
-		}
+			if err != nil {
+				return nil, err
+			}
 
-		if err != nil {
-			return nil, err
+			if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+				return nil, err
+			}
 		}
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
@@ -516,6 +540,14 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 			logger.Error(err.Error())
 		}
 		return nil, st.Err()
+	}
+
+	if err := s.DeleteResourceState(id, connectorType); err != nil {
+		return nil, err
+	}
+
+	if err := s.UpdateResourceState(newID, connectorType, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
+		return nil, err
 	}
 
 	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {

@@ -326,8 +326,10 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, constant.params)
-            if (res.json().operation.done === true) {
+            let res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
+                name: `models/dummy-cls`
+            }, {})
+            if (res.message.state === "STATE_OFFLINE") {
                 break
             }
             sleep(1)
