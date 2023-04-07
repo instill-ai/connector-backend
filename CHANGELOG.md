@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.8.0-alpha...v0.9.0-alpha) (2023-04-07)
+
+
+### Features
+
+* **controller:** add connector state monitoring with controller ([#72](https://github.com/instill-ai/connector-backend/issues/72)) ([d4092e6](https://github.com/instill-ai/connector-backend/commit/d4092e6b3eaae7047804183e6b28e346ec375e22))
+
 ## [0.8.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.7.6-alpha...v0.8.0-alpha) (2023-03-26)
 
 
