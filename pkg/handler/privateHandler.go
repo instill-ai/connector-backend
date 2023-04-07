@@ -268,3 +268,57 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 
 	return resp, nil
 }
+
+func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var isBasicView = true
+
+	var connID string
+	var connType datamodel.ConnectorType
+
+	switch v := req.(type) {
+	case *connectorPB.CheckSourceConnectorRequest:
+		resp = &connectorPB.CheckSourceConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+	case *connectorPB.CheckDestinationConnectorRequest:
+		resp = &connectorPB.CheckDestinationConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
+	}
+
+	dbConnector, err := h.service.GetConnectorByIDAdmin(connID, connType, isBasicView)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	if err != nil {
+		return resp, err
+	}
+
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+
+	if err != nil {
+		return resp, err
+	}
+
+
+	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), owner, dbConnDef)
+
+	if err != nil {
+		return resp, err
+	}
+
+	switch v := resp.(type) {
+	case *connectorPB.CheckSourceConnectorResponse:
+		v.WorkflowId = *wfId
+	case *connectorPB.CheckDestinationConnectorResponse:
+		v.WorkflowId = *wfId
+	}
+
+	return resp, nil
+}

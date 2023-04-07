@@ -165,10 +165,10 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
+            var res = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)

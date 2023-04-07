@@ -89,10 +89,10 @@ export function CheckCreate() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${csvDstConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -139,10 +139,10 @@ export function CheckCreate() {
         timeoutTime = new Date().getTime() + 180000;
         var pass = false
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resDstMySQL.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_ERROR") {
+            if (res.message.state === "STATE_ERROR") {
                 pass = true
                 break
             }
@@ -361,10 +361,10 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -540,6 +540,20 @@ export function CheckState() {
             destination_connector: csvDstConnector
         })
 
+        // Check connector state being updated in 120 secs
+        let currentTime = new Date().getTime();
+        let timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+            })
+            if (res.message.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
@@ -549,23 +563,21 @@ export function CheckState() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Check connector state being updated in 120 secs
-        let currentTime = new Date().getTime();
-        let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -577,6 +589,18 @@ export function CheckState() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
+
+        // Check connector state being updated in 120 secs
+        while (timeoutTime > currentTime) {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
+                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+            })
+            if (res.message.state === "STATE_CONNECTED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
@@ -600,10 +624,10 @@ export function CheckState() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -691,10 +715,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -748,10 +772,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -805,10 +829,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -864,10 +888,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -922,10 +946,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -978,10 +1002,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -1035,10 +1059,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -1092,10 +1116,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -1149,10 +1173,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -1206,10 +1230,10 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
+            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
                 name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
             })
-            if (res.message.destinationConnector.connector.state === "STATE_CONNECTED") {
+            if (res.message.state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)

@@ -137,6 +137,11 @@ func main() {
 		defer pipelinePublicServiceClientConn.Close()
 	}
 
+	controllerClient, controllerClientConn := external.InitControllerPrivateServiceClient()
+	if controllerClientConn != nil {
+		defer controllerClientConn.Close()
+	}
+
 	repository := repository.NewRepository(db)
 
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
@@ -153,6 +158,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				temporalClient,
+				controllerClient,
 			)))
 
 	connectorPB.RegisterConnectorPublicServiceServer(
@@ -163,6 +169,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				temporalClient,
+				controllerClient,
 			)))
 
 	privateServeMux := runtime.NewServeMux(

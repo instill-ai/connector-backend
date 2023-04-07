@@ -81,8 +81,8 @@ export function CheckCreate() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -128,8 +128,8 @@ export function CheckCreate() {
         timeoutTime = new Date().getTime() + 180000;
         var pass = false
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_ERROR") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_ERROR") {
                 pass = true
                 break
             }
@@ -295,8 +295,8 @@ export function CheckGet() {
         var currentTime = new Date().getTime();
         var timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -436,19 +436,19 @@ export function CheckState() {
             JSON.stringify(csvDstConnector), constant.params)
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, constant.params), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response at UNSPECIFIED state status 422`]: (r) => r.status === 422,
         });
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, constant.params), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response at UNSPECIFIED state status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response at UNSPECIFIED state status 422`]: (r) => r.status === 422,
         });
 
         // Check connector state being updated in 120 secs
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -475,8 +475,8 @@ export function CheckState() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -546,8 +546,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -600,8 +600,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -655,8 +655,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -710,8 +710,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -764,8 +764,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -818,8 +818,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -872,8 +872,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -926,8 +926,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -980,8 +980,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)
@@ -1034,8 +1034,8 @@ export function CheckWrite() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`)
-            if (res.json().destination_connector.connector.state === "STATE_CONNECTED") {
+            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
+            if (res.json().state === "STATE_CONNECTED") {
                 break
             }
             sleep(1)

@@ -270,8 +270,10 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, constant.params)
-            if (res.json().operation.done === true) {
+            let res = http.get(`${modelPublicHost}/v1alpha/models/dummy-cls/watch`, {
+                headers: helper.genHeader(`application/json`),
+            })
+            if (res.json().state === "STATE_OFFLINE") {
                 break
             }
             sleep(1)
@@ -312,7 +314,7 @@ export function CheckDelete() {
 
         // Cannot delete model due to pipeline occupancy
         check(http.request("DELETE", `${modelPublicHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/models/dummy-cls response status is 422`]: (r) => r.status === 422,
             [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
         });
 
@@ -329,6 +331,20 @@ export function CheckDelete() {
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/destination-http`), {
             [`DELETE /v1alpha/destination-connectors/destination-http response status 204`]: (r) => r.status === 204,
         });
+
+        // Wait for model state to be updated
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            let res = http.get(`${modelPublicHost}/v1alpha/models/dummy-cls/watch`, {
+                headers: helper.genHeader(`application/json`),
+            })
+            if (res.json().state !== "STATE_UNSPECIFIED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         // Can delete model now
         check(http.request("DELETE", `${modelPublicHost}/v1alpha/models/dummy-cls`), {

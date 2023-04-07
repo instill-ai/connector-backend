@@ -14,6 +14,7 @@ import * as helper from "./helper.js"
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
+client.load(['proto/vdp/model/v1alpha'], 'model_public_service.proto');
 
 export function CheckCreate() {
 
@@ -325,8 +326,10 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, constant.params)
-            if (res.json().operation.done === true) {
+            let res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
+                name: `models/dummy-cls`
+            }, {})
+            if (res.message.state === "STATE_OFFLINE") {
                 break
             }
             sleep(1)
@@ -392,6 +395,20 @@ export function CheckDelete() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
+
+        // Wait for model state to be updated
+        currentTime = new Date().getTime();
+        timeoutTime = new Date().getTime() + 120000;
+        while (timeoutTime > currentTime) {
+            var res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
+                name: `models/dummy-cls`
+            }, {})
+            if (res.message.state !== "STATE_UNSPECIFIED") {
+                break
+            }
+            sleep(1)
+            currentTime = new Date().getTime();
+        }
 
         // Can delete model now
         check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {

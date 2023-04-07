@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/gofrs/uuid"
 	"go.temporal.io/sdk/client"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -17,9 +18,11 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/connector-backend/pkg/worker"
 	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
@@ -52,6 +55,16 @@ type Service interface {
 
 	// Destination connector custom service
 	WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
+
+	// Longrunning operation
+	SearchAttributeReady() error
+	GetOperation(workflowId string) (*longrunningpb.Operation, *worker.WorkflowParam, *string, error)
+	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
+
+	// Controller custom service
+	GetResourceState(connectorName string, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
+	UpdateResourceState(connectorName string, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error
+	DeleteResourceState(connectorName string, connectorType datamodel.ConnectorType) error
 }
 
 type service struct {
@@ -59,15 +72,17 @@ type service struct {
 	mgmtPrivateServiceClient    mgmtPB.MgmtPrivateServiceClient
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
 	temporalClient              client.Client
+	controllerClient            controllerPB.ControllerPrivateServiceClient
 }
 
 // NewService initiates a service instance
-func NewService(r repository.Repository, u mgmtPB.MgmtPrivateServiceClient, p pipelinePB.PipelinePublicServiceClient, t client.Client) Service {
+func NewService(r repository.Repository, u mgmtPB.MgmtPrivateServiceClient, p pipelinePB.PipelinePublicServiceClient, t client.Client, c controllerPB.ControllerPrivateServiceClient) Service {
 	return &service{
 		repository:                  r,
 		mgmtPrivateServiceClient:    u,
 		pipelinePublicServiceClient: p,
 		temporalClient:              t,
+		controllerClient:            c,
 	}
 }
 
@@ -156,14 +171,24 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 		return nil, err
 	}
 
-	// Check connector state
+	// User desire state = CONNECTED
+	if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		return nil, err
+	}
+
+	// Check connector state and update resource state in etcd
 	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
 		// HTTP and gRPC connector is always with STATE_CONNECTED
-		if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil, nil); err != nil {
 			return nil, err
 		}
 	} else {
-		if err := s.startCheckWorkflow(ownerPermalink, connector.UID.String(), connDef.DockerRepository, connDef.DockerImageTag); err != nil {
+		wfId, err := s.startCheckWorkflow(ownerPermalink, connector.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
 			return nil, err
 		}
 	}
@@ -297,7 +322,12 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 	}
 
 	// Check connector state
-	if err := s.startCheckWorkflow(ownerPermalink, existingConnector.UID.String(), def.DockerRepository, def.DockerImageTag); err != nil {
+	wfId, err := s.startCheckWorkflow(ownerPermalink, existingConnector.UID.String(), def.DockerRepository, def.DockerImageTag)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
 		return nil, err
 	}
 
@@ -356,6 +386,10 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 		return st.Err()
 	}
 
+	if err := s.DeleteResourceState(id, connectorType); err != nil {
+		return err
+	}
+
 	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
 }
 
@@ -377,8 +411,13 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		return nil, err
 	}
 
-	switch conn.State {
-	case datamodel.ConnectorState(connectorPB.Connector_STATE_ERROR):
+	connState, err := s.GetResourceState(id, connectorType)
+	if err != nil {
+		return nil, err
+	}
+
+	switch *connState {
+	case connectorPB.Connector_STATE_ERROR:
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector state",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -386,6 +425,20 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 					Type:        "STATE",
 					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 					Description: "The connector is in STATE_ERROR",
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		return nil, st.Err()
+	case connectorPB.Connector_STATE_UNSPECIFIED:
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector state",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "STATE",
+					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Description: "The connector is in STATE_UNSPECIFIED",
 				},
 			})
 		if err != nil {
@@ -401,13 +454,22 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 			break
 		}
 
-		// Set connector state to STATE_UNSPECIFIED when it is set to STATE_CONNECTED from STATE_DISCONNECTED
-		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_UNSPECIFIED)); err != nil {
+		// Set connector state to user desire state
+		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 
-		if err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag); err != nil {
-			return nil, err
+		// Set resource state to STATE_UNSPECIFIED
+		if datamodel.ConnectorState(*connState) != state {
+			wfId, err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
+
+			if err != nil {
+				return nil, err
+			}
+
+			if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+				return nil, err
+			}
 		}
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
@@ -429,6 +491,9 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		}
 
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
+			return nil, err
+		}
+		if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_State(state), nil, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -475,6 +540,14 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 			logger.Error(err.Error())
 		}
 		return nil, st.Err()
+	}
+
+	if err := s.DeleteResourceState(id, connectorType); err != nil {
+		return nil, err
+	}
+
+	if err := s.UpdateResourceState(newID, connectorType, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
+		return nil, err
 	}
 
 	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {
@@ -597,13 +670,33 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	byteAbMsgs = byteAbMsgs[:len(byteAbMsgs)-1]
 
 	// Start Temporal worker
-	if err := s.startWriteWorkflow(
+	_, err = s.startWriteWorkflow(
 		ownerPermalink, conn.UID.String(),
 		connDef.DockerRepository, connDef.DockerImageTag,
 		param.Pipeline, param.DataMappingIndices,
-		byteCfgAbCatalog, byteAbMsgs); err != nil {
+		byteCfgAbCatalog, byteAbMsgs)
+	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *service) CheckConnectorByUID(connUID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error) {
+	ownerPermalink := "users/" + owner.GetUid()
+
+	var wfId string
+
+	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
+		wfId = string("")
+		return &wfId, nil
+	}
+
+	wfId, err := s.startCheckWorkflow(ownerPermalink, connUID, connDef.DockerRepository, connDef.DockerImageTag)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &wfId, nil
 }

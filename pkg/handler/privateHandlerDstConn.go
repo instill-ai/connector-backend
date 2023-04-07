@@ -20,3 +20,8 @@ func (h *PrivateHandler) LookUpDestinationConnectorAdmin(ctx context.Context, re
 	resp, err := h.lookUpConnector(ctx, req)
 	return resp.(*connectorPB.LookUpDestinationConnectorAdminResponse), err
 }
+
+func (h *PrivateHandler) CheckDestinationConnector(ctx context.Context, req *connectorPB.CheckDestinationConnectorRequest) (*connectorPB.CheckDestinationConnectorResponse, error) {
+	resp, err := h.checkConnector(ctx, req)
+	return resp.(*connectorPB.CheckDestinationConnectorResponse), err
+}

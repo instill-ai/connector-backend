@@ -76,3 +76,8 @@ func (h *PublicHandler) RenameSourceConnector(ctx context.Context, req *connecto
 func (h *PublicHandler) ReadSourceConnector(context.Context, *connectorPB.ReadSourceConnectorRequest) (*connectorPB.ReadSourceConnectorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReadSourceConnector not implemented")
 }
+
+func (h *PublicHandler) WatchSourceConnector(ctx context.Context, req *connectorPB.WatchSourceConnectorRequest) (*connectorPB.WatchSourceConnectorResponse, error) {
+	resp, err := h.watchConnector(ctx, req)
+	return resp.(*connectorPB.WatchSourceConnectorResponse), err
+}
