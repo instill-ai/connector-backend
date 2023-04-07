@@ -33,14 +33,14 @@ export function CheckCreate() {
         // Cannot create http destination connector of a non-exist user
         check(http.request("POST",
             `${connectorPublicHost}/v1alpha/destination-connectors`,
-            JSON.stringify(httpDstConnector), constant.paramsWithJwt), {
+            JSON.stringify(httpDstConnector), constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors response for creating HTTP destination status is 500`]: (r) => r.status === 500,
         });
 
         // Cannot create grpc destination connector of a non-exist user
         check(http.request("POST",
             `${connectorPublicHost}/v1alpha/destination-connectors`,
-            JSON.stringify(gRPCDstConnector), constant.paramsWithJwt), {
+            JSON.stringify(gRPCDstConnector), constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors response for creating gRPC destination status is 500`]: (r) => r.status === 500,
         });
     });
@@ -52,7 +52,7 @@ export function CheckList() {
     group(`Connector API: List destination connectors [with random "jwt-sub" header]`, () => {
 
         // Cannot list destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`, null, constant.paramsWithJwt), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] GET /v1alpha/destination-connectors response status is 500`]: (r) => r.status === 500,
         });
     });
@@ -87,7 +87,7 @@ export function CheckGet() {
         }
 
         // Cannot get a destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`, null, constant.paramsWithJwt), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status is 500`]: (r) => r.status === 500,
         });
 
@@ -129,7 +129,7 @@ export function CheckUpdate() {
         check(http.request(
             "PATCH",
             `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`,
-            JSON.stringify(csvDstConnectorUpdate), constant.paramsWithJwt), {
+            JSON.stringify(csvDstConnectorUpdate), constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] PATCH /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 500`]: (r) => r.status === 500,
         });
 
@@ -156,7 +156,7 @@ export function CheckLookUp() {
             JSON.stringify(csvDstConnector), constant.params)
 
         // Cannot look up a destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp`, null, constant.paramsWithJwt), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response status 500`]: (r) => r.status === 500,
         });
 
@@ -182,11 +182,11 @@ export function CheckState() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, constant.paramsWithJwt), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response at UNSPECIFIED state status 500`]: (r) => r.status === 500,
         });
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, constant.paramsWithJwt), {
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response at UNSPECIFIED state status 500`]: (r) => r.status === 500,
         });
 
@@ -218,7 +218,7 @@ export function CheckRename() {
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/rename`,
             JSON.stringify({
                 "new_destination_connector_id": `some-id-not-${resCSVDst.json().destination_connector.id}`
-            }), constant.paramsWithJwt), {
+            }), constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/rename response status 500`]: (r) => r.status === 500,
         });
 
@@ -276,7 +276,7 @@ export function CheckWrite() {
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.clsModelOutputs
-            }), constant.paramsWithJwt), {
+            }), constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 500 (classification)`]: (r) => r.status === 500,
         });
 
