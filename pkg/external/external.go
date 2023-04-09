@@ -74,14 +74,14 @@ func InitUsageServiceClient() (usagePB.UsageServiceClient, *grpc.ClientConn) {
 	logger, _ := logger.GetZapLogger()
 
 	var clientDialOpts grpc.DialOption
-	if config.Config.UsageBackend.TLSEnabled {
+	if config.Config.UsageServer.TLSEnabled {
 		tlsConfig := &tls.Config{}
 		clientDialOpts = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))
 	} else {
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.UsageBackend.Host, config.Config.UsageBackend.Port), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.UsageServer.Host, config.Config.UsageServer.Port), clientDialOpts)
 	if err != nil {
 		logger.Error(err.Error())
 		return nil, nil
@@ -107,7 +107,7 @@ func InitControllerPrivateServiceClient() (controllerPB.ControllerPrivateService
 		clientDialOpts = grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
-	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.Controller.Host, config.Config.Controller.Port), clientDialOpts)
+	clientConn, err := grpc.Dial(fmt.Sprintf("%v:%v", config.Config.Controller.Host, config.Config.Controller.PrivatePort), clientDialOpts)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

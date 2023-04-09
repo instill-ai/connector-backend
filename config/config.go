@@ -23,10 +23,10 @@ type AppConfig struct {
 	Worker          WorkerConfig          `koanf:"worker"`
 	Database        DatabaseConfig        `koanf:"database"`
 	Temporal        TemporalConfig        `koanf:"temporal"`
-	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
-	UsageBackend    UsageBackendConfig    `koanf:"usagebackend"`
+	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
+	UsageServer    UsageServerConfig    `koanf:"usageserver"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -96,8 +96,8 @@ type PipelineBackendConfig struct {
 	}
 }
 
-// UsageBackendConfig related to usage-backend
-type UsageBackendConfig struct {
+// UsageServerConfig related to usage-backend
+type UsageServerConfig struct {
 	TLSEnabled bool   `koanf:"tlsenabled"`
 	Host       string `koanf:"host"`
 	Port       int    `koanf:"port"`
@@ -106,7 +106,7 @@ type UsageBackendConfig struct {
 // ControllerConfig related to controller
 type ControllerConfig struct {
 	Host  string `koanf:"host"`
-	Port  int    `koanf:"port"`
+	PrivatePort  int    `koanf:"privateport"`
 	HTTPS struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
