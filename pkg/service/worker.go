@@ -8,7 +8,6 @@ import (
 	"cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/converter"
 
 	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/pkg/logger"
@@ -85,16 +84,8 @@ func (s *service) startWriteWorkflow(ownerPermalink string, connUID string,
 	return workflowOptions.ID, nil
 }
 
-func getOperationFromWorkflowInfo(workflowExecutionInfo *workflowpb.WorkflowExecutionInfo) (*longrunningpb.Operation, *worker.WorkflowParam, *string, error) {
+func getOperationFromWorkflowInfo(workflowExecutionInfo *workflowpb.WorkflowExecutionInfo) (*longrunningpb.Operation, error) {
 	operation := longrunningpb.Operation{}
-
-	// var state connectorPB.Connector_State
-	// if err := converter.GetDefaultDataConverter().FromPayload(
-	// 	workflowExecutionInfo.Memo.Fields["result"],
-	// 	state,
-	// ); err != nil {
-	// 	return nil, nil, err
-	// }
 
 	switch workflowExecutionInfo.Status {
 	case enums.WORKFLOW_EXECUTION_STATUS_COMPLETED:
@@ -127,41 +118,15 @@ func getOperationFromWorkflowInfo(workflowExecutionInfo *workflowpb.WorkflowExec
 		}
 	}
 
-	// Get search attributes that were provided when workflow was started.
-	workflowParam := worker.WorkflowParam{}
-	operationType := ""
-	for k, v := range workflowExecutionInfo.GetSearchAttributes().GetIndexedFields() {
-		if k != "ConnectorUID" && k != "Owner" && k != "Type" {
-			continue
-		}
-		var currentVal string
-		if err := converter.GetDefaultDataConverter().FromPayload(v, &currentVal); err != nil {
-			return nil, nil, nil, err
-		}
-		if currentVal == "" {
-			continue
-		}
-
-		if k == "Type" {
-			operationType = currentVal
-			continue
-		}
-
-		if k == "ConnectorUID" {
-			workflowParam.ConnectorUID = currentVal
-		} else if k == "Owner" {
-			workflowParam.Owner = fmt.Sprintf("users/%s", currentVal) // remove prefix users when storing in temporal
-		}
-	}
 	operation.Name = fmt.Sprintf("operations/%s", workflowExecutionInfo.Execution.WorkflowId)
-	return &operation, &workflowParam, &operationType, nil
+	return &operation, nil
 }
 
-func (s *service) GetOperation(workflowId string) (*longrunningpb.Operation, *worker.WorkflowParam, *string, error) {
+func (s *service) GetOperation(workflowId string) (*longrunningpb.Operation, error) {
 	workflowExecutionRes, err := s.temporalClient.DescribeWorkflowExecution(context.Background(), workflowId, "")
 
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
 	return getOperationFromWorkflowInfo(workflowExecutionRes.WorkflowExecutionInfo)

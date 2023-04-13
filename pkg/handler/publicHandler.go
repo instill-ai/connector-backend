@@ -16,7 +16,6 @@ import (
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/util"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
@@ -1510,27 +1509,13 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 
 func (h *PublicHandler) GetConnectorOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
 	wfId := strings.TrimPrefix(req.Name, "operations/")
-	operation, _, operationType, err := h.service.GetOperation(wfId)
+	operation, err := h.service.GetOperation(wfId)
 
 	if err != nil {
 		return &connectorPB.GetConnectorOperationResponse{}, err
 	}
 
-	if !operation.Done {
-		return &connectorPB.GetConnectorOperationResponse{
-			Operation: operation,
-		}, nil
-	}
-
-	switch *operationType {
-	case string(util.OperationTypeCheck):
-		return &connectorPB.GetConnectorOperationResponse{
-			Operation: operation,
-		}, nil
-	case string(util.OperationTypeWrite):
-		// TODO: to be implemented
-		return nil, nil
-	default:
-		return &connectorPB.GetConnectorOperationResponse{}, fmt.Errorf("operation type not supported")
-	}
+	return &connectorPB.GetConnectorOperationResponse{
+		Operation: operation,
+	}, nil
 }
