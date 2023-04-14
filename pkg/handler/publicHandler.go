@@ -59,19 +59,11 @@ func (h *PublicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRe
 }
 
 func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
-	if err := h.service.SearchAttributeReady(); err != nil {
-		return &connectorPB.ReadinessResponse{
-			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
-				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_NOT_SERVING,
-			},
-		}, nil
-	} else {
-		return &connectorPB.ReadinessResponse{
-			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
-				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
-			},
-		}, nil
-	}
+	return &connectorPB.ReadinessResponse{
+		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
+		},
+	}, nil
 }
 
 func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {

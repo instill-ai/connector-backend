@@ -9,7 +9,6 @@ import (
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 
-	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/worker"
 	"google.golang.org/genproto/googleapis/rpc/status"
@@ -130,43 +129,4 @@ func (s *service) GetOperation(workflowId string) (*longrunningpb.Operation, err
 	}
 
 	return getOperationFromWorkflowInfo(workflowExecutionRes.WorkflowExecutionInfo)
-}
-
-func (s *service) SearchAttributeReady() error {
-	logger, _ := logger.GetZapLogger()
-	id, _ := uuid.NewV4()
-	workflowOptions := client.StartWorkflowOptions{
-		ID:        id.String(),
-		TaskQueue: worker.TaskQueue,
-	}
-
-	ctx := context.Background()
-	we, err := s.temporalClient.ExecuteWorkflow(
-		ctx,
-		workflowOptions,
-		"AddSearchAttributeWorkflow",
-	)
-	if err != nil {
-		logger.Error(fmt.Sprintf("unable to execute workflow: %s", err.Error()))
-		return err
-	}
-
-	logger.Info(fmt.Sprintf("started workflow with WorkflowID %s and RunID %s", we.GetID(), we.GetRunID()))
-
-	start := time.Now()
-	for {
-		if time.Since(start) > 10*time.Second {
-			return fmt.Errorf("health workflow timed out")
-		}
-		workflowExecutionRes, err := s.temporalClient.DescribeWorkflowExecution(ctx, we.GetID(), we.GetRunID())
-		if err != nil {
-			continue
-		}
-		if workflowExecutionRes.WorkflowExecutionInfo.Status == enums.WORKFLOW_EXECUTION_STATUS_COMPLETED {
-			return nil
-		} else if workflowExecutionRes.WorkflowExecutionInfo.Status == enums.WORKFLOW_EXECUTION_STATUS_FAILED {
-			return fmt.Errorf("health workflow failed")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
 }

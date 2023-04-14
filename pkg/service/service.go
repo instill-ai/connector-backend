@@ -56,7 +56,6 @@ type Service interface {
 	WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
 
 	// Longrunning operation
-	SearchAttributeReady() error
 	GetOperation(workflowId string) (*longrunningpb.Operation, error)
 	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
 

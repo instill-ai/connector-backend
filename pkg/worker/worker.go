@@ -31,7 +31,6 @@ type Worker interface {
 	CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error)
 	WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) error
 	WriteActivity(ctx context.Context, param *WriteActivityParam) (exitCode, error)
-	AddSearchAttributeWorkflow(ctx workflow.Context) error
 }
 
 // worker represents resources required to run Temporal workflow and activity
@@ -46,8 +45,8 @@ type worker struct {
 }
 
 type WorkflowParam struct {
-	ConnectorUID  string
-	Owner         string
+	ConnectorUID string
+	Owner        string
 }
 
 // NewWorker initiates a temporal worker for workflow and activity definition
