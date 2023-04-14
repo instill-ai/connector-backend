@@ -326,10 +326,10 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
-                name: `models/dummy-cls`
-            }, {})
-            if (res.message.state === "STATE_OFFLINE") {
+            let res = http.get(`${constant.modelPublicHost}/v1alpha/models/dummy-cls/watch`, {
+                headers: helper.genHeader(`application/json`),
+            })
+            if (res.json().state === "STATE_OFFLINE") {
                 break
             }
             sleep(1)
@@ -400,10 +400,10 @@ export function CheckDelete() {
         currentTime = new Date().getTime();
         timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
-                name: `models/dummy-cls`
-            }, {})
-            if (res.message.state !== "STATE_UNSPECIFIED") {
+            var res = http.get(`${constant.modelPublicHost}/v1alpha/models/dummy-cls/watch`, {
+                headers: helper.genHeader(`application/json`),
+            })
+            if (res.json().state !== "STATE_UNSPECIFIED") {
                 break
             }
             sleep(1)
