@@ -27,11 +27,8 @@ const (
 
 // Worker interface
 type Worker interface {
-	CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) error
-	CheckActivity(ctx context.Context, param *CheckActivityParam) (exitCode, error)
 	WriteWorkflow(ctx workflow.Context, param *WriteWorkflowParam) error
 	WriteActivity(ctx context.Context, param *WriteActivityParam) (exitCode, error)
-	AddSearchAttributeWorkflow(ctx workflow.Context) error
 }
 
 // worker represents resources required to run Temporal workflow and activity

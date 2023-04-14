@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -300,14 +301,13 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	var state *connectorPB.Connector_State
 
-	if err != nil {
-		return resp, err
+	if strings.Contains(dbConnDef.ID, "http") || strings.Contains(dbConnDef.ID, "grpc") {
+		state = connectorPB.Connector_STATE_CONNECTED.Enum()
+	} else {
+		state, err = h.service.CheckConnectorAdmin(dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
 	}
-
-
-	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), owner, dbConnDef)
 
 	if err != nil {
 		return resp, err
@@ -315,9 +315,9 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 
 	switch v := resp.(type) {
 	case *connectorPB.CheckSourceConnectorResponse:
-		v.WorkflowId = *wfId
+		v.State = *state
 	case *connectorPB.CheckDestinationConnectorResponse:
-		v.WorkflowId = *wfId
+		v.State = *state
 	}
 
 	return resp, nil
