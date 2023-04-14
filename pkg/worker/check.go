@@ -24,6 +24,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/util"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
 // CheckWorkflowParam represents the parameters for CheckWorkflow
@@ -50,17 +51,6 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	logger.Info("CheckWorkflow started")
 
 	logger.Info(fmt.Sprintf("ConnUID: %v, Owner: %v", param.ConnUID, strings.TrimPrefix(param.OwnerPermalink, "users/")))
-
-	// Upsert search attributes.
-	attributes := map[string]interface{}{
-		"Type":         util.OperationTypeCheck,
-		"ConnectorUID": param.ConnUID,
-		"Owner":        strings.TrimPrefix(param.OwnerPermalink, "users/"),
-	}
-
-	if err := workflow.UpsertSearchAttributes(ctx, attributes); err != nil {
-		return err
-	}
 
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Minute,
@@ -97,13 +87,17 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	}
 
 	// result as memo for getOperation to parse
-	memo := map[string]interface{}{
-		"Result": res,
-	}
+	controllerCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if err := workflow.UpsertMemo(ctx, memo); err != nil {
-		return temporal.NewNonRetryableApplicationError("cannot Upser memo state by", "WorkflowError", err)
-	}
+	w.controllerClient.UpdateResource(controllerCtx, &controllerPB.UpdateResourceRequest{
+		Resource: &controllerPB.Resource{
+			Name: util.ConvertConnectorToResourceName(dbConnector.ID, dbConnector.ConnectorType),
+			State: &controllerPB.Resource_ConnectorState{
+				ConnectorState: res,
+			},
+		},
+	})
 
 	logger.Info("CheckWorkflow completed")
 

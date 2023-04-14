@@ -18,7 +18,6 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
-	"github.com/instill-ai/connector-backend/pkg/worker"
 	"github.com/instill-ai/x/sterr"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -57,8 +56,7 @@ type Service interface {
 	WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
 
 	// Longrunning operation
-	SearchAttributeReady() error
-	GetOperation(workflowId string) (*longrunningpb.Operation, *worker.WorkflowParam, *string, error)
+	GetOperation(workflowId string) (*longrunningpb.Operation, error)
 	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
 
 	// Controller custom service

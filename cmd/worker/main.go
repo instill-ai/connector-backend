@@ -14,6 +14,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 
 	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/zapadapter"
@@ -43,6 +44,11 @@ func main() {
 	}
 	defer dc.Close()
 
+	controllerClient, controllerClientConn := external.InitControllerPrivateServiceClient()
+	if controllerClientConn != nil {
+		defer controllerClientConn.Close()
+	}
+
 	clientNamespace, err := client.NewNamespaceClient(client.Options{
 		HostPort: config.Config.Temporal.ClientOptions.HostPort,
 	})
@@ -63,7 +69,7 @@ func main() {
 		}
 	}
 
-	cw := connWorker.NewWorker(repository.NewRepository(db), dc)
+	cw := connWorker.NewWorker(repository.NewRepository(db), dc, controllerClient)
 
 	c, err := client.Dial(client.Options{
 		// ZapAdapter implements log.Logger interface and can be passed
@@ -88,7 +94,6 @@ func main() {
 	w.RegisterActivity(cw.CheckActivity)
 	w.RegisterWorkflow(cw.WriteWorkflow)
 	w.RegisterActivity(cw.WriteActivity)
-	w.RegisterWorkflow(cw.AddSearchAttributeWorkflow)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {
