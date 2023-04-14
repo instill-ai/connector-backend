@@ -21,7 +21,10 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
+	"github.com/instill-ai/connector-backend/pkg/util"
+
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
 // CheckWorkflowParam represents the parameters for CheckWorkflow
@@ -84,13 +87,17 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	}
 
 	// result as memo for getOperation to parse
-	memo := map[string]interface{}{
-		"Result": res,
-	}
+	controllerCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if err := workflow.UpsertMemo(ctx, memo); err != nil {
-		return temporal.NewNonRetryableApplicationError("cannot Upser memo state by", "WorkflowError", err)
-	}
+	w.controllerClient.UpdateResource(controllerCtx, &controllerPB.UpdateResourceRequest{
+		Resource: &controllerPB.Resource{
+			Name: util.ConvertConnectorToResourceName(dbConnector.ID, dbConnector.ConnectorType),
+			State: &controllerPB.Resource_ConnectorState{
+				ConnectorState: res,
+			},
+		},
+	})
 
 	logger.Info("CheckWorkflow completed")
 

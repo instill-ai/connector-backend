@@ -10,6 +10,8 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"go.temporal.io/sdk/workflow"
+
+	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
 // Namespace is the Temporal namespace for connector-backend
@@ -38,6 +40,7 @@ type worker struct {
 	repository         repository.Repository
 	cache              *bigcache.BigCache
 	dockerClient       *client.Client
+	controllerClient   controllerPB.ControllerPrivateServiceClient
 	mountSourceVDP     string
 	mountTargetVDP     string
 	mountSourceAirbyte string
@@ -50,7 +53,7 @@ type WorkflowParam struct {
 }
 
 // NewWorker initiates a temporal worker for workflow and activity definition
-func NewWorker(r repository.Repository, dc *client.Client) Worker {
+func NewWorker(r repository.Repository, dc *client.Client, c controllerPB.ControllerPrivateServiceClient) Worker {
 
 	logger, _ := logger.GetZapLogger()
 
@@ -63,6 +66,7 @@ func NewWorker(r repository.Repository, dc *client.Client) Worker {
 		repository:         r,
 		cache:              cache,
 		dockerClient:       dc,
+		controllerClient:   c,
 		mountSourceVDP:     config.Config.Worker.MountSource.VDP,
 		mountTargetVDP:     config.Config.Worker.MountTarget.VDP,
 		mountSourceAirbyte: config.Config.Worker.MountSource.Airbyte,
