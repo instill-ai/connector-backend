@@ -84,11 +84,8 @@ func main() {
 
 	w := worker.New(c, connWorker.TaskQueue, worker.Options{})
 
-	w.RegisterWorkflow(cw.CheckWorkflow)
-	w.RegisterActivity(cw.CheckActivity)
 	w.RegisterWorkflow(cw.WriteWorkflow)
 	w.RegisterActivity(cw.WriteActivity)
-	w.RegisterWorkflow(cw.AddSearchAttributeWorkflow)
 
 	err = w.Run(worker.InterruptCh())
 	if err != nil {

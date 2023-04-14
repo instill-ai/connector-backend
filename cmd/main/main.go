@@ -36,6 +36,8 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/usage"
 	"github.com/instill-ai/x/zapadapter"
 
+	dockerclient "github.com/docker/docker/client"
+
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	connWorker "github.com/instill-ai/connector-backend/pkg/worker"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -142,6 +144,12 @@ func main() {
 		defer controllerClientConn.Close()
 	}
 
+	dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	defer dockerClient.Close()
+
 	repository := repository.NewRepository(db)
 
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
@@ -159,6 +167,7 @@ func main() {
 				pipelinePublicServiceClient,
 				temporalClient,
 				controllerClient,
+				dockerClient,
 			)))
 
 	connectorPB.RegisterConnectorPublicServiceServer(
@@ -170,6 +179,7 @@ func main() {
 				pipelinePublicServiceClient,
 				temporalClient,
 				controllerClient,
+				dockerClient,
 			)))
 
 	privateServeMux := runtime.NewServeMux(

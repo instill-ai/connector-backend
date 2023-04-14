@@ -59,19 +59,11 @@ func (h *PublicHandler) Liveness(ctx context.Context, in *connectorPB.LivenessRe
 }
 
 func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.ReadinessRequest) (*connectorPB.ReadinessResponse, error) {
-	if err := h.service.SearchAttributeReady(); err != nil {
-		return &connectorPB.ReadinessResponse{
-			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
-				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_NOT_SERVING,
-			},
-		}, nil
-	} else {
-		return &connectorPB.ReadinessResponse{
-			HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
-				Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
-			},
-		}, nil
-	}
+	return &connectorPB.ReadinessResponse{
+		HealthCheckResponse: &healthcheckPB.HealthCheckResponse{
+			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
+		},
+	}, nil
 }
 
 func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
@@ -1505,17 +1497,4 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	}
 
 	return resp, nil
-}
-
-func (h *PublicHandler) GetConnectorOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
-	wfId := strings.TrimPrefix(req.Name, "operations/")
-	operation, err := h.service.GetOperation(wfId)
-
-	if err != nil {
-		return &connectorPB.GetConnectorOperationResponse{}, err
-	}
-
-	return &connectorPB.GetConnectorOperationResponse{
-		Operation: operation,
-	}, nil
 }
