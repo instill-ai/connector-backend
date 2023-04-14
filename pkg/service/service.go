@@ -207,11 +207,6 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 			return nil, err
 		}
 	} else {
-		// wfId, err := s.startCheckWorkflow(ownerPermalink, connector.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
-		// if err != nil {
-		// 	return nil, err
-		// }
-
 		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, nil); err != nil {
 			return nil, err
 		}
@@ -344,12 +339,6 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 	if err := s.repository.UpdateConnector(id, ownerPermalink, connectorType, updatedConnector); err != nil {
 		return nil, err
 	}
-
-	// Check connector state
-	// wfId, err := s.startCheckWorkflow(ownerPermalink, existingConnector.UID.String(), def.DockerRepository, def.DockerImageTag)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, nil); err != nil {
 		return nil, err
@@ -485,12 +474,6 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 
 		// Set resource state to STATE_UNSPECIFIED
 		if datamodel.ConnectorState(*connState) != state {
-			// wfId, err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
-
-			// if err != nil {
-			// 	return nil, err
-			// }
-
 			if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, nil); err != nil {
 				return nil, err
 			}
