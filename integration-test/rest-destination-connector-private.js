@@ -14,6 +14,7 @@ import {
 } from "./const.js"
 
 import * as constant from "./const.js"
+import * as helper from "./helper.js"
 
 export function CheckList() {
 
@@ -74,16 +75,19 @@ export function CheckList() {
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors?page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
+            "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_BASIC response destination_connectors[0].connector.owner is UUID": (r) => helper.isValidOwner(r.json().destination_connectors[0].connector.user),
         });
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors?page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors[0].connector.configuration is not null": (r) => r.json().destination_connectors[0].connector.configuration !== null
+            "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors[0].connector.configuration is not null": (r) => r.json().destination_connectors[0].connector.configuration !== null,
+            "GET /v1alpha/admin/destination-connectors?page_size=1&view=VIEW_FULL response destination_connectors[0].connector.owner is UUID": (r) => helper.isValidOwner(r.json().destination_connectors[0].connector.user),
         });
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors?page_size=1`), {
             "GET /v1alpha/admin/destination-connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/destination-connectors?page_size=1 response destination_connectors[0].connector.configuration is null": (r) => r.json().destination_connectors[0].connector.configuration === null,
+            "GET /v1alpha/admin/destination-connectors?page_size=1 response destination_connectors[0].connector.owner is UUID": (r) => helper.isValidOwner(r.json().destination_connectors[0].connector.user),
         });
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors?page_size=${limitedRecords.json().total_size}`), {
@@ -132,6 +136,7 @@ export function CheckGet() {
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
+            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector owner is UUID permalink`]: (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
@@ -160,6 +165,7 @@ export function CheckLookUp() {
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response connector uid`]: (r) => r.json().destination_connector.uid === resCSVDst.json().destination_connector.uid,
             [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response connector destination_connector_definition`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
+            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {

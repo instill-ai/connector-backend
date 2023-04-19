@@ -9,6 +9,7 @@ import {
 } from "https://jslib.k6.io/k6-utils/1.1.0/index.js";
 
 import * as constant from "./const.js"
+import * as helper from "./helper.js"
 
 const clientPrivate = new grpc.Client();
 const clientPublic = new grpc.Client();
@@ -97,6 +98,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
@@ -105,6 +107,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
 
@@ -113,6 +116,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin pageSize=1 response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListDestinationConnectorsAdmin', {
@@ -181,6 +185,7 @@ export function CheckGet() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -224,6 +229,7 @@ export function CheckLookUp() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response connector id`]: (r) => r.message.destinationConnector.uid === resCSVDst.message.destinationConnector.uid,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {

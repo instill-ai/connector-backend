@@ -40,7 +40,8 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector name": (r) => r.message.destinationConnector.name == `destination-connectors/${httpDstConnector.id}`,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector uid": (r) => helper.isUUID(r.message.destinationConnector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.httpDstDefRscName
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.httpDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
@@ -131,7 +132,8 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector name": (r) => r.message.destinationConnector.name == `destination-connectors/${mySQLDstConnector.id}`,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector uid": (r) => helper.isUUID(r.message.destinationConnector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.mySQLDstDefRscName
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.mySQLDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         // Check connector state being updated in 180 secs
@@ -298,6 +300,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
@@ -306,6 +309,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
 
@@ -314,6 +318,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
@@ -377,6 +382,7 @@ export function CheckGet() {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -434,6 +440,7 @@ export function CheckUpdate() {
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector description`]: (r) => r.message.destinationConnector.connector.description === csvDstConnectorUpdate.connector.description,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector tombstone`]: (r) => r.message.destinationConnector.connector.tombstone === false,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector configuration`]: (r) => r.message.destinationConnector.connector.configuration.destination_path === csvDstConnectorUpdate.connector.configuration.destination_path,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         // Try to update with empty description
@@ -452,6 +459,7 @@ export function CheckUpdate() {
         check(resCSVDstUpdate, {
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response connector description`]: (r) => r.message.destinationConnector.connector.description === csvDstConnectorUpdate.connector.description,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         // Try to update with a non-existing name field (which should be ignored because name field is OUTPUT_ONLY)
@@ -507,6 +515,7 @@ export function CheckLookUp() {
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector id`]: (r) => r.message.destinationConnector.uid === resCSVDst.message.destinationConnector.uid,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
