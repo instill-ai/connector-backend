@@ -476,7 +476,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		owner.GetName(),
+		service.GenOwnerPermalink(owner),
 		connDefRscName)
 
 	switch v := resp.(type) {
@@ -888,7 +888,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	pbConnector := DBToPBConnector(
 		dbConnector,
 		connType,
-		owner.GetName(),
+		service.GenOwnerPermalink(owner),
 		connDefRscName)
 
 	switch v := resp.(type) {

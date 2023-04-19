@@ -105,8 +105,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 
 	logger, _ := logger.GetZapLogger()
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	connector.Owner = ownerPermalink
 
@@ -196,24 +195,17 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 		return nil, err
 	}
 
-	dbConnector.Owner = ownerRscName
-
 	return dbConnector, nil
 
 }
 
 func (s *service) ListConnectors(owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
-	}
-
-	for _, dbConnector := range dbConnectors {
-		dbConnector.Owner = ownerRscName
 	}
 
 	return dbConnectors, pageSize, pageToken, nil
@@ -231,15 +223,12 @@ func (s *service) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pag
 
 func (s *service) GetConnectorByID(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, isBasicView)
 	if err != nil {
 		return nil, err
 	}
-
-	dbConnector.Owner = ownerRscName
 
 	return dbConnector, nil
 }
@@ -256,15 +245,12 @@ func (s *service) GetConnectorByIDAdmin(id string, connectorType datamodel.Conne
 
 func (s *service) GetConnectorByUID(uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error) {
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	dbConnector, err := s.repository.GetConnectorByUID(uid, ownerPermalink, isBasicView)
 	if err != nil {
 		return nil, err
 	}
-
-	dbConnector.Owner = ownerRscName
 
 	return dbConnector, nil
 }
@@ -283,8 +269,7 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 
 	logger, _ := logger.GetZapLogger()
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	updatedConnector.Owner = ownerPermalink
 
@@ -334,15 +319,13 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 		return nil, err
 	}
 
-	dbConnector.Owner = ownerRscName
-
 	return dbConnector, nil
 }
 
 func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error {
 	logger, _ := logger.GetZapLogger()
 
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, false)
 	if err != nil {
@@ -395,8 +378,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 
 	logger, _ := logger.GetZapLogger()
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connector cannot be disconnected
 	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
@@ -501,8 +483,6 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		return nil, err
 	}
 
-	dbConnector.Owner = ownerRscName
-
 	return dbConnector, nil
 }
 
@@ -510,8 +490,7 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 
 	logger, _ := logger.GetZapLogger()
 
-	ownerRscName := owner.GetName()
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connectors cannot be renamed
 	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
@@ -557,8 +536,6 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 		return nil, err
 	}
 
-	dbConnector.Owner = ownerRscName
-
 	return dbConnector, nil
 }
 
@@ -569,7 +546,7 @@ func (s *service) ReadSourceConnector(id string, owner *mgmtPB.User) ([]byte, er
 
 func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error {
 
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), true)
 	if err != nil {
@@ -681,7 +658,7 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 }
 
 func (s *service) CheckConnectorByUID(connUID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error) {
-	ownerPermalink := "users/" + owner.GetUid()
+	ownerPermalink := GenOwnerPermalink(owner)
 
 	var wfId string
 
