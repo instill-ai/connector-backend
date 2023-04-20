@@ -11,6 +11,10 @@ export function isUUID(uuid) {
     return regexExp.test(uuid)
 }
 
+export function isValidOwner(user) {
+    return isUUID(user.replace("users/", ""));
+}
+
 export function genHeader(contentType) {
     return {
       "Content-Type": `${contentType}`,

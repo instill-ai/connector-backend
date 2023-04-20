@@ -94,6 +94,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_BASIC response has sourceConnectors[0].connector.configuration is null`]: (r) => r.message.sourceConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_BASIC response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
         });
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin', {
             pageSize: 1,
@@ -102,6 +103,7 @@ export function CheckList() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.configuration is not null`]: (r) => r.message.sourceConnectors[0].connector.configuration !== null,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.configuration is {}`]: (r) => Object.keys(r.message.sourceConnectors[0].connector.configuration).length === 0,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
         });
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin', {
@@ -109,6 +111,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 response has sourceConnectors[0].connector.configuration is null`]: (r) => r.message.sourceConnectors[0].connector.configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin pageSize=1 response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
         });
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/ListSourceConnectorsAdmin', {
@@ -160,6 +163,7 @@ export function CheckGet() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.id} response connector id`]: (r) => r.message.sourceConnector.id === httpSrcConnector.id,
             [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector id`]: (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
         });
 
         check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
@@ -202,6 +206,7 @@ export function CheckLookUp() {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpSourceConnectorAdmin permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpSourceConnectorAdmin permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector uid`]: (r) => r.message.sourceConnector.id === httpSrcConnector.id,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpSourceConnectorAdmin permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector id`]: (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpSourceConnectorAdmin permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
         });
 
         check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
