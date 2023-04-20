@@ -340,7 +340,7 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 		filter = fmt.Sprintf("recipe.destination:\"%s\"", dbConnector.UID)
 	}
 
-	pipeResp, err := s.pipelinePublicServiceClient.ListPipelines(context.Background(), &pipelinePB.ListPipelinesRequest{
+	pipeResp, err := s.pipelinePublicServiceClient.ListPipelines(InjectOwnerToContext(context.Background(), owner), &pipelinePB.ListPipelinesRequest{
 		Filter: &filter,
 	})
 	if err != nil {
