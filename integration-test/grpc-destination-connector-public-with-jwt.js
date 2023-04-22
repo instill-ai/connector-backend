@@ -36,7 +36,7 @@ export function CheckCreate() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: httpDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // destination-grpc
@@ -52,7 +52,7 @@ export function CheckCreate() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: gRPCDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector gRPC response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector gRPC response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // destination-csv
@@ -69,7 +69,7 @@ export function CheckCreate() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: csvDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // destination-mysql (will end up with STATE_ERROR)
@@ -90,7 +90,7 @@ export function CheckCreate() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
             destination_connector: mySQLDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         client.close();
@@ -108,7 +108,7 @@ export function CheckList() {
 
         // Cannot list destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         client.close();
@@ -154,7 +154,7 @@ export function CheckGet() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -206,7 +206,7 @@ export function CheckUpdate() {
             destination_connector: csvDstConnectorUpdate,
             update_mask: "connector.description,connector.configuration",
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${csvDstConnectorUpdate.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${csvDstConnectorUpdate.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -244,7 +244,7 @@ export function CheckLookUp() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector', {
             permalink: `destination_connector/${resCSVDst.message.destinationConnector.uid}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -282,14 +282,14 @@ export function CheckState() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Cannot disconnect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Check connector state being updated in 120 secs
@@ -310,28 +310,28 @@ export function CheckState() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Cannot disconnect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Cannot connect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Cannot disconnect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -372,7 +372,7 @@ export function CheckRename() {
             name: resCSVDst.message.destinationConnector.id,
             new_destination_connector_id: new_id
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
@@ -441,7 +441,7 @@ export function CheckWrite() {
             "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
             "model_outputs": constant.clsModelOutputs
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it

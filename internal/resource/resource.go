@@ -71,7 +71,7 @@ func GetOwner(ctx context.Context, client mgmtPB.MgmtPrivateServiceClient) (*mgm
 	if headerOwnerUId != "" {
 		_, err := uuid.FromString(headerOwnerUId)
 		if err != nil {
-			return nil, status.Errorf(codes.Unauthenticated, "Unauthenticated request")
+			return nil, status.Errorf(codes.NotFound, "Not found")
 		}
 		ownerPermalink := "users/" + headerOwnerUId
 
@@ -79,7 +79,7 @@ func GetOwner(ctx context.Context, client mgmtPB.MgmtPrivateServiceClient) (*mgm
 		defer cancel()
 		resp, err := client.LookUpUserAdmin(ctx, &mgmtPB.LookUpUserAdminRequest{Permalink: ownerPermalink})
 		if err != nil {
-			return nil, fmt.Errorf("[mgmt-backend] %s", err)
+			return nil, status.Errorf(codes.NotFound, "Not found")
 		}
 
 		return resp.User, nil
@@ -87,16 +87,16 @@ func GetOwner(ctx context.Context, client mgmtPB.MgmtPrivateServiceClient) (*mgm
 
 	// Verify "owner-id" in the header if there is no "jwt-sub"
 	headerOwnerId := GetRequestSingleHeader(ctx, constant.HeaderOwnerIDKey)
-	if headerOwnerId != constant.DefaultOwnerID {
-		return nil, status.Error(codes.Unauthenticated, "Unauthenticated request")
-	} else {
-		// Get the permalink from management backend from resource name
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		resp, err := client.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: "users/" + headerOwnerId})
-		if err != nil {
-			return nil, fmt.Errorf("[mgmt-backend] %s", err)
-		}
-		return resp.User, nil
+	if headerOwnerId == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 	}
+
+	// Get the permalink from management backend from resource name
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resp, err := client.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: "users/" + headerOwnerId})
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "Not found")
+	}
+	return resp.User, nil
 }

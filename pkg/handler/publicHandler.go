@@ -626,7 +626,6 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 }
 
 func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
-
 	logger, _ := logger.GetZapLogger()
 
 	var pbConnectorReq interface{}
@@ -640,9 +639,15 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	var connDefRscName string
 	var connDefUID uuid.UUID
 
+	owner, ownerErr := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+
 	switch v := req.(type) {
 	case *connectorPB.UpdateSourceConnectorRequest:
 		resp = &connectorPB.UpdateSourceConnectorResponse{}
+		if ownerErr != nil {
+			return resp, ownerErr
+		}
+
 		pbConnectorReq = v.GetSourceConnector()
 		pbUpdateMask := v.GetUpdateMask()
 
@@ -754,8 +759,11 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		connDefUID = dbConnDef.UID
 
 	case *connectorPB.UpdateDestinationConnectorRequest:
-
 		resp = &connectorPB.UpdateDestinationConnectorResponse{}
+		if ownerErr != nil {
+			return resp, ownerErr
+		}
+
 		pbConnectorReq = v.GetDestinationConnector()
 		pbUpdateMask := v.GetUpdateMask()
 
@@ -869,9 +877,8 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		connDefUID = dbConnDef.UID
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		return resp, err
+	if ownerErr != nil {
+		return resp, ownerErr
 	}
 
 	// Only the fields mentioned in the field mask will be copied to `pbPipelineToUpdate`, other fields are left intact
