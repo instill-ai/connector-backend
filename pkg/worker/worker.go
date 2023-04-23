@@ -14,9 +14,6 @@ import (
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
-// Namespace is the Temporal namespace for connector-backend
-const Namespace = "connector-backend"
-
 // TaskQueue is the Temporal task queue name for connector-backend
 const TaskQueue = "connector-backend"
 

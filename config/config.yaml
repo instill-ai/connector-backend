@@ -28,8 +28,12 @@ database:
     maxconnections: 10
     connlifetime: 30m # In minutes, e.g., '60m'
 temporal:
-  clientoptions:
-    hostport: temporal:7233
+  hostport: temporal:7233
+  namespace: connector-backend
+  ca:
+  cert:
+  key:
+  servername:
 pipelinebackend:
   host: pipeline-backend
   publicport: 8081

@@ -34,10 +34,10 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/usage"
+	"github.com/instill-ai/x/temporal"
 	"github.com/instill-ai/x/zapadapter"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
-	connWorker "github.com/instill-ai/connector-backend/pkg/worker"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -76,15 +76,33 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	temporalClient, err := client.Dial(client.Options{
-		// ZapAdapter implements log.Logger interface and can be passed
-		// to the client constructor using client using client.Options.
-		Namespace: connWorker.Namespace,
-		Logger:    zapadapter.NewZapAdapter(logger),
-		HostPort:  config.Config.Temporal.ClientOptions.HostPort,
-	})
+	var temporalClientOptions client.Options
+	var err error
+	if config.Config.Temporal.Ca != "" && config.Config.Temporal.Cert != "" && config.Config.Temporal.Key != "" {
+		if temporalClientOptions, err = temporal.GetTLSClientOption(
+			config.Config.Temporal.HostPort,
+			config.Config.Temporal.Namespace,
+			zapadapter.NewZapAdapter(logger),
+			config.Config.Temporal.Ca,
+			config.Config.Temporal.Cert,
+			config.Config.Temporal.Key,
+			config.Config.Temporal.ServerName,
+			true,
+		); err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
+		}
+	} else {
+		if temporalClientOptions, err = temporal.GetClientOption(
+			config.Config.Temporal.HostPort,
+			config.Config.Temporal.Namespace,
+			zapadapter.NewZapAdapter(logger)); err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
+		}
+	}
+
+	temporalClient, err := client.Dial(temporalClientOptions)
 	if err != nil {
-		logger.Fatal(err.Error())
+		logger.Fatal(fmt.Sprintf("Unable to create client: %s", err))
 	}
 	defer temporalClient.Close()
 
