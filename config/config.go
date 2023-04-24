@@ -11,7 +11,6 @@ import (
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/env"
 	"github.com/knadh/koanf/providers/file"
-	"go.temporal.io/sdk/client"
 )
 
 // Config - Global variable to export
@@ -26,7 +25,7 @@ type AppConfig struct {
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
-	UsageServer    UsageServerConfig    `koanf:"usageserver"`
+	UsageServer     UsageServerConfig     `koanf:"usageserver"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -73,7 +72,12 @@ type DatabaseConfig struct {
 
 // TemporalConfig related to Temporal
 type TemporalConfig struct {
-	ClientOptions client.Options `koanf:"clientoptions"`
+	HostPort   string
+	Namespace  string
+	Ca         string
+	Cert       string
+	Key        string
+	ServerName string
 }
 
 // MgmtBackendConfig related to mgmt-backend
@@ -105,9 +109,9 @@ type UsageServerConfig struct {
 
 // ControllerConfig related to controller
 type ControllerConfig struct {
-	Host  string `koanf:"host"`
-	PrivatePort  int    `koanf:"privateport"`
-	HTTPS struct {
+	Host        string `koanf:"host"`
+	PrivatePort int    `koanf:"privateport"`
+	HTTPS       struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}

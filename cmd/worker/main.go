@@ -1,13 +1,9 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"time"
 
-	"go.temporal.io/api/serviceerror"
-	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 
@@ -17,6 +13,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/x/temporal"
 	"github.com/instill-ai/x/zapadapter"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
@@ -38,57 +35,49 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	dc, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+	dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 	if err != nil {
 		logger.Error(err.Error())
 	}
-	defer dc.Close()
+	defer dockerClient.Close()
 
 	controllerClient, controllerClientConn := external.InitControllerPrivateServiceClient()
 	if controllerClientConn != nil {
 		defer controllerClientConn.Close()
 	}
 
-	clientNamespace, err := client.NewNamespaceClient(client.Options{
-		HostPort: config.Config.Temporal.ClientOptions.HostPort,
-	})
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("Unable to create namespace client: %s", err))
-	}
-	defer clientNamespace.Close()
+	cw := connWorker.NewWorker(repository.NewRepository(db), dockerClient, controllerClient)
 
-	retention := time.Duration(72 * time.Hour)
-	if err = clientNamespace.Register(context.Background(), &workflowservice.RegisterNamespaceRequest{
-		Namespace:                        connWorker.Namespace,
-		Description:                      "For workflows triggered in the connector-backend",
-		OwnerEmail:                       "infra@instill.tech",
-		WorkflowExecutionRetentionPeriod: &retention,
-	}); err != nil {
-		if _, ok := err.(*serviceerror.NamespaceAlreadyExists); !ok {
-			logger.Error(fmt.Sprintf("Unable to register namespace: %s", err))
+	var temporalClientOptions client.Options
+	if config.Config.Temporal.Ca != "" && config.Config.Temporal.Cert != "" && config.Config.Temporal.Key != "" {
+		if temporalClientOptions, err = temporal.GetTLSClientOption(
+			config.Config.Temporal.HostPort,
+			config.Config.Temporal.Namespace,
+			zapadapter.NewZapAdapter(logger),
+			config.Config.Temporal.Ca,
+			config.Config.Temporal.Cert,
+			config.Config.Temporal.Key,
+			config.Config.Temporal.ServerName,
+			true,
+		); err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
+		}
+	} else {
+		if temporalClientOptions, err = temporal.GetClientOption(
+			config.Config.Temporal.HostPort,
+			config.Config.Temporal.Namespace,
+			zapadapter.NewZapAdapter(logger)); err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
 		}
 	}
 
-	cw := connWorker.NewWorker(repository.NewRepository(db), dc, controllerClient)
-
-	c, err := client.Dial(client.Options{
-		// ZapAdapter implements log.Logger interface and can be passed
-		// to the client constructor using client using client.Options.
-		Logger:    zapadapter.NewZapAdapter(logger),
-		HostPort:  config.Config.Temporal.ClientOptions.HostPort,
-		Namespace: connWorker.Namespace,
-	})
-
-	// Note that Namespace registration using this API takes up to 10 seconds to complete.
-	// Ensure to wait for this registration to complete before starting the Workflow Execution against the Namespace.
-	time.Sleep(time.Second * 10)
-
+	temporalClient, err := client.Dial(temporalClientOptions)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("Unable to create client: %s", err))
 	}
-	defer c.Close()
+	defer temporalClient.Close()
 
-	w := worker.New(c, connWorker.TaskQueue, worker.Options{})
+	w := worker.New(temporalClient, connWorker.TaskQueue, worker.Options{})
 
 	w.RegisterWorkflow(cw.CheckWorkflow)
 	w.RegisterActivity(cw.CheckActivity)

@@ -90,14 +90,16 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 	controllerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	w.controllerClient.UpdateResource(controllerCtx, &controllerPB.UpdateResourceRequest{
+	if _, err := w.controllerClient.UpdateResource(controllerCtx, &controllerPB.UpdateResourceRequest{
 		Resource: &controllerPB.Resource{
 			Name: util.ConvertConnectorToResourceName(dbConnector.ID, dbConnector.ConnectorType),
 			State: &controllerPB.Resource_ConnectorState{
 				ConnectorState: res,
 			},
 		},
-	})
+	}); err != nil {
+		return err
+	}
 
 	logger.Info("CheckWorkflow completed")
 
