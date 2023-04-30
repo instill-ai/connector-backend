@@ -72,12 +72,12 @@ type DatabaseConfig struct {
 
 // TemporalConfig related to Temporal
 type TemporalConfig struct {
-	HostPort   string
-	Namespace  string
-	Ca         string
-	Cert       string
-	Key        string
-	ServerName string
+	HostPort   string `koanf:"hostport"`
+	Namespace  string `koanf:"namespace"`
+	Ca         string `koanf:"ca"`
+	Cert       string `koanf:"cert"`
+	Key        string `koanf:"key"`
+	ServerName string `koanf:"servername"`
 }
 
 // MgmtBackendConfig related to mgmt-backend
