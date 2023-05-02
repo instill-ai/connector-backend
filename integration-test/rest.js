@@ -53,7 +53,7 @@ export default function (data) {
   });
 
   // private API do not expose to public.
-  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost") {
+  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost" && __ENV.MODE != "internal") {
     // Source connectors
     sourceConnectorPrivate.CheckList()
     sourceConnectorPrivate.CheckGet()

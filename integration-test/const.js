@@ -5,15 +5,21 @@ let pHost, cHost, mHost
 let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
 
 if (__ENV.MODE == "api-gateway") {
-  // api-gateway mode
+  // api-gateway mode for accessing api-gateway directly
   proto = "http"
   pHost = cHost = mHost = "api-gateway"
   cPrivatePort = 3082
   pPublicPort = cPublicPort = mPublicPort = 8080
 } else if (__ENV.MODE == "localhost") {
-  // localhost mode for GitHub Actions
+  // localhost mode for accessing api-gateway from localhost
   proto = "http"
   pHost = cHost = mHost = "localhost"
+  cPrivatePort = 3082
+  pPublicPort = cPublicPort = mPublicPort = 8080
+} else if (__ENV.MODE == "internal") {
+  // localhost mode for accessing api-gateway from internal
+  proto = "http"
+  pHost = cHost = mHost = "host.docker.internal"
   cPrivatePort = 3082
   pPublicPort = cPublicPort = mPublicPort = 8080
 } else {
