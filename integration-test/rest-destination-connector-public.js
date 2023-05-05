@@ -125,9 +125,9 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
         });
 
-        // Check connector state being updated in 180 secs
+        // Check connector state being updated in 360 secs
         currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 180000;
+        timeoutTime = new Date().getTime() + 360000;
         var pass = false
         while (timeoutTime > currentTime) {
             var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}/watch`)

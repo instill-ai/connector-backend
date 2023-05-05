@@ -3,6 +3,7 @@ import { check, group } from "k6";
 
 import { connectorPublicHost, pipelinePublicHost } from "./const.js"
 
+import * as constant from "./const.js"
 import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
 import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
 import * as sourceConnectorPublic from './rest-source-connector-public.js';
@@ -53,7 +54,7 @@ export default function (data) {
   });
 
   // private API do not expose to public.
-  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost" && __ENV.MODE != "internal") {
+  if (!constant.apiGatewayMode) {
     // Source connectors
     sourceConnectorPrivate.CheckList()
     sourceConnectorPrivate.CheckGet()

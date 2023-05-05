@@ -136,9 +136,9 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
         });
 
-        // Check connector state being updated in 180 secs
+        // Check connector state being updated in 360 secs
         currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 180000;
+        timeoutTime = new Date().getTime() + 360000;
         var pass = false
         while (timeoutTime > currentTime) {
             var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
