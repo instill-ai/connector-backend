@@ -4,27 +4,28 @@ let proto
 let pHost, cHost, mHost
 let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
 
-if (__ENV.MODE == "api-gateway") {
-  // api-gateway mode for accessing api-gateway directly
+if (__ENV.API_GATEWAY_HOST && !__ENV.API_GATEWAY_PORT || !__ENV.API_GATEWAY_HOST && __ENV.API_GATEWAY_PORT) {
+  fail("both API_GATEWAY_HOST and API_GATEWAY_PORT should be properly configured.")
+}
+
+export const apiGatewayMode = (__ENV.API_GATEWAY_HOST && __ENV.API_GATEWAY_PORT);
+
+if (__ENV.API_GATEWAY_PROTOCOL) {
+  if (__ENV.API_GATEWAY_PROTOCOL !== "http" && __ENV.API_GATEWAY_PROTOCOL != "https") {
+    fail("only allow `http` or `https` for API_GATEWAY_PROTOCOL")
+  }
+  proto = __ENV.API_GATEWAY_PROTOCOL
+} else {
   proto = "http"
-  pHost = cHost = mHost = "api-gateway"
+}
+
+if (apiGatewayMode) {
+  // api gateway mode
+  pHost = cHost = mHost = __ENV.API_GATEWAY_HOST
   cPrivatePort = 3082
-  pPublicPort = cPublicPort = mPublicPort = 8080
-} else if (__ENV.MODE == "localhost") {
-  // localhost mode for accessing api-gateway from localhost
-  proto = "http"
-  pHost = cHost = mHost = "localhost"
-  cPrivatePort = 3082
-  pPublicPort = cPublicPort = mPublicPort = 8080
-} else if (__ENV.MODE == "internal") {
-  // localhost mode for accessing api-gateway from internal
-  proto = "http"
-  pHost = cHost = mHost = "host.docker.internal"
-  cPrivatePort = 3082
-  pPublicPort = cPublicPort = mPublicPort = 8080
+  pPublicPort = cPublicPort = mPublicPort = __ENV.API_GATEWAY_PORT
 } else {
   // direct microservice mode
-  proto = "http"
   pHost = "pipeline-backend"
   cHost = "connector-backend"
   mHost = "model-backend"

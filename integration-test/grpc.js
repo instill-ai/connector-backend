@@ -72,7 +72,7 @@ export default function (data) {
     client.close();
   });
 
-  if (__ENV.MODE != "api-gateway" && __ENV.MODE != "localhost" && __ENV.MODE != "internal") {
+  if (!constant.apiGatewayMode) {
     // Source connector private
     sourceConnectorPrivate.CheckList()
     sourceConnectorPrivate.CheckGet()
