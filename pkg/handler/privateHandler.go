@@ -111,61 +111,6 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 
 }
 
-func (h *PrivateHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
-
-	var isBasicView bool
-
-	var connID string
-	var connType datamodel.ConnectorType
-
-	var connDefColID string
-
-	switch v := req.(type) {
-	case *connectorPB.GetSourceConnectorAdminRequest:
-		resp = &connectorPB.GetSourceConnectorAdminResponse{}
-		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
-			return resp, err
-		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
-		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-		connDefColID = "source-connector-definitions"
-	case *connectorPB.GetDestinationConnectorAdminRequest:
-		resp = &connectorPB.GetDestinationConnectorAdminResponse{}
-		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
-			return resp, err
-		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
-		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-		connDefColID = "destination-connector-definitions"
-	}
-
-	dbConnector, err := h.service.GetConnectorByIDAdmin(connID, connType, isBasicView)
-	if err != nil {
-		return resp, err
-	}
-
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
-	if err != nil {
-		return resp, err
-	}
-
-	pbConnector := DBToPBConnector(
-		dbConnector,
-		connType,
-		dbConnector.Owner,
-		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
-	)
-
-	switch v := resp.(type) {
-	case *connectorPB.GetSourceConnectorAdminResponse:
-		v.SourceConnector = pbConnector.(*connectorPB.SourceConnector)
-	case *connectorPB.GetDestinationConnectorAdminResponse:
-		v.DestinationConnector = pbConnector.(*connectorPB.DestinationConnector)
-	}
-
-	return resp, nil
-}
-
 func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
 	logger, _ := logger.GetZapLogger()
@@ -272,25 +217,22 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	var isBasicView = true
 
-	var connID string
-	var connType datamodel.ConnectorType
+	var connUID string
 
 	switch v := req.(type) {
 	case *connectorPB.CheckSourceConnectorRequest:
 		resp = &connectorPB.CheckSourceConnectorResponse{}
-		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+		if connUID, err = resource.GetPermalinkUID(v.GetSourceConnectorPermalink()); err != nil {
 			return resp, err
 		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 	case *connectorPB.CheckDestinationConnectorRequest:
 		resp = &connectorPB.CheckDestinationConnectorResponse{}
-		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+		if connUID, err = resource.GetPermalinkUID(v.GetDestinationConnectorPermalink()); err != nil {
 			return resp, err
 		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	dbConnector, err := h.service.GetConnectorByIDAdmin(connID, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUIDAdmin(uuid.FromStringOrNil(connUID), isBasicView)
 	if err != nil {
 		return resp, err
 	}

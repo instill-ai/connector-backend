@@ -275,15 +275,15 @@ export function CheckDelete() {
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
-            let res = http.get(`${modelPublicHost}/v1alpha/models/dummy-cls/watch`, {
-                headers: helper.genHeader(`application/json`),
+            var res = http.get(`${modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
+              headers: helper.genHeader(`application/json`),
             })
-            if (res.json().state === "STATE_OFFLINE") {
-                break
+            if (res.json().operation.done === true) {
+              break
             }
             sleep(1)
             currentTime = new Date().getTime();
-        }
+          }
 
         const detSyncRecipe = {
             recipe: {

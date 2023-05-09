@@ -46,7 +46,6 @@ type Service interface {
 	DeleteConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error
 
 	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
 	// Source connector custom service
@@ -60,9 +59,9 @@ type Service interface {
 	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
 
 	// Controller custom service
-	GetResourceState(connectorName string, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
-	UpdateResourceState(connectorName string, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error
-	DeleteResourceState(connectorName string, connectorType datamodel.ConnectorType) error
+	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
+	UpdateResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error
+	DeleteResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) error
 }
 
 type service struct {
@@ -176,7 +175,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 	// Check connector state and update resource state in etcd
 	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
 		// HTTP and gRPC connector is always with STATE_CONNECTED
-		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil, nil); err != nil {
+		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil, nil); err != nil {
 			return nil, err
 		}
 	} else {
@@ -185,7 +184,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 			return nil, err
 		}
 
-		if err := s.UpdateResourceState(connector.ID, connector.ConnectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
 			return nil, err
 		}
 	}
@@ -226,16 +225,6 @@ func (s *service) GetConnectorByID(id string, owner *mgmtPB.User, connectorType 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, isBasicView)
-	if err != nil {
-		return nil, err
-	}
-
-	return dbConnector, nil
-}
-
-func (s *service) GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
-
-	dbConnector, err := s.repository.GetConnectorByIDAdmin(id, connectorType, isBasicView)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +299,7 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 		return nil, err
 	}
 
-	if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+	if err := s.UpdateResourceState(updatedConnector.UID, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
 		return nil, err
 	}
 
@@ -367,7 +356,7 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 		return st.Err()
 	}
 
-	if err := s.DeleteResourceState(id, connectorType); err != nil {
+	if err := s.DeleteResourceState(dbConnector.UID, connectorType); err != nil {
 		return err
 	}
 
@@ -391,7 +380,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		return nil, err
 	}
 
-	connState, err := s.GetResourceState(id, connectorType)
+	connState, err := s.GetResourceState(conn.UID, connectorType)
 	if err != nil {
 		return nil, err
 	}
@@ -447,7 +436,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 				return nil, err
 			}
 
-			if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+			if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
 				return nil, err
 			}
 		}
@@ -473,7 +462,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
-		if err := s.UpdateResourceState(id, connectorType, connectorPB.Connector_State(state), nil, nil); err != nil {
+		if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_State(state), nil, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -519,13 +508,13 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 		return nil, st.Err()
 	}
 
-	if err := s.DeleteResourceState(id, connectorType); err != nil {
-		return nil, err
-	}
+	// if err := s.DeleteResourceState(id, connectorType); err != nil {
+	// 	return nil, err
+	// }
 
-	if err := s.UpdateResourceState(newID, connectorType, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
-		return nil, err
-	}
+	// if err := s.UpdateResourceState(newID, connectorType, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
+	// 	return nil, err
+	// }
 
 	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {
 		return nil, err
