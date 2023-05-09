@@ -104,47 +104,6 @@ export function CheckList() {
     });
 }
 
-export function CheckGet() {
-
-    group("Connector API: Get destination connectors by ID by admin", () => {
-
-        var csvDstConnector = {
-            "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
-        }
-
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
-            JSON.stringify(csvDstConnector), constant.params)
-
-        // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
-            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
-            [`GET /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response connector owner is UUID permalink`]: (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
-        });
-
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
-            [`DELETE /v1alpha/admin/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
-        });
-    });
-}
-
 export function CheckLookUp() {
 
     group("Connector API: Look up destination connectors by UID by admin", () => {

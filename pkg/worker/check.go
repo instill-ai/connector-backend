@@ -92,7 +92,7 @@ func (w *worker) CheckWorkflow(ctx workflow.Context, param *CheckWorkflowParam) 
 
 	if _, err := w.controllerClient.UpdateResource(controllerCtx, &controllerPB.UpdateResourceRequest{
 		Resource: &controllerPB.Resource{
-			Name: util.ConvertConnectorToResourceName(dbConnector.ID, dbConnector.ConnectorType),
+			ResourcePermalink: util.ConvertConnectorToResourceName(dbConnector.UID.String(), dbConnector.ConnectorType),
 			State: &controllerPB.Resource_ConnectorState{
 				ConnectorState: res,
 			},

@@ -44,7 +44,6 @@ type Repository interface {
 	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
 
 	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 }
 
@@ -483,36 +482,6 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 			"connector",
 			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
 			ownerPermalink,
-			result.Error.Error(),
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		return nil, st.Err()
-	}
-	return &connector, nil
-}
-
-func (r *repository) GetConnectorByIDAdmin(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
-
-	logger, _ := logger.GetZapLogger()
-
-	var connector datamodel.Connector
-
-	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND connector_type = ?", id, connectorType)
-
-	if isBasicView {
-		queryBuilder.Omit("configuration")
-	}
-
-	if result := queryBuilder.First(&connector); result.Error != nil {
-		st, err := sterr.CreateErrorResourceInfo(
-			codes.NotFound,
-			fmt.Sprintf("[db] get connector by id error: %s", result.Error.Error()),
-			"connector",
-			fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
-			"admin",
 			result.Error.Error(),
 		)
 		if err != nil {

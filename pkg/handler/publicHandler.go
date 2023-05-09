@@ -1490,7 +1490,17 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	state, err := h.service.GetResourceState(connID, connType)
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, true)
+	if err != nil {
+		return resp, err
+	}
+
+	state, err := h.service.GetResourceState(dbConnector.UID, connType)
 
 	if err != nil {
 		return resp, err

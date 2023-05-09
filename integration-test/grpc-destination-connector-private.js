@@ -140,64 +140,6 @@ export function CheckList() {
     });
 }
 
-export function CheckGet() {
-
-    group("Connector API: Get destination connectors by ID by admin", () => {
-
-        clientPrivate.connect(constant.connectorGRPCPrivateHost, {
-            plaintext: true
-        });
-
-        clientPublic.connect(constant.connectorGRPCPublicHost, {
-            plaintext: true
-        });
-
-        var csvDstConnector = {
-            "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
-        }
-
-        var resCSVDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
-        })
-
-        // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-            })
-            if (res.message.state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
-        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-        }), {
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetDestinationConnectorAdmin CSV ${resCSVDst.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
-        });
-
-        check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-        }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-        });
-
-        clientPublic.close();
-    });
-}
-
 export function CheckLookUp() {
 
     group("Connector API: Look up destination connectors by UID by admin", () => {

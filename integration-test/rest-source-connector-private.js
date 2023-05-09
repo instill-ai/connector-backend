@@ -106,35 +106,6 @@ export function CheckList() {
     });
 }
 
-export function CheckGet() {
-
-    group("Connector API: Get source connectors by ID by admin", () => {
-
-        var httpSrcConnector = {
-            "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
-        }
-
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
-            JSON.stringify(httpSrcConnector), constant.params)
-
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response connector id`]: (r) => r.json().source_connector.id === httpSrcConnector.id,
-            [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
-            [`GET /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().source_connector.connector.user),
-        });
-
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/admin/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
-        });
-
-    });
-}
-
 export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID by admin", () => {

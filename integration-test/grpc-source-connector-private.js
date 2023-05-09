@@ -134,48 +134,6 @@ export function CheckList() {
     clientPublic.close();
 }
 
-export function CheckGet() {
-
-    group("Connector API: Get source connectors by ID by admin", () => {
-        clientPrivate.connect(constant.connectorGRPCPrivateHost, {
-            plaintext: true
-        });
-
-        clientPublic.connect(constant.connectorGRPCPublicHost, {
-            plaintext: true
-        });
-
-        var httpSrcConnector = {
-            "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
-        }
-
-        var resHTTP = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
-        })
-
-        check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
-        }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.id} response connector id`]: (r) => r.message.sourceConnector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector id`]: (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/GetSourceConnectorAdmin name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
-        });
-
-        check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
-        }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-        });
-
-        clientPublic.close();
-    });
-}
-
 export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID by admin", () => {

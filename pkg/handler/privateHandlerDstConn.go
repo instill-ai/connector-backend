@@ -11,11 +11,6 @@ func (h *PrivateHandler) ListDestinationConnectorsAdmin(ctx context.Context, req
 	return resp.(*connectorPB.ListDestinationConnectorsAdminResponse), err
 }
 
-func (h *PrivateHandler) GetDestinationConnectorAdmin(ctx context.Context, req *connectorPB.GetDestinationConnectorAdminRequest) (*connectorPB.GetDestinationConnectorAdminResponse, error) {
-	resp, err := h.getConnector(ctx, req)
-	return resp.(*connectorPB.GetDestinationConnectorAdminResponse), err
-}
-
 func (h *PrivateHandler) LookUpDestinationConnectorAdmin(ctx context.Context, req *connectorPB.LookUpDestinationConnectorAdminRequest) (*connectorPB.LookUpDestinationConnectorAdminResponse, error) {
 	resp, err := h.lookUpConnector(ctx, req)
 	return resp.(*connectorPB.LookUpDestinationConnectorAdminResponse), err

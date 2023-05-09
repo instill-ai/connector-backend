@@ -57,12 +57,10 @@ export default function (data) {
   if (!constant.apiGatewayMode) {
     // Source connectors
     sourceConnectorPrivate.CheckList()
-    sourceConnectorPrivate.CheckGet()
     sourceConnectorPrivate.CheckLookUp()
 
     // Destination connectors
     destinationConnectorPrivate.CheckList()
-    destinationConnectorPrivate.CheckGet()
     destinationConnectorPrivate.CheckLookUp()
 
     // Source public with jwt-sub
