@@ -56,7 +56,7 @@ type Service interface {
 
 	// Longrunning operation
 	GetOperation(workflowId string) (*longrunningpb.Operation, error)
-	CheckConnectorByUID(connID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error)
+	CheckConnectorByUID(connID string, ownerPermalink string, connDef *datamodel.ConnectorDefinition) (*string, error)
 
 	// Controller custom service
 	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
@@ -646,8 +646,7 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	return nil
 }
 
-func (s *service) CheckConnectorByUID(connUID string, owner *mgmtPB.User, connDef *datamodel.ConnectorDefinition) (*string, error) {
-	ownerPermalink := GenOwnerPermalink(owner)
+func (s *service) CheckConnectorByUID(connUID string, ownerPermalink string, connDef *datamodel.ConnectorDefinition) (*string, error) {
 
 	var wfId string
 
