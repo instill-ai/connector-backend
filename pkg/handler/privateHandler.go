@@ -242,14 +242,11 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-
 	if err != nil {
 		return resp, err
 	}
 
-
-	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), owner, dbConnDef)
+	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), dbConnector.Owner, dbConnDef)
 
 	if err != nil {
 		return resp, err
