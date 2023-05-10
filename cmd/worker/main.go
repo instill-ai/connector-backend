@@ -77,7 +77,9 @@ func main() {
 	}
 	defer temporalClient.Close()
 
-	w := worker.New(temporalClient, connWorker.TaskQueue, worker.Options{})
+	w := worker.New(temporalClient, connWorker.TaskQueue, worker.Options{
+		MaxConcurrentActivityExecutionSize: 2,
+	})
 
 	w.RegisterWorkflow(cw.CheckWorkflow)
 	w.RegisterActivity(cw.CheckActivity)
