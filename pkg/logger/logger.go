@@ -17,13 +17,18 @@ var core zapcore.Core
 func GetZapLogger() (*zap.Logger, error) {
 	var err error
 	once.Do(func() {
+		// debug and info level enabler
+		debugInfoLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+			return level == zapcore.DebugLevel || level == zapcore.InfoLevel
+		})
+
 		// info level enabler
 		infoLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
 			return level == zapcore.InfoLevel
 		})
 
-		// error and fatal level enabler
-		errorFatalLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
+		// warn, error and fatal level enabler
+		warnErrorFatalLevel := zap.LevelEnablerFunc(func(level zapcore.Level) bool {
 			return level == zapcore.WarnLevel || level == zapcore.ErrorLevel || level == zapcore.FatalLevel
 		})
 
@@ -37,12 +42,12 @@ func GetZapLogger() (*zap.Logger, error) {
 				zapcore.NewCore(
 					zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
 					stdoutSyncer,
-					infoLevel,
+					debugInfoLevel,
 				),
 				zapcore.NewCore(
 					zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
 					stderrSyncer,
-					errorFatalLevel,
+					warnErrorFatalLevel,
 				),
 			)
 		} else {
@@ -55,7 +60,7 @@ func GetZapLogger() (*zap.Logger, error) {
 				zapcore.NewCore(
 					zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
 					stderrSyncer,
-					errorFatalLevel,
+					warnErrorFatalLevel,
 				),
 			)
 		}
