@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
@@ -231,10 +232,19 @@ func main() {
 		usageServiceClient, usageServiceClientConn := external.InitUsageServiceClient()
 		if usageServiceClientConn != nil {
 			defer usageServiceClientConn.Close()
-		}
-		usg = usage.NewUsage(ctx, repository, mgmtPrivateServiceClient, usageServiceClient)
-		if usg != nil {
-			usg.StartReporter(ctx)
+			logger.Info("try to start usage reporter")
+			go func() {
+				for {
+					usg = usage.NewUsage(ctx, repository, mgmtPrivateServiceClient, usageServiceClient)
+					if usg != nil {
+						usg.StartReporter(ctx)
+						logger.Info("usage reporter started")
+						break
+					}
+					logger.Warn("retry to start usage reporter after 5 minutes")
+					time.Sleep(5 * time.Minute)
+				}
+			}()
 		}
 
 	}
