@@ -73,17 +73,17 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 	}
 
 	var pbConnectors []interface{}
-	for _, dbConnector := range dbConnectors {
-		dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	for idx := range dbConnectors {
+		dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnectors[idx].ConnectorDefinitionUID, true)
 		if err != nil {
 			return resp, err
 		}
 		pbConnectors = append(
 			pbConnectors,
 			DBToPBConnector(
-				dbConnector,
+				dbConnectors[idx],
 				connType,
-				dbConnector.Owner,
+				dbConnectors[idx].Owner,
 				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
 			))
 	}
