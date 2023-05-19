@@ -568,11 +568,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.clsModelOutputs
@@ -622,12 +623,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model",
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
                 "model_outputs": constant.detectionEmptyModelOutputs
@@ -677,12 +678,13 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model",
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "m02", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
                 "model_outputs": constant.detectionModelOutputs
@@ -732,11 +734,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.keypointModelOutputs
@@ -786,11 +789,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.ocrModelOutputs
@@ -840,11 +844,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.semanticSegModelOutputs
@@ -894,11 +899,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.instSegModelOutputs
@@ -948,11 +954,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.textToImageModelOutputs
@@ -1002,11 +1009,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.textGenerationModelOutputs
@@ -1056,11 +1064,12 @@ export function CheckWrite() {
                 "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
                 "pipeline": "pipelines/dummy-pipeline",
                 "recipe": {
-                    "source": "source-connectors/dummy-source",
-                    "models": [
-                        "models/dummy-model"
-                    ],
-                    "destination": "destination-connectors/dummy-destination",
+                    "version": "v1alpha",
+                    "components": [
+                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+                        {"id": "m01", "resource_name": "models/dummy-model"},
+                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
+                    ]
                 },
                 "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
                 "model_outputs": constant.unspecifiedModelOutputs

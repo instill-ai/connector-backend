@@ -287,9 +287,12 @@ export function CheckDelete() {
 
         const detSyncRecipe = {
             recipe: {
-                source: "source-connectors/source-http",
-                models: [`models/dummy-cls`],
-                destination: "destination-connectors/destination-http"
+                "version": "v1alpha",
+                "components": [
+                    {"id": "s01", "resource_name": "source-connectors/source-http"},
+                    {"id": "m01", "resource_name": "models/dummy-cls"},
+                    {"id": "d01", "resource_name": "destination-connectors/destination-http"},
+                ]
             },
         };
 
