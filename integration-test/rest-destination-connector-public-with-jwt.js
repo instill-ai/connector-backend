@@ -74,17 +74,9 @@ export function CheckGet() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         // Cannot get a destination connector of a non-exist user
         check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`, null, constant.paramsHTTPWithJwt), {
@@ -249,17 +241,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`[with random "jwt-sub" header] GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         // Cannot write to destination connector of a non-exist user
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
@@ -286,6 +270,37 @@ export function CheckWrite() {
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (classification)`]: (r) => r.status === 204,
+        });
+    });
+}
+
+export function CheckTest() {
+
+    group(`Connector API: Test destination connectors by ID [with random "jwt-sub" header]`, () => {
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": constant.csvDstConfig
+            }
+        }
+
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), constant.params)
+
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
+
+        // Cannot test destination connector of a non-exist user
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response status is 404`]: (r) => r.status === 404,
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }

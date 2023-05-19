@@ -136,19 +136,11 @@ export function CheckGet() {
             destination_connector: csvDstConnector
         })
 
-        // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-            })
-            if (res.message.state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }), {
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+        })
 
         // Cannot get destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
@@ -292,19 +284,11 @@ export function CheckState() {
             [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at UNSPECIFIED StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
-        // Check connector state being updated in 120 secs
-        let currentTime = new Date().getTime();
-        let timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-            })
-            if (res.message.state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }), {
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+        })
 
         // Cannot connect destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
@@ -411,19 +395,11 @@ export function CheckWrite() {
             destination_connector: csvDstConnector
         })
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-                name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
-            })
-            if (res.message.state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }), {
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+        })
 
         // Cannot write destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
@@ -452,6 +428,44 @@ export function CheckWrite() {
             name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
+        });
+
+        client.close();
+    });
+}
+
+export function CheckTest() {
+
+    group(`Connector API: Test destination connectors' connection [with random "jwt-sub" header]`, () => {
+
+        client.connect(constant.connectorGRPCPublicHost, {
+            plaintext: true
+        });
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": constant.csvDstConfig
+            }
+        }
+
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
+            destination_connector: csvDstConnector
+        })
+
+        // Cannot test destination connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestDestinationConnector', {
+            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        }, constant.paramsGRPCWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/TestDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+        })
+
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
+            name: `destination-connectors/${csvDstConnector.id}`
+        }), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();

@@ -28,7 +28,7 @@ func (s *service) GetResourceState(connectorUID uuid.UUID, connectorType datamod
 	return resp.Resource.GetConnectorState().Enum(), nil
 }
 
-func (s *service) UpdateResourceState(connectorUID uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error {
+func (s *service) UpdateResourceState(connectorUID uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -42,7 +42,7 @@ func (s *service) UpdateResourceState(connectorUID uuid.UUID, connectorType data
 			},
 			Progress: progress,
 		},
-		WorkflowId: workflowId,
+		WorkflowId: nil,
 	})
 
 	if err != nil {

@@ -448,3 +448,30 @@ export function CheckRename() {
     });
 
 }
+
+export function CheckTest() {
+
+    group("Connector API: Test source connectors by ID", () => {
+
+        var httpSrcConnector = {
+            "id": "source-http",
+            "source_connector_definition": constant.httpSrcDefRscName,
+            "connector": {
+                "configuration": {}
+            }
+        }
+
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+            JSON.stringify(httpSrcConnector), constant.params)
+
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection`), {
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response connector STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
+            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
+    });
+}

@@ -1516,15 +1516,56 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	return resp, nil
 }
 
-func (h *PublicHandler) GetConnectorOperation(ctx context.Context, req *connectorPB.GetConnectorOperationRequest) (*connectorPB.GetConnectorOperationResponse, error) {
-	wfId := strings.TrimPrefix(req.Name, "operations/")
-	operation, err := h.service.GetOperation(wfId)
+func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var connID string
+	var connType datamodel.ConnectorType
 
-	if err != nil {
-		return &connectorPB.GetConnectorOperationResponse{}, err
+	switch v := req.(type) {
+	case *connectorPB.TestSourceConnectorRequest:
+		resp = &connectorPB.TestSourceConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
+	case *connectorPB.TestDestinationConnectorRequest:
+		resp = &connectorPB.TestDestinationConnectorResponse{}
+		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			return resp, err
+		}
+		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 	}
 
-	return &connectorPB.GetConnectorOperationResponse{
-		Operation: operation,
-	}, nil
+	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, true)
+	if err != nil {
+		return resp, err
+	}
+
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	if err != nil {
+		return resp, err
+	}
+
+	if err != nil {
+		return resp, err
+	}
+
+	state, err := h.service.CheckConnectorByUID(dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
+
+	if err != nil {
+		return resp, err
+	}
+
+	switch v := resp.(type) {
+	case *connectorPB.TestSourceConnectorResponse:
+		v.State = *state
+	case *connectorPB.TestDestinationConnectorResponse:
+		v.State = *state
+	}
+
+	return resp, nil
 }

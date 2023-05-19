@@ -81,3 +81,8 @@ func (h *PublicHandler) WatchSourceConnector(ctx context.Context, req *connector
 	resp, err := h.watchConnector(ctx, req)
 	return resp.(*connectorPB.WatchSourceConnectorResponse), err
 }
+
+func (h *PublicHandler) TestSourceConnector(ctx context.Context, req *connectorPB.TestSourceConnectorRequest) (*connectorPB.TestSourceConnectorResponse, error) {
+	resp, err := h.testConnector(ctx, req)
+	return resp.(*connectorPB.TestSourceConnectorResponse), err
+}

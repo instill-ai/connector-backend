@@ -90,6 +90,7 @@ export default function (data) {
     sourceConnectorPublicWithJwt.CheckLookUp()
     sourceConnectorPublicWithJwt.CheckState()
     sourceConnectorPublicWithJwt.CheckRename()
+    sourceConnectorPublicWithJwt.CheckTest()
 
     // Destination public with jwt-sub
     destinationConnectorPublicWithJwt.CheckCreate()
@@ -100,6 +101,7 @@ export default function (data) {
     destinationConnectorPublicWithJwt.CheckState()
     destinationConnectorPublicWithJwt.CheckRename()
     destinationConnectorPublicWithJwt.CheckWrite()
+    destinationConnectorPublicWithJwt.CheckTest()
   }
 
   // Source connector Definitions
@@ -119,6 +121,7 @@ export default function (data) {
   sourceConnectorPublic.CheckLookUp()
   sourceConnectorPublic.CheckState()
   sourceConnectorPublic.CheckRename()
+  sourceConnectorPublic.CheckTest()
 
   // Destination connectors
   destinationConnectorPublic.CheckCreate()
@@ -129,6 +132,7 @@ export default function (data) {
   destinationConnectorPublic.CheckState()
   destinationConnectorPublic.CheckRename()
   destinationConnectorPublic.CheckWrite()
+  destinationConnectorPublic.CheckTest()
 
 }
 

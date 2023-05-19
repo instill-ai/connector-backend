@@ -78,21 +78,13 @@ export function CheckCreate() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        let currentTime = new Date().getTime();
-        let timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
         check(resCSVDst, {
             "POST /v1alpha/destination-connectors response status 201": (r) => r.status === 201,
         });
+
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response STATE_CONNECTED`]: (r) => r.json().destination_connector.connector.state === "STATE_CONNECTED",
@@ -125,22 +117,8 @@ export function CheckCreate() {
             "POST /v1alpha/destination-connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
         });
 
-        // Check connector state being updated in 360 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 360000;
-        var pass = false
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_ERROR") {
-                pass = true
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
-        check(null, {
-            "POST /v1alpha/destination-connectors MySQL destination connector ended up STATE_ERROR": (r) => pass
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resDstMySQL.json().destination_connector.id}/watch response connector state ended up STATE_ERROR`]: (r) => r.json().state === "STATE_ERROR",
         })
 
         // check JSON Schema failure cases
@@ -296,24 +274,16 @@ export function CheckGet() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        var currentTime = new Date().getTime();
-        var timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
         check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector id`]: (r) => r.json().destination_connector.id === csvDstConnector.id,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector destination_connector_definition permalink`]: (r) => r.json().destination_connector.destination_connector_definition === constant.csvDstDefRscName,
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().destination_connector.connector.user),
         });
+
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
@@ -443,25 +413,9 @@ export function CheckState() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect`, null, constant.params), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/disconnect response at UNSPECIFIED state status 422`]: (r) => r.status === 422,
-        });
-
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, constant.params), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response at UNSPECIFIED state status 422`]: (r) => r.status === 422,
-        });
-
-        // Check connector state being updated in 120 secs
-        let currentTime = new Date().getTime();
-        let timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect`, null, constant.params), {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response status 200 (with STATE_CONNECTED)`]: (r) => r.status === 200,
@@ -479,17 +433,9 @@ export function CheckState() {
             [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/connect response status 200 (with STATE_DISCONNECTED)`]: (r) => r.status === 200,
         });
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
@@ -550,17 +496,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -605,17 +543,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -660,17 +590,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -716,17 +638,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -771,17 +685,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -826,17 +732,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -881,17 +779,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -936,17 +826,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -991,17 +873,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -1046,17 +920,9 @@ export function CheckWrite() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        // Check connector state being updated in 120 secs
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`)
-            if (res.json().state === "STATE_CONNECTED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        })
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
@@ -1084,6 +950,33 @@ export function CheckWrite() {
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
             [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204 (unspecified)`]: (r) => r.status === 204,
+        });
+    });
+}
+
+export function CheckTest() {
+
+    group("Connector API: Test destination connectors by ID", () => {
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "destination_connector_definition": constant.csvDstDefRscName,
+            "connector": {
+                "description": randomString(50),
+                "configuration": constant.csvDstConfig
+            }
+        }
+
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
+            JSON.stringify(csvDstConnector), constant.params)
+
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection`), {
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {
+            [`DELETE /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
