@@ -14,7 +14,6 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
-	"go.temporal.io/sdk/client"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
@@ -27,6 +26,7 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
+	dockerclient "github.com/docker/docker/client"
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
@@ -35,8 +35,6 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/usage"
-	"github.com/instill-ai/x/temporal"
-	"github.com/instill-ai/x/zapadapter"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -77,36 +75,7 @@ func main() {
 	db := database.GetConnection()
 	defer database.Close(db)
 
-	var temporalClientOptions client.Options
 	var err error
-	if config.Config.Temporal.Ca != "" && config.Config.Temporal.Cert != "" && config.Config.Temporal.Key != "" {
-		if temporalClientOptions, err = temporal.GetTLSClientOption(
-			config.Config.Temporal.HostPort,
-			config.Config.Temporal.Namespace,
-			zapadapter.NewZapAdapter(logger),
-			config.Config.Temporal.Ca,
-			config.Config.Temporal.Cert,
-			config.Config.Temporal.Key,
-			config.Config.Temporal.ServerName,
-			true,
-		); err != nil {
-			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
-		}
-	} else {
-		if temporalClientOptions, err = temporal.GetClientOption(
-			config.Config.Temporal.HostPort,
-			config.Config.Temporal.Namespace,
-			zapadapter.NewZapAdapter(logger)); err != nil {
-			logger.Fatal(fmt.Sprintf("Unable to get Temporal client options: %s", err))
-		}
-	}
-
-	temporalClient, err := client.Dial(temporalClientOptions)
-	if err != nil {
-		logger.Fatal(fmt.Sprintf("Unable to create client: %s", err))
-	}
-	defer temporalClient.Close()
-
 	// Create tls based credential.
 	var creds credentials.TransportCredentials
 	if config.Config.Server.HTTPS.Cert != "" && config.Config.Server.HTTPS.Key != "" {
@@ -161,6 +130,12 @@ func main() {
 		defer controllerClientConn.Close()
 	}
 
+	dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+	if err != nil {
+		logger.Error(err.Error())
+	}
+	defer dockerClient.Close()
+
 	repository := repository.NewRepository(db)
 
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
@@ -176,8 +151,8 @@ func main() {
 				repository,
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
-				temporalClient,
 				controllerClient,
+				dockerClient,
 			)))
 
 	connectorPB.RegisterConnectorPublicServiceServer(
@@ -187,8 +162,8 @@ func main() {
 				repository,
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
-				temporalClient,
 				controllerClient,
+				dockerClient,
 			)))
 
 	privateServeMux := runtime.NewServeMux(

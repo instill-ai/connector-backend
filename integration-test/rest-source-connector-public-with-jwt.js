@@ -222,3 +222,30 @@ export function CheckRename() {
     });
 
 }
+
+export function CheckTest() {
+
+    group(`Connector API: Test source connectors by ID [with random "jwt-sub" header]`, () => {
+
+        var httpSrcConnector = {
+            "id": "source-http",
+            "source_connector_definition": constant.httpSrcDefRscName,
+            "connector": {
+                "configuration": {}
+            }
+        }
+
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+            JSON.stringify(httpSrcConnector), constant.params)
+
+        // Cannot test source connector of a non-exist user
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response status is 404`]: (r) => r.status === 404,
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
+            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
+    });
+}

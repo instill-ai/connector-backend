@@ -296,3 +296,39 @@ export function CheckRename() {
         client.close();
     });
 }
+
+export function CheckTest() {
+
+    group(`Connector API: Test source connectors by ID [with random "jwt-sub" header]`, () => {
+        client.connect(constant.connectorGRPCPublicHost, {
+            plaintext: true
+        });
+
+        var httpSrcConnector = {
+            "id": "source-http",
+            "source_connector_definition": constant.httpSrcDefRscName,
+            "connector": {
+                "configuration": {}
+            }
+        }
+
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
+            source_connector: httpSrcConnector
+        })
+
+        // Cannot test connector of a non-exist user
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector', {
+            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        }, constant.paramsGRPCWithJwt), {
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+        })
+
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
+            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        }), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        });
+
+        client.close();
+    });
+}

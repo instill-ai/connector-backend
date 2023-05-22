@@ -1,25 +1,36 @@
 package service
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
-	"cloud.google.com/go/longrunning/autogen/longrunningpb"
+	"github.com/allegro/bigcache"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
+
 	"github.com/gofrs/uuid"
-	"go.temporal.io/sdk/client"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/sterr"
 
+	dockerClient "github.com/docker/docker/client"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
@@ -54,32 +65,47 @@ type Service interface {
 	// Destination connector custom service
 	WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
 
-	// Longrunning operation
-	GetOperation(workflowId string) (*longrunningpb.Operation, error)
-	CheckConnectorByUID(connID string, ownerPermalink string, connDef *datamodel.ConnectorDefinition) (*string, error)
+	// Shared public/private method for checking connector's connection
+	CheckConnectorByUID(connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error)
 
 	// Controller custom service
 	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
-	UpdateResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32, workflowId *string) error
+	UpdateResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32) error
 	DeleteResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) error
 }
 
 type service struct {
 	repository                  repository.Repository
+	cache                       *bigcache.BigCache
 	mgmtPrivateServiceClient    mgmtPB.MgmtPrivateServiceClient
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
-	temporalClient              client.Client
 	controllerClient            controllerPB.ControllerPrivateServiceClient
+	dockerClient                *dockerClient.Client
 }
 
 // NewService initiates a service instance
-func NewService(r repository.Repository, u mgmtPB.MgmtPrivateServiceClient, p pipelinePB.PipelinePublicServiceClient, t client.Client, c controllerPB.ControllerPrivateServiceClient) Service {
+func NewService(
+	r repository.Repository,
+	u mgmtPB.MgmtPrivateServiceClient,
+	p pipelinePB.PipelinePublicServiceClient,
+	c controllerPB.ControllerPrivateServiceClient,
+	d *dockerClient.Client,
+) Service {
+
+	logger, _ := logger.GetZapLogger()
+
+	cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
 	return &service{
 		repository:                  r,
+		cache:                       cache,
 		mgmtPrivateServiceClient:    u,
 		pipelinePublicServiceClient: p,
-		temporalClient:              t,
 		controllerClient:            c,
+		dockerClient:                d,
 	}
 }
 
@@ -175,16 +201,15 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 	// Check connector state and update resource state in etcd
 	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
 		// HTTP and gRPC connector is always with STATE_CONNECTED
-		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil, nil); err != nil {
+		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
 			return nil, err
 		}
 	} else {
-		wfId, err := s.startCheckWorkflow(ownerPermalink, connector.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+		if state, err := s.CheckConnectorByUID(connector.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
+			if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, *state, nil); err != nil {
+				return nil, err
+			}
+		} else {
 			return nil, err
 		}
 	}
@@ -294,12 +319,11 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 	}
 
 	// Check connector state
-	wfId, err := s.startCheckWorkflow(ownerPermalink, existingConnector.UID.String(), def.DockerRepository, def.DockerImageTag)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.UpdateResourceState(updatedConnector.UID, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+	if state, err := s.CheckConnectorByUID(existingConnector.UID, def.DockerRepository, def.DockerImageTag); err == nil {
+		if err := s.UpdateResourceState(updatedConnector.UID, connectorType, *state, nil); err != nil {
+			return nil, err
+		}
+	} else {
 		return nil, err
 	}
 
@@ -428,15 +452,13 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 			return nil, err
 		}
 
-		// Set resource state to STATE_UNSPECIFIED
+		// Check resource state
 		if datamodel.ConnectorState(*connState) != state {
-			wfId, err := s.startCheckWorkflow(ownerPermalink, conn.UID.String(), connDef.DockerRepository, connDef.DockerImageTag)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_STATE_UNSPECIFIED, nil, &wfId); err != nil {
+			if state, err := s.CheckConnectorByUID(conn.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
+				if err := s.UpdateResourceState(conn.UID, connectorType, *state, nil); err != nil {
+					return nil, err
+				}
+			} else {
 				return nil, err
 			}
 		}
@@ -462,7 +484,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
-		if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_State(state), nil, nil); err != nil {
+		if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_State(state), nil); err != nil {
 			return nil, err
 		}
 	}
@@ -535,9 +557,14 @@ func (s *service) ReadSourceConnector(id string, owner *mgmtPB.User) ([]byte, er
 
 func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error {
 
+	logger, _ := logger.GetZapLogger()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), true)
+	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
 	if err != nil {
 		return err
 	}
@@ -633,33 +660,311 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	// Remove the last "\n"
 	byteAbMsgs = byteAbMsgs[:len(byteAbMsgs)-1]
 
-	// Start Temporal worker
-	_, err = s.startWriteWorkflow(
-		ownerPermalink, conn.UID.String(),
-		connDef.DockerRepository, connDef.DockerImageTag,
-		param.Pipeline, param.DataMappingIndices,
-		byteCfgAbCatalog, byteAbMsgs)
+	imageName := fmt.Sprintf("%s:%s", connDef.DockerRepository, connDef.DockerImageTag)
+	containerName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
+	configFileName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
+	catalogFileName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
+
+	// If there is already a container run dispatched in the previous attempt, return exitCodeOK directly
+	if _, err := s.cache.Get(containerName); err == nil {
+		return nil
+	}
+
+	// Write config into a container local file (always overwrite)
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", config.Config.Container.MountTarget.VDP, configFileName)
+	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
+		return fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := os.WriteFile(configFilePath, conn.Configuration, 0644); err != nil {
+		return fmt.Errorf(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+
+	// Write catalog into a container local file (always overwrite)
+	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", config.Config.Container.MountTarget.VDP, catalogFileName)
+	if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
+		return fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := os.WriteFile(catalogFilePath, byteCfgAbCatalog, 0644); err != nil {
+		return fmt.Errorf(fmt.Sprintf("unable to write connector catalog file %s", catalogFilePath), "WriteContainerLocalFileError", err)
+	}
+
+	defer func() {
+		// Delete config local file
+		if _, err := os.Stat(configFilePath); err == nil {
+			if err := os.Remove(configFilePath); err != nil {
+				logger.Error(fmt.Sprintln("Activity", "ImageName", imageName, "ContainerName", containerName, "Error", err))
+			}
+		}
+
+		// Delete catalog local file
+		if _, err := os.Stat(catalogFilePath); err == nil {
+			if err := os.Remove(catalogFilePath); err != nil {
+				logger.Error(fmt.Sprintln("Activity", "ImageName", imageName, "ContainerName", containerName, "Error", err))
+			}
+		}
+	}()
+
+	out, err := s.dockerClient.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
 		return err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(os.Stdout, out); err != nil {
+		return err
+	}
+
+	resp, err := s.dockerClient.ContainerCreate(ctx,
+		&container.Config{
+			Image:        imageName,
+			AttachStdin:  true,
+			AttachStdout: true,
+			OpenStdin:    true,
+			StdinOnce:    true,
+			Tty:          true,
+			Cmd: []string{
+				"write",
+				"--config",
+				configFilePath,
+				"--catalog",
+				catalogFilePath,
+			},
+		},
+		&container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type: func() mount.Type {
+						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
+					Source: config.Config.Container.MountSource.VDP,
+					Target: config.Config.Container.MountTarget.VDP,
+				},
+				{
+					Type: func() mount.Type {
+						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
+					Source: config.Config.Container.MountSource.Airbyte,
+					Target: config.Config.Container.MountTarget.Airbyte,
+				},
+			},
+		},
+		nil, nil, containerName)
+	if err != nil {
+		return err
+	}
+
+	hijackedResp, err := s.dockerClient.ContainerAttach(ctx, resp.ID, types.ContainerAttachOptions{
+		Stdout: true,
+		Stdin:  true,
+		Stream: true,
+	})
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	// need to append "\n" and "ctrl+D" at the end of the input message
+	_, err = hijackedResp.Conn.Write(append(byteAbMsgs, 10, 4))
+	if err != nil {
+		logger.Error(err.Error())
+	}
+
+	if err := s.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return err
+	}
+
+	var bufStdOut bytes.Buffer
+	if _, err := bufStdOut.ReadFrom(hijackedResp.Reader); err != nil {
+		return err
+	}
+
+	if err := s.dockerClient.ContainerRemove(ctx, resp.ID,
+		types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		}); err != nil {
+		return err
+	}
+
+	// Set cache flag (empty value is fine since we need only the entry record)
+	if err := s.cache.Set(containerName, []byte{}); err != nil {
+		logger.Error(err.Error())
+	}
+
+	logger.Info(fmt.Sprintln("Activity",
+		"ImageName", imageName,
+		"ContainerName", containerName,
+		"Pipeline", param.Pipeline,
+		"Indices", param.DataMappingIndices,
+		"STDOUT", bufStdOut.String()))
+
+	// Delete the cache entry only after the write completed
+	if err := s.cache.Delete(containerName); err != nil {
+		logger.Error(err.Error())
 	}
 
 	return nil
 }
 
-func (s *service) CheckConnectorByUID(connUID string, ownerPermalink string, connDef *datamodel.ConnectorDefinition) (*string, error) {
+func (s *service) CheckConnectorByUID(connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error) {
+	logger, _ := logger.GetZapLogger()
 
-	var wfId string
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
-		wfId = string("")
-		return &wfId, nil
+	dbConnector, err := s.repository.GetConnectorByUIDAdmin(connUID, false)
+	if err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
 	}
 
-	wfId, err := s.startCheckWorkflow(ownerPermalink, connUID, connDef.DockerRepository, connDef.DockerImageTag)
+	if strings.Contains(dbConnector.ID, "http") || strings.Contains(dbConnector.ID, "grpc") {
+		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
+	}
 
+	imageName := fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag)
+	containerName := fmt.Sprintf("%s.%d.check", connUID, time.Now().UnixNano())
+	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", config.Config.Container.MountTarget.VDP, containerName)
+	// Write config into a container local file
+	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+	if err := os.WriteFile(configFilePath, dbConnector.Configuration, 0644); err != nil {
+		return nil, fmt.Errorf(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
+	}
+
+	defer func() {
+		// Delete config local file
+		if _, err := os.Stat(configFilePath); err == nil {
+			if err := os.Remove(configFilePath); err != nil {
+				logger.Error(fmt.Sprintf("ImageName: %s, ContainerName: %s, Error: %v", imageName, containerName, err))
+			}
+		}
+	}()
+
+	out, err := s.dockerClient.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(os.Stdout, out); err != nil {
+		return nil, err
+	}
+
+	resp, err := s.dockerClient.ContainerCreate(ctx,
+		&container.Config{
+			Image: imageName,
+			Tty:   false,
+			Cmd: []string{
+				"check",
+				"--config",
+				configFilePath,
+			},
+		},
+		&container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type: func() mount.Type {
+						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
+							return mount.TypeBind
+						}
+						return mount.TypeVolume
+					}(),
+					Source: config.Config.Container.MountSource.VDP,
+					Target: config.Config.Container.MountTarget.VDP,
+				},
+			},
+		},
+		nil, nil, containerName)
 	if err != nil {
 		return nil, err
 	}
 
-	return &wfId, nil
+	if err := s.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return nil, err
+	}
+
+	statusCh, errCh := s.dockerClient.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return nil, err
+		}
+	case <-statusCh:
+	}
+
+	if out, err = s.dockerClient.ContainerLogs(ctx,
+		resp.ID,
+		types.ContainerLogsOptions{
+			ShowStdout: true,
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	if err := s.dockerClient.ContainerRemove(ctx, containerName,
+		types.ContainerRemoveOptions{
+			RemoveVolumes: true,
+			Force:         true,
+		}); err != nil {
+		return nil, err
+	}
+
+	var bufStdOut, bufStdErr bytes.Buffer
+	if _, err := stdcopy.StdCopy(&bufStdOut, &bufStdErr, out); err != nil {
+		return nil, err
+	}
+
+	var teeStdOut io.Reader = strings.NewReader(bufStdOut.String())
+	var teeStdErr io.Reader = strings.NewReader(bufStdErr.String())
+	teeStdOut = io.TeeReader(teeStdOut, &bufStdOut)
+	teeStdErr = io.TeeReader(teeStdErr, &bufStdErr)
+
+	var byteStdOut, byteStdErr []byte
+	if byteStdOut, err = io.ReadAll(teeStdOut); err != nil {
+		return nil, err
+	}
+	if byteStdErr, err = io.ReadAll(teeStdErr); err != nil {
+		return nil, err
+	}
+
+	logger.Info(fmt.Sprintf("ImageName, %s, ContainerName, %s, STDOUT, %v, STDERR, %v", imageName, containerName, byteStdOut, byteStdErr))
+
+	scanner := bufio.NewScanner(&bufStdOut)
+	for scanner.Scan() {
+
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
+
+		var jsonMsg map[string]interface{}
+		if err := json.Unmarshal(scanner.Bytes(), &jsonMsg); err == nil {
+			switch jsonMsg["type"] {
+			case "CONNECTION_STATUS":
+				switch jsonMsg["connectionStatus"].(map[string]interface{})["status"] {
+				case "SUCCEEDED":
+					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+						return nil, err
+					}
+					return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
+				case "FAILED":
+					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+						return nil, err
+					}
+					return connectorPB.Connector_STATE_ERROR.Enum(), nil
+				default:
+					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+						return nil, err
+					}
+					return connectorPB.Connector_STATE_ERROR.Enum(), fmt.Errorf("UNKNOWN STATUS")
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("unable to scan container stdout and find the connection status successfully")
 }

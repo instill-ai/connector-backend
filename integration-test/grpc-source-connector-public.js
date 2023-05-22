@@ -544,3 +544,41 @@ export function CheckRename() {
         client.close();
     });
 }
+
+export function CheckTest() {
+
+    group("Connector API: Test source connectors by ID", () => {
+        client.connect(constant.connectorGRPCPublicHost, {
+            plaintext: true
+        });
+
+        var httpSrcConnector = {
+            "id": "source-http",
+            "source_connector_definition": constant.httpSrcDefRscName,
+            "connector": {
+                "configuration": {}
+            }
+        }
+
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
+            source_connector: httpSrcConnector
+        })
+
+        var testRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector', {
+            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        }, {})
+
+        check(testRes, {
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response connector STATE_CONNECTED`]: (r) => r.message.state === "STATE_CONNECTED",
+        });
+
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
+            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        }), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        });
+
+        client.close();
+    });
+}

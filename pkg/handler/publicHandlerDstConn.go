@@ -174,3 +174,8 @@ func (h *PublicHandler) WatchDestinationConnector(ctx context.Context, req *conn
 	resp, err := h.watchConnector(ctx, req)
 	return resp.(*connectorPB.WatchDestinationConnectorResponse), err
 }
+
+func (h *PublicHandler) TestDestinationConnector(ctx context.Context, req *connectorPB.TestDestinationConnectorRequest) (*connectorPB.TestDestinationConnectorResponse, error) {
+	resp, err := h.testConnector(ctx, req)
+	return resp.(*connectorPB.TestDestinationConnectorResponse), err
+}

@@ -19,9 +19,8 @@ var Config AppConfig
 // AppConfig defines
 type AppConfig struct {
 	Server          ServerConfig          `koanf:"server"`
-	Worker          WorkerConfig          `koanf:"worker"`
+	Container       ContainerConfig       `koanf:"container"`
 	Database        DatabaseConfig        `koanf:"database"`
-	Temporal        TemporalConfig        `koanf:"temporal"`
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
@@ -42,8 +41,8 @@ type ServerConfig struct {
 	Debug        bool     `koanf:"debug"`
 }
 
-// WorkerConfig defines the Temporal Worker configurations
-type WorkerConfig struct {
+// ContainerConfig defines the container configurations
+type ContainerConfig struct {
 	MountSource struct {
 		VDP     string `koanf:"vdp"`
 		Airbyte string `koanf:"airbyte"`
@@ -68,16 +67,6 @@ type DatabaseConfig struct {
 		MaxConnections  int           `koanf:"maxconnections"`
 		ConnLifeTime    time.Duration `koanf:"connlifetime"`
 	}
-}
-
-// TemporalConfig related to Temporal
-type TemporalConfig struct {
-	HostPort   string `koanf:"hostport"`
-	Namespace  string `koanf:"namespace"`
-	Ca         string `koanf:"ca"`
-	Cert       string `koanf:"cert"`
-	Key        string `koanf:"key"`
-	ServerName string `koanf:"servername"`
 }
 
 // MgmtBackendConfig related to mgmt-backend

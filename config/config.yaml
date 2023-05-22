@@ -8,7 +8,7 @@ server:
   edition: local-ce:dev
   disableusage: false
   debug: true
-worker:
+container:
   mountsource:
     vdp: vdp # vdp docker volume name by default
     airbyte: airbyte # airbyte docker volume name by default
@@ -27,13 +27,6 @@ database:
     idleconnections: 5
     maxconnections: 10
     connlifetime: 30m # In minutes, e.g., '60m'
-temporal:
-  hostport: temporal:7233
-  namespace: connector-backend
-  ca:
-  cert:
-  key:
-  servername:
 pipelinebackend:
   host: pipeline-backend
   publicport: 8081

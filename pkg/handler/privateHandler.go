@@ -246,7 +246,7 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	wfId, err := h.service.CheckConnectorByUID(dbConnector.UID.String(), dbConnector.Owner, dbConnDef)
+	state, err := h.service.CheckConnectorByUID(dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
 
 	if err != nil {
 		return resp, err
@@ -254,9 +254,9 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 
 	switch v := resp.(type) {
 	case *connectorPB.CheckSourceConnectorResponse:
-		v.WorkflowId = *wfId
+		v.State = *state
 	case *connectorPB.CheckDestinationConnectorResponse:
-		v.WorkflowId = *wfId
+		v.State = *state
 	}
 
 	return resp, nil
