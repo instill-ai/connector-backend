@@ -44,13 +44,6 @@ $ go run ./cmd/init
 $ go run ./cmd/main
 ```
 
-### Run the Temporal worker
-
-```bash
-$ docker exec -it connector-backend /bin/bash
-$ go run ./cmd/worker
-```
-
 ### Run the integration test
 
 ``` bash
