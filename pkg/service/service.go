@@ -324,9 +324,9 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 	var filter string
 	switch {
 	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE):
-		filter = fmt.Sprintf("recipe.source:\"%s\"", dbConnector.UID)
+		filter = fmt.Sprintf("recipe.components.resource_name:\"source-connectors/%s\"", dbConnector.UID)
 	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION):
-		filter = fmt.Sprintf("recipe.destination:\"%s\"", dbConnector.UID)
+		filter = fmt.Sprintf("recipe.components.resource_name:\"destination-connectors/%s\"", dbConnector.UID)
 	}
 
 	pipeResp, err := s.pipelinePublicServiceClient.ListPipelines(InjectOwnerToContext(context.Background(), owner), &pipelinePB.ListPipelinesRequest{
