@@ -564,7 +564,7 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), true)
+	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
 	if err != nil {
 		return err
 	}
