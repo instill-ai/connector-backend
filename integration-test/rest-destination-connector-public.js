@@ -970,9 +970,9 @@ export function CheckTest() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection`), {
-            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection`), {
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/testConnection response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}`), {

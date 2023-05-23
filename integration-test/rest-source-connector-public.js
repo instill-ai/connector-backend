@@ -464,9 +464,9 @@ export function CheckTest() {
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection`), {
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response connector STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection`), {
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response connector STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
