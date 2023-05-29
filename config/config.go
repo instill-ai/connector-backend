@@ -25,6 +25,7 @@ type AppConfig struct {
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
 	UsageServer     UsageServerConfig     `koanf:"usageserver"`
+	Log             LogConfig             `koanf:"log"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -103,6 +104,14 @@ type ControllerConfig struct {
 	HTTPS       struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
+	}
+}
+
+// LogConfig related to logging
+type LogConfig struct {
+	OtelCollector struct {
+		Host string `koanf:"host"`
+		Port string `koanf:"port"`
 	}
 }
 

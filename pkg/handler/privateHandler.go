@@ -23,9 +23,9 @@ type PrivateHandler struct {
 }
 
 // NewPrivateHandler initiates a handler instance
-func NewPrivateHandler(s service.Service) connectorPB.ConnectorPrivateServiceServer {
-	datamodel.InitJSONSchema()
-	datamodel.InitAirbyteCatalog()
+func NewPrivateHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPrivateServiceServer {
+	datamodel.InitJSONSchema(ctx)
+	datamodel.InitAirbyteCatalog(ctx)
 	return &PrivateHandler{
 		service: s,
 	}
@@ -67,20 +67,21 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 		connDefColID = "destination-connector-definitions"
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorsAdmin(connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorsAdmin(ctx, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return resp, err
 	}
 
 	var pbConnectors []interface{}
 	for idx := range dbConnectors {
-		dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnectors[idx].ConnectorDefinitionUID, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnectors[idx].ConnectorDefinitionUID, true)
 		if err != nil {
 			return resp, err
 		}
 		pbConnectors = append(
 			pbConnectors,
 			DBToPBConnector(
+				ctx,
 				dbConnectors[idx],
 				connType,
 				dbConnectors[idx].Owner,
@@ -113,7 +114,7 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 
 func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var isBasicView bool
 
@@ -187,17 +188,18 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 		connDefColID = "destination-connector-definitions"
 	}
 
-	dbConnector, err := h.service.GetConnectorByUIDAdmin(connUID, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return resp, err
 	}
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
@@ -232,12 +234,12 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		}
 	}
 
-	dbConnector, err := h.service.GetConnectorByUIDAdmin(uuid.FromStringOrNil(connUID), isBasicView)
+	dbConnector, err := h.service.GetConnectorByUIDAdmin(ctx, uuid.FromStringOrNil(connUID), isBasicView)
 	if err != nil {
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return resp, err
 	}
@@ -246,7 +248,7 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	state, err := h.service.CheckConnectorByUID(dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
+	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
 
 	if err != nil {
 		return resp, err

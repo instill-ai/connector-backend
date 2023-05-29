@@ -8,6 +8,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/iancoleman/strcase"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -19,6 +21,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
+	"github.com/instill-ai/connector-backend/pkg/util"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
@@ -26,15 +29,17 @@ import (
 	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
 
+var tracer = otel.Tracer("connector-backend.public-handler.tracer")
+
 type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
 	service service.Service
 }
 
 // NewPublicHandler initiates a handler instance
-func NewPublicHandler(s service.Service) connectorPB.ConnectorPublicServiceServer {
-	datamodel.InitJSONSchema()
-	datamodel.InitAirbyteCatalog()
+func NewPublicHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPublicServiceServer {
+	datamodel.InitJSONSchema(ctx)
+	datamodel.InitAirbyteCatalog(ctx)
 	return &PublicHandler{
 		service: s,
 	}
@@ -68,6 +73,12 @@ func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 
 func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
+	ctx, span := tracer.Start(ctx, "ListConnectorDefinitions",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
 	var pageSize int64
 	var pageToken string
 	var isBasicView bool
@@ -89,8 +100,9 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	}
 
-	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(connType, pageSize, pageToken, isBasicView)
+	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(ctx, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
@@ -100,6 +112,7 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 			v.SourceConnectorDefinitions = append(
 				v.SourceConnectorDefinitions,
 				DBToPBConnectorDefinition(
+					ctx,
 					dbDef,
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)).(*connectorPB.SourceConnectorDefinition))
 		}
@@ -110,6 +123,7 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 			v.DestinationConnectorDefinitions = append(
 				v.DestinationConnectorDefinitions,
 				DBToPBConnectorDefinition(
+					ctx,
 					dbDef,
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)).(*connectorPB.DestinationConnectorDefinition))
 		}
@@ -117,10 +131,18 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 		v.TotalSize = totalSize
 	}
 
+	logger.Info("ListConnectorDefinitions")
+
 	return resp, nil
 }
 
 func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	ctx, span := tracer.Start(ctx, "GetConnectorDefinition",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var isBasicView bool
@@ -131,6 +153,7 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 	case *connectorPB.GetSourceConnectorDefinitionRequest:
 		resp = &connectorPB.GetSourceConnectorDefinitionResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -138,23 +161,27 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 	case *connectorPB.GetDestinationConnectorDefinitionRequest:
 		resp = &connectorPB.GetDestinationConnectorDefinitionResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	}
 
-	dbDef, err := h.service.GetConnectorDefinitionByID(connID, connType, isBasicView)
+	dbDef, err := h.service.GetConnectorDefinitionByID(ctx, connID, connType, isBasicView)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
 	switch v := resp.(type) {
 	case *connectorPB.GetSourceConnectorDefinitionResponse:
-		v.SourceConnectorDefinition = DBToPBConnectorDefinition(dbDef, connType).(*connectorPB.SourceConnectorDefinition)
+		v.SourceConnectorDefinition = DBToPBConnectorDefinition(ctx, dbDef, connType).(*connectorPB.SourceConnectorDefinition)
 	case *connectorPB.GetDestinationConnectorDefinitionResponse:
-		v.DestinationConnectorDefinition = DBToPBConnectorDefinition(dbDef, connType).(*connectorPB.DestinationConnectorDefinition)
+		v.DestinationConnectorDefinition = DBToPBConnectorDefinition(ctx, dbDef, connType).(*connectorPB.DestinationConnectorDefinition)
 	}
+
+	logger.Info(dbDef.Title)
 
 	return resp, nil
 
@@ -162,7 +189,11 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 
 func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	ctx, span := tracer.Start(ctx, "CreateConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var connDesc sql.NullString
@@ -191,6 +222,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -208,6 +240,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -225,6 +258,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -232,6 +266,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 
 		connConfig, err = v.GetSourceConnector().GetConnector().GetConfiguration().MarshalJSON()
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -249,6 +284,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -267,6 +303,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -283,6 +320,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -299,6 +337,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -322,6 +361,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -339,6 +379,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -356,6 +397,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -363,6 +405,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 
 		connConfig, err = v.GetDestinationConnector().GetConnector().GetConfiguration().MarshalJSON()
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -380,6 +423,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -398,6 +442,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -414,6 +459,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -430,6 +476,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -450,11 +497,13 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		if err != nil {
 			logger.Error(err.Error())
 		}
+		span.SetStatus(1, err.Error())
 		return resp, st.Err()
 	}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
@@ -468,12 +517,23 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		Description:            connDesc,
 	}
 
-	dbConnector, err = h.service.CreateConnector(owner, dbConnector)
+	dbConnector, err = h.service.CreateConnector(ctx, owner, dbConnector)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"CreateConnector",
+		false,
+		"",
+	)))
+
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		service.GenOwnerPermalink(owner),
@@ -490,6 +550,12 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 }
 
 func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	ctx, span := tracer.Start(ctx, "ListConnectors",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var pageSize int64
 	var pageToken string
@@ -518,28 +584,40 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(owner, connType, pageSize, pageToken, isBasicView)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectors(ctx, owner, connType, pageSize, pageToken, isBasicView)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
 	var pbConnectors []interface{}
 	for idx := range dbConnectors {
-		dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnectors[idx].ConnectorDefinitionUID, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnectors[idx].ConnectorDefinitionUID, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		pbConnectors = append(
 			pbConnectors,
 			DBToPBConnector(
+				ctx,
 				dbConnectors[idx],
 				connType,
 				dbConnectors[idx].Owner,
 				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
 			))
+		logger.Info(string(util.ConstructAuditLog(
+			span,
+			*owner,
+			*dbConnectors[idx],
+			"GetConnector",
+			false,
+			"",
+		)))
 	}
 
 	switch v := resp.(type) {
@@ -567,6 +645,12 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 
 func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
+	ctx, span := tracer.Start(ctx, "GetConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
 	var isBasicView bool
 
 	var connID string
@@ -578,6 +662,7 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 	case *connectorPB.GetSourceConnectorRequest:
 		resp = &connectorPB.GetSourceConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -586,6 +671,7 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 	case *connectorPB.GetDestinationConnectorRequest:
 		resp = &connectorPB.GetDestinationConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -595,25 +681,38 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, isBasicView)
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, isBasicView)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
 	)
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"GetConnector",
+		false,
+		"",
+	)))
 
 	switch v := resp.(type) {
 	case *connectorPB.GetSourceConnectorResponse:
@@ -626,7 +725,12 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 }
 
 func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
-	logger, _ := logger.GetZapLogger()
+
+	ctx, span := tracer.Start(ctx, "UpdateConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var pbConnectorReq interface{}
 	var pbConnectorToUpdate interface{}
@@ -645,6 +749,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	case *connectorPB.UpdateSourceConnectorRequest:
 		resp = &connectorPB.UpdateSourceConnectorResponse{}
 		if ownerErr != nil {
+			span.SetStatus(1, err.Error())
 			return resp, ownerErr
 		}
 
@@ -671,6 +776,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 		// Remove all OUTPUT_ONLY fields in the requested payload
@@ -688,6 +794,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 		getResp, err := h.GetSourceConnector(
@@ -697,6 +804,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -714,6 +822,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -731,6 +840,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -747,11 +857,13 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -761,6 +873,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	case *connectorPB.UpdateDestinationConnectorRequest:
 		resp = &connectorPB.UpdateDestinationConnectorResponse{}
 		if ownerErr != nil {
+			span.SetStatus(1, err.Error())
 			return resp, ownerErr
 		}
 
@@ -787,6 +900,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -805,6 +919,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -815,6 +930,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_FULL.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -832,6 +948,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -849,6 +966,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -865,11 +983,13 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -878,21 +998,34 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	}
 
 	if ownerErr != nil {
+		span.SetStatus(1, err.Error())
 		return resp, ownerErr
 	}
 
 	// Only the fields mentioned in the field mask will be copied to `pbPipelineToUpdate`, other fields are left intact
 	err = fieldmask_utils.StructToStruct(mask, pbConnectorReq, pbConnectorToUpdate)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnector(connID, owner, connType, PBToDBConnector(pbConnectorToUpdate, connType, owner.GetName(), connDefUID))
+	dbConnector, err := h.service.UpdateConnector(ctx, connID, owner, connType, PBToDBConnector(ctx, pbConnectorToUpdate, connType, owner.GetName(), connDefUID))
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"UpdateConnector",
+		false,
+		"",
+	)))
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		service.GenOwnerPermalink(owner),
@@ -909,6 +1042,12 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 }
 
 func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	ctx, span := tracer.Start(ctx, "DeleteConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var connType datamodel.ConnectorType
@@ -931,19 +1070,40 @@ func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(connID, owner, connType); err != nil {
+	if err := h.service.DeleteConnector(ctx, connID, owner, connType); err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"UpdateConnector",
+		false,
+		"",
+	)))
 
 	return resp, nil
 }
 
 func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	ctx, span := tracer.Start(ctx, "LookUpConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var isBasicView bool
 
@@ -970,15 +1130,18 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connUID, err = uuid.FromString(connUIDStr)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -1001,15 +1164,18 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connUIDStr, err := resource.GetPermalinkUID(v.GetPermalink())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connUID, err = uuid.FromString(connUIDStr)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -1019,20 +1185,33 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUID(connUID, owner, isBasicView)
+	dbConnector, err := h.service.GetConnectorByUID(ctx, connUID, owner, isBasicView)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"LookUpConnector",
+		false,
+		"",
+	)))
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
@@ -1051,7 +1230,11 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 
 func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	ctx, span := tracer.Start(ctx, "ConnectConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var connType datamodel.ConnectorType
@@ -1076,11 +1259,13 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -1092,16 +1277,19 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1129,6 +1317,7 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 
 		connID, err = resource.GetRscNameID(v.GetName())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -1140,16 +1329,19 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1158,15 +1350,27 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(ctx, connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"ConnectConnector",
+		false,
+		"",
+	)))
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
@@ -1185,7 +1389,11 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 
 func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	ctx, span := tracer.Start(ctx, "DisconnectConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var connType datamodel.ConnectorType
@@ -1210,11 +1418,13 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
@@ -1226,16 +1436,19 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1258,11 +1471,13 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -1274,16 +1489,19 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1292,15 +1510,27 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(ctx, connID, owner, connType, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"DisconnectConnector",
+		false,
+		"",
+	)))
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
@@ -1319,7 +1549,11 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 
 func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	ctx, span := tracer.Start(ctx, "RenameConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connID string
 	var connNewID string
@@ -1345,11 +1579,13 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
 		connID, err = resource.GetRscNameID(v.GetName())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connNewID = v.GetNewSourceConnectorId()
@@ -1362,16 +1598,19 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetSourceConnector().GetSourceConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1394,6 +1633,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, err.Error())
 			return resp, st.Err()
 		}
 
@@ -1411,16 +1651,19 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 				View: connectorPB.View_VIEW_BASIC.Enum(),
 			})
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
 		dbConnDefID, err := resource.GetRscNameID(getResp.GetDestinationConnector().GetDestinationConnectorDefinition())
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(dbConnDefID, connType, true)
+		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
 		if err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
@@ -1441,20 +1684,33 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 		if err != nil {
 			logger.Error(err.Error())
 		}
+		span.SetStatus(1, err.Error())
 		return resp, st.Err()
 	}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorID(connID, owner, connType, connNewID)
+	dbConnector, err := h.service.UpdateConnectorID(ctx, connID, owner, connType, connNewID)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"RenameConnector",
+		false,
+		"",
+	)))
 
 	pbConnector := DBToPBConnector(
+		ctx,
 		dbConnector,
 		connType,
 		dbConnector.Owner,
@@ -1472,6 +1728,13 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 }
 
 func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	ctx, span := tracer.Start(ctx, "WatchConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -1479,12 +1742,14 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	case *connectorPB.WatchSourceConnectorRequest:
 		resp = &connectorPB.WatchSourceConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 	case *connectorPB.WatchDestinationConnectorRequest:
 		resp = &connectorPB.WatchDestinationConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -1492,19 +1757,31 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, true)
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
 	state, err := h.service.GetResourceState(dbConnector.UID, connType)
 
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"WatchConnector",
+		false,
+		state.String(),
+	)))
 
 	switch v := resp.(type) {
 	case *connectorPB.WatchSourceConnectorResponse:
@@ -1517,6 +1794,13 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 }
 
 func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (resp interface{}, err error) {
+
+	ctx, span := tracer.Start(ctx, "TestConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
 	var connID string
 	var connType datamodel.ConnectorType
 
@@ -1524,12 +1808,14 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 	case *connectorPB.TestSourceConnectorRequest:
 		resp = &connectorPB.TestSourceConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 	case *connectorPB.TestDestinationConnectorRequest:
 		resp = &connectorPB.TestDestinationConnectorResponse{}
 		if connID, err = resource.GetRscNameID(v.GetName()); err != nil {
+			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
@@ -1537,28 +1823,37 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(connID, owner, connType, true)
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	if err != nil {
-		return resp, err
-	}
-
-	state, err := h.service.CheckConnectorByUID(dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
+	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
 
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	logger.Info(string(util.ConstructAuditLog(
+		span,
+		*owner,
+		*dbConnector,
+		"TestConnector",
+		false,
+		state.String(),
+	)))
 
 	switch v := resp.(type) {
 	case *connectorPB.TestSourceConnectorResponse:

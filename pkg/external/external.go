@@ -1,6 +1,7 @@
 package external
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 
@@ -18,8 +19,8 @@ import (
 )
 
 // InitMgmtPrivateServiceClient initialises a MgmtPrivateServiceClient instance
-func InitMgmtPrivateServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
-	logger, _ := logger.GetZapLogger()
+func InitMgmtPrivateServiceClient(ctx context.Context) (mgmtPB.MgmtPrivateServiceClient, *grpc.ClientConn) {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var clientDialOpts grpc.DialOption
 	var creds credentials.TransportCredentials
@@ -44,8 +45,8 @@ func InitMgmtPrivateServiceClient() (mgmtPB.MgmtPrivateServiceClient, *grpc.Clie
 }
 
 // InitPipelinePublicServiceClient initialises a PipelineServiceClient instance
-func InitPipelinePublicServiceClient() (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
-	logger, _ := logger.GetZapLogger()
+func InitPipelinePublicServiceClient(ctx context.Context) (pipelinePB.PipelinePublicServiceClient, *grpc.ClientConn) {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var clientDialOpts grpc.DialOption
 	var creds credentials.TransportCredentials
@@ -70,8 +71,8 @@ func InitPipelinePublicServiceClient() (pipelinePB.PipelinePublicServiceClient, 
 }
 
 // InitUsageServiceClient initialises a UsageServiceClient instance
-func InitUsageServiceClient() (usagePB.UsageServiceClient, *grpc.ClientConn) {
-	logger, _ := logger.GetZapLogger()
+func InitUsageServiceClient(ctx context.Context) (usagePB.UsageServiceClient, *grpc.ClientConn) {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var clientDialOpts grpc.DialOption
 	if config.Config.UsageServer.TLSEnabled {
@@ -91,8 +92,8 @@ func InitUsageServiceClient() (usagePB.UsageServiceClient, *grpc.ClientConn) {
 }
 
 // InitControllerPrivateServiceClient initialises a ControllerPrivateServiceClient instance
-func InitControllerPrivateServiceClient() (controllerPB.ControllerPrivateServiceClient, *grpc.ClientConn) {
-	logger, _ := logger.GetZapLogger()
+func InitControllerPrivateServiceClient(ctx context.Context) (controllerPB.ControllerPrivateServiceClient, *grpc.ClientConn) {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var clientDialOpts grpc.DialOption
 	var creds credentials.TransportCredentials

@@ -81,7 +81,7 @@ func (h *PublicHandler) RenameDestinationConnector(ctx context.Context, req *con
 
 func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	resp := &connectorPB.WriteDestinationConnectorResponse{}
 
@@ -155,7 +155,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		dstSyncMode = "append_dedup"
 	}
 
-	if err := h.service.WriteDestinationConnector(dstConnID, owner,
+	if err := h.service.WriteDestinationConnector(ctx, dstConnID, owner,
 		datamodel.WriteDestinationConnectorParam{
 			SyncMode:           syncMode,
 			DstSyncMode:        dstSyncMode,

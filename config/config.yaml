@@ -49,3 +49,7 @@ usageserver:
   tlsenabled: true
   host: usage.instill.tech
   port: 443
+log:
+  otelcollector:
+    host: otel-collector
+    port: 8095

@@ -42,31 +42,31 @@ type Service interface {
 	GetMgmtPrivateServiceClient() mgmtPB.MgmtPrivateServiceClient
 
 	// ConnectorDefinition
-	ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
-	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
-	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
+	ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
+	GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
+	GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector common
-	CreateConnector(owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnectors(owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
-	UpdateConnectorID(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
-	UpdateConnectorState(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
-	DeleteConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error
+	CreateConnector(ctx context.Context, owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error)
+	ListConnectors(ctx context.Context, owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error)
+	UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
+	UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
+	UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
+	DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error
 
-	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
+	ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
 	// Source connector custom service
-	ReadSourceConnector(id string, owner *mgmtPB.User) ([]byte, error)
+	ReadSourceConnector(ctx context.Context, id string, owner *mgmtPB.User) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
+	WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
 
 	// Shared public/private method for checking connector's connection
-	CheckConnectorByUID(connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error)
+	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error)
 
 	// Controller custom service
 	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
@@ -85,6 +85,7 @@ type service struct {
 
 // NewService initiates a service instance
 func NewService(
+	t context.Context,
 	r repository.Repository,
 	u mgmtPB.MgmtPrivateServiceClient,
 	p pipelinePB.PipelinePublicServiceClient,
@@ -92,7 +93,7 @@ func NewService(
 	d *dockerClient.Client,
 ) Service {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(t)
 
 	cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
 	if err != nil {
@@ -114,27 +115,27 @@ func (s *service) GetMgmtPrivateServiceClient() mgmtPB.MgmtPrivateServiceClient 
 	return s.mgmtPrivateServiceClient
 }
 
-func (s *service) ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
-	return s.repository.ListConnectorDefinitions(connectorType, pageSize, pageToken, isBasicView)
+func (s *service) ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
+	return s.repository.ListConnectorDefinitions(ctx, connectorType, pageSize, pageToken, isBasicView)
 }
 
-func (s *service) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
-	return s.repository.GetConnectorDefinitionByID(id, connectorType, isBasicView)
+func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+	return s.repository.GetConnectorDefinitionByID(ctx, id, connectorType, isBasicView)
 }
 
-func (s *service) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
-	return s.repository.GetConnectorDefinitionByUID(uid, isBasicView)
+func (s *service) GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+	return s.repository.GetConnectorDefinitionByUID(ctx, uid, isBasicView)
 }
 
-func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error) {
+func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	connector.Owner = ownerPermalink
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(connector.ConnectorDefinitionUID, true)
+	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, connector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +174,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 			return nil, st.Err()
 		}
 
-		if existingConnector, _ := s.GetConnectorByID(connector.ID, owner, connector.ConnectorType, true); existingConnector != nil {
+		if existingConnector, _ := s.GetConnectorByID(ctx, connector.ID, owner, connector.ConnectorType, true); existingConnector != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.AlreadyExists,
 				"[service] create connector",
@@ -189,12 +190,12 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 		}
 	}
 
-	if err := s.repository.CreateConnector(connector); err != nil {
+	if err := s.repository.CreateConnector(ctx, connector); err != nil {
 		return nil, err
 	}
 
 	// User desire state = CONNECTED
-	if err := s.repository.UpdateConnectorStateByID(connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+	if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 		return nil, err
 	}
 
@@ -205,7 +206,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 			return nil, err
 		}
 	} else {
-		if state, err := s.CheckConnectorByUID(connector.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
+		if state, err := s.CheckConnectorByUID(ctx, connector.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
 			if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, *state, nil); err != nil {
 				return nil, err
 			}
@@ -214,7 +215,7 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 		}
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(connector.ID, ownerPermalink, connector.ConnectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, connector.ID, ownerPermalink, connector.ConnectorType, false)
 	if err != nil {
 		return nil, err
 	}
@@ -223,11 +224,11 @@ func (s *service) CreateConnector(owner *mgmtPB.User, connector *datamodel.Conne
 
 }
 
-func (s *service) ListConnectors(owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectors(ctx context.Context, owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ctx, ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -235,9 +236,9 @@ func (s *service) ListConnectors(owner *mgmtPB.User, connectorType datamodel.Con
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorsAdmin(connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorsAdmin(ctx, connectorType, pageSize, pageToken, isBasicView)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -245,11 +246,11 @@ func (s *service) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pag
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) GetConnectorByID(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, isBasicView)
 	if err != nil {
 		return nil, err
 	}
@@ -257,11 +258,11 @@ func (s *service) GetConnectorByID(id string, owner *mgmtPB.User, connectorType 
 	return dbConnector, nil
 }
 
-func (s *service) GetConnectorByUID(uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnector, err := s.repository.GetConnectorByUID(uid, ownerPermalink, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByUID(ctx, uid, ownerPermalink, isBasicView)
 	if err != nil {
 		return nil, err
 	}
@@ -269,9 +270,9 @@ func (s *service) GetConnectorByUID(uid uuid.UUID, owner *mgmtPB.User, isBasicVi
 	return dbConnector, nil
 }
 
-func (s *service) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
 
-	dbConnector, err := s.repository.GetConnectorByUIDAdmin(uid, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, uid, isBasicView)
 	if err != nil {
 		return nil, err
 	}
@@ -279,21 +280,21 @@ func (s *service) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*data
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	updatedConnector.Owner = ownerPermalink
 
 	// Validation: HTTP and gRPC connector cannot be updated
-	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := s.repository.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.repository.GetConnectorDefinitionByUID(ctx, existingConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -314,12 +315,12 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 		return nil, st.Err()
 	}
 
-	if err := s.repository.UpdateConnector(id, ownerPermalink, connectorType, updatedConnector); err != nil {
+	if err := s.repository.UpdateConnector(ctx, id, ownerPermalink, connectorType, updatedConnector); err != nil {
 		return nil, err
 	}
 
 	// Check connector state
-	if state, err := s.CheckConnectorByUID(existingConnector.UID, def.DockerRepository, def.DockerImageTag); err == nil {
+	if state, err := s.CheckConnectorByUID(ctx, existingConnector.UID, def.DockerRepository, def.DockerImageTag); err == nil {
 		if err := s.UpdateResourceState(updatedConnector.UID, connectorType, *state, nil); err != nil {
 			return nil, err
 		}
@@ -327,7 +328,7 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(updatedConnector.ID, ownerPermalink, updatedConnector.ConnectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, updatedConnector.ID, ownerPermalink, updatedConnector.ConnectorType, false)
 	if err != nil {
 		return nil, err
 	}
@@ -335,12 +336,12 @@ func (s *service) UpdateConnector(id string, owner *mgmtPB.User, connectorType d
 	return dbConnector, nil
 }
 
-func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error {
-	logger, _ := logger.GetZapLogger()
+func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
 	if err != nil {
 		return err
 	}
@@ -384,22 +385,22 @@ func (s *service) DeleteConnector(id string, owner *mgmtPB.User, connectorType d
 		return err
 	}
 
-	return s.repository.DeleteConnector(id, ownerPermalink, connectorType)
+	return s.repository.DeleteConnector(ctx, id, ownerPermalink, connectorType)
 }
 
-func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connector cannot be disconnected
-	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
 	if err != nil {
 		return nil, err
 	}
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(conn.ConnectorDefinitionUID, true)
+	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -448,13 +449,13 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		}
 
 		// Set connector state to user desire state
-		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 
 		// Check resource state
 		if datamodel.ConnectorState(*connState) != state {
-			if state, err := s.CheckConnectorByUID(conn.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
+			if state, err := s.CheckConnectorByUID(ctx, conn.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
 				if err := s.UpdateResourceState(conn.UID, connectorType, *state, nil); err != nil {
 					return nil, err
 				}
@@ -481,7 +482,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 			return nil, st.Err()
 		}
 
-		if err := s.repository.UpdateConnectorStateByID(id, ownerPermalink, connectorType, state); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, connectorType, state); err != nil {
 			return nil, err
 		}
 		if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_State(state), nil); err != nil {
@@ -489,7 +490,7 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 		}
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
 	if err != nil {
 		return nil, err
 	}
@@ -497,19 +498,19 @@ func (s *service) UpdateConnectorState(id string, owner *mgmtPB.User, connectorT
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connectors cannot be renamed
-	existingConnector, err := s.repository.GetConnectorByID(id, ownerPermalink, connectorType, true)
+	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
 	if err != nil {
 		return nil, err
 	}
 
-	def, err := s.repository.GetConnectorDefinitionByUID(existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.repository.GetConnectorDefinitionByUID(ctx, existingConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -538,11 +539,11 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 	// 	return nil, err
 	// }
 
-	if err := s.repository.UpdateConnectorID(id, ownerPermalink, connectorType, newID); err != nil {
+	if err := s.repository.UpdateConnectorID(ctx, id, ownerPermalink, connectorType, newID); err != nil {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(newID, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, newID, ownerPermalink, connectorType, false)
 	if err != nil {
 		return nil, err
 	}
@@ -550,26 +551,26 @@ func (s *service) UpdateConnectorID(id string, owner *mgmtPB.User, connectorType
 	return dbConnector, nil
 }
 
-func (s *service) ReadSourceConnector(id string, owner *mgmtPB.User) ([]byte, error) {
+func (s *service) ReadSourceConnector(ctx context.Context, id string, owner *mgmtPB.User) ([]byte, error) {
 	// TODO: Implement async source destination
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error {
+func (s *service) WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	conn, err := s.repository.GetConnectorByID(id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
 	if err != nil {
 		return err
 	}
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(conn.ConnectorDefinitionUID, true)
+	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, true)
 	if err != nil {
 		return err
 	}
@@ -811,13 +812,13 @@ func (s *service) WriteDestinationConnector(id string, owner *mgmtPB.User, param
 	return nil
 }
 
-func (s *service) CheckConnectorByUID(connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error) {
-	logger, _ := logger.GetZapLogger()
+func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error) {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	dbConnector, err := s.repository.GetConnectorByUIDAdmin(connUID, false)
+	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
 	}
