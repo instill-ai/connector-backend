@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -80,6 +81,10 @@ func (h *PublicHandler) RenameDestinationConnector(ctx context.Context, req *con
 }
 
 func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
+
+	ctx, span := tracer.Start(ctx, "WriteDestinationConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
 
 	logger, _ := logger.GetZapLogger(ctx)
 

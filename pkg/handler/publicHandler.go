@@ -222,7 +222,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -240,7 +240,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -258,7 +258,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -303,7 +303,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -320,7 +320,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -337,7 +337,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -361,7 +361,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -379,7 +379,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -397,7 +397,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -442,7 +442,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -459,7 +459,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -476,7 +476,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -497,7 +497,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		span.SetStatus(1, err.Error())
+		span.SetStatus(1, st.Err().Error())
 		return resp, st.Err()
 	}
 
@@ -776,7 +776,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 		// Remove all OUTPUT_ONLY fields in the requested payload
@@ -794,7 +794,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 		getResp, err := h.GetSourceConnector(
@@ -840,7 +840,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -900,7 +900,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -919,7 +919,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -948,7 +948,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -966,7 +966,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1130,7 +1130,7 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1164,7 +1164,7 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1259,7 +1259,7 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1312,6 +1312,7 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 			if err != nil {
 				logger.Error(err.Error())
 			}
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1418,7 +1419,7 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1471,7 +1472,7 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1579,7 +1580,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1633,7 +1634,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			if err != nil {
 				logger.Error(err.Error())
 			}
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, st.Err().Error())
 			return resp, st.Err()
 		}
 
@@ -1684,7 +1685,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		span.SetStatus(1, err.Error())
+		span.SetStatus(1, st.Err().Error())
 		return resp, st.Err()
 	}
 

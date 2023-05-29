@@ -560,9 +560,6 @@ func (s *service) WriteDestinationConnector(ctx context.Context, id string, owne
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
@@ -813,10 +810,8 @@ func (s *service) WriteDestinationConnector(ctx context.Context, id string, owne
 }
 
 func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error) {
-	logger, _ := logger.GetZapLogger(ctx)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
