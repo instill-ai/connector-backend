@@ -50,6 +50,7 @@ usageserver:
   host: usage.instill.tech
   port: 443
 log:
+  external: false
   otelcollector:
     host: otel-collector
     port: 8095
