@@ -1074,13 +1074,13 @@ func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnector(ctx, connID, owner, connType); err != nil {
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
+	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
-	if err != nil {
+	if err := h.service.DeleteConnector(ctx, connID, owner, connType); err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
