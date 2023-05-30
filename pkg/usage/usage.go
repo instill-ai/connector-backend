@@ -34,7 +34,7 @@ type usage struct {
 
 // NewUsage initiates a usage instance
 func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivateServiceClient, usc usagePB.UsageServiceClient) Usage {
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	version, err := repo.ReadReleaseManifest("release-please/manifest.json")
 	if err != nil {
@@ -58,8 +58,8 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivat
 
 func (u *usage) RetrieveUsageData() interface{} {
 
-	logger, _ := logger.GetZapLogger()
 	ctx := context.Background()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	logger.Debug("Retrieve usage data...")
 
@@ -88,6 +88,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 			srcConnDefSet := make(map[string]struct{})
 			for {
 				dbSrcConns, _, connNextPageToken, err := u.repository.ListConnectors(
+					ctx,
 					fmt.Sprintf("users/%s", user.GetUid()),
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
 					int64(repository.MaxPageSize),
@@ -105,7 +106,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
 						srcConnDisconnectedStateNum++
 					}
-					srcConnDef, err := u.repository.GetConnectorDefinitionByUID(conn.ConnectorDefinitionUID, false)
+					srcConnDef, err := u.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, false)
 					if err != nil {
 						logger.Error(fmt.Sprintf("%s", err))
 					}
@@ -131,6 +132,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 			dstConnDefSet := make(map[string]struct{})
 			for {
 				dbDstConns, _, connNextPageToken, err := u.repository.ListConnectors(
+					ctx,
 					fmt.Sprintf("users/%s", user.GetUid()),
 					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
 					int64(repository.MaxPageSize),
@@ -148,7 +150,7 @@ func (u *usage) RetrieveUsageData() interface{} {
 					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
 						dstConnDisconnectedStateNum++
 					}
-					dstConnDef, err := u.repository.GetConnectorDefinitionByUID(conn.ConnectorDefinitionUID, false)
+					dstConnDef, err := u.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, false)
 					if err != nil {
 						logger.Error(fmt.Sprintf("%s", err))
 					}
@@ -200,7 +202,7 @@ func (u *usage) StartReporter(ctx context.Context) {
 		return
 	}
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 	go func() {
 		time.Sleep(5 * time.Second)
 		err := usageClient.StartReporter(ctx, u.reporter, usagePB.Session_SERVICE_CONNECTOR, config.Config.Server.Edition, u.version, u.RetrieveUsageData)
@@ -214,7 +216,7 @@ func (u *usage) TriggerSingleReporter(ctx context.Context) {
 	if u.reporter == nil {
 		return
 	}
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 	err := usageClient.SingleReporter(ctx, u.reporter, usagePB.Session_SERVICE_CONNECTOR, config.Config.Server.Edition, u.version, u.RetrieveUsageData())
 	if err != nil {
 		logger.Error(fmt.Sprintf("unable to trigger single reporter: %v\n", err))

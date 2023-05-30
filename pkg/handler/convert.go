@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -19,8 +20,8 @@ import (
 )
 
 // DBToPBConnectorDefinition converts db data model to protobuf data model
-func DBToPBConnectorDefinition(dbSrcDef *datamodel.ConnectorDefinition, connectorType datamodel.ConnectorType) interface{} {
-	logger, _ := logger.GetZapLogger()
+func DBToPBConnectorDefinition(ctx context.Context, dbSrcDef *datamodel.ConnectorDefinition, connectorType datamodel.ConnectorType) interface{} {
+	logger, _ := logger.GetZapLogger(ctx)
 	connDef := &connectorPB.ConnectorDefinition{
 		Title:            dbSrcDef.Title,
 		DockerRepository: dbSrcDef.DockerRepository,
@@ -91,12 +92,13 @@ func DBToPBConnectorDefinition(dbSrcDef *datamodel.ConnectorDefinition, connecto
 
 // PBToDBConnector converts protobuf data model to db data model
 func PBToDBConnector(
+	ctx context.Context,
 	pbConnector interface{},
 	connectorType datamodel.ConnectorType,
 	ownerRscName string,
 	connectorDefinitionUID uuid.UUID) *datamodel.Connector {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var uid uuid.UUID
 	var id string
@@ -175,12 +177,13 @@ func PBToDBConnector(
 
 // DBToPBConnector converts db data model to protobuf data model
 func DBToPBConnector(
+	ctx context.Context,
 	dbConnector *datamodel.Connector,
 	connectorType datamodel.ConnectorType,
 	owner string,
 	connectorDefinition string) interface{} {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	connector := &connectorPB.Connector{
 

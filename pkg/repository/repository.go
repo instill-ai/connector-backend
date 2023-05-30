@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -28,23 +29,23 @@ const MaxPageSize = 100
 // Repository interface
 type Repository interface {
 	// ConnectorDefinition
-	ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
-	GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
-	GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
+	ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
+	GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
+	GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector
-	CreateConnector(connector *datamodel.Connector) error
-	ListConnectors(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
-	DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
-	UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
-	UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
-	UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
+	CreateConnector(ctx context.Context, connector *datamodel.Connector) error
+	ListConnectors(ctx context.Context, ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	GetConnectorByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
+	UpdateConnector(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error
+	DeleteConnector(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType) error
+	UpdateConnectorID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error
+	UpdateConnectorStateByID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error
+	UpdateConnectorStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
 
-	ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
+	ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 }
 
 type repository struct {
@@ -58,9 +59,9 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) ListConnectorDefinitions(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectorDefinitions []*datamodel.ConnectorDefinition, totalSize int64, nextPageToken string, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	r.db.Model(&datamodel.ConnectorDefinition{}).Where("connector_type = ?", connectorType).Count(&totalSize)
 
@@ -169,9 +170,9 @@ func (r *repository) ListConnectorDefinitions(connectorType datamodel.ConnectorT
 
 }
 
-func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+func (r *repository) GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connectorDefinition datamodel.ConnectorDefinition
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("id = ? AND connector_type = ?", id, connectorType)
@@ -196,9 +197,9 @@ func (r *repository) GetConnectorDefinitionByID(id string, connectorType datamod
 	return &connectorDefinition, nil
 }
 
-func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
+func (r *repository) GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connectorDefinition datamodel.ConnectorDefinition
 	queryBuilder := r.db.Model(&datamodel.ConnectorDefinition{}).Where("uid = ?", uid)
@@ -222,9 +223,9 @@ func (r *repository) GetConnectorDefinitionByUID(uid uuid.UUID, isBasicView bool
 	return &connectorDefinition, nil
 }
 
-func (r *repository) CreateConnector(connector *datamodel.Connector) error {
+func (r *repository) CreateConnector(ctx context.Context, connector *datamodel.Connector) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	if result := r.db.Model(&datamodel.Connector{}).Create(connector); result.Error != nil {
 		var pgErr *pgconn.PgError
@@ -248,9 +249,9 @@ func (r *repository) CreateConnector(connector *datamodel.Connector) error {
 	return nil
 }
 
-func (r *repository) ListConnectors(ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	r.db.Model(&datamodel.Connector{}).Where("owner = ? AND connector_type = ?", ownerPermalink, connectorType).Count(&totalSize)
 
@@ -355,9 +356,9 @@ func (r *repository) ListConnectors(ownerPermalink string, connectorType datamod
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) ListConnectorsAdmin(connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	r.db.Model(&datamodel.Connector{}).Where("connector_type = ?", connectorType).Count(&totalSize)
 
@@ -462,9 +463,9 @@ func (r *repository) ListConnectorsAdmin(connectorType datamodel.ConnectorType, 
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) GetConnectorByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connector datamodel.Connector
 
@@ -492,9 +493,9 @@ func (r *repository) GetConnectorByID(id string, ownerPermalink string, connecto
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connector datamodel.Connector
 
@@ -522,9 +523,9 @@ func (r *repository) GetConnectorByUID(uid uuid.UUID, ownerPermalink string, isB
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	var connector datamodel.Connector
 
@@ -552,9 +553,9 @@ func (r *repository) GetConnectorByUIDAdmin(uid uuid.UUID, isBasicView bool) (*d
 	return &connector, nil
 }
 
-func (r *repository) UpdateConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
+func (r *repository) UpdateConnector(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, connector *datamodel.Connector) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
@@ -588,9 +589,9 @@ func (r *repository) UpdateConnector(id string, ownerPermalink string, connector
 	return nil
 }
 
-func (r *repository) DeleteConnector(id string, ownerPermalink string, connectorType datamodel.ConnectorType) error {
+func (r *repository) DeleteConnector(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
@@ -629,9 +630,9 @@ func (r *repository) DeleteConnector(id string, ownerPermalink string, connector
 	return nil
 }
 
-func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error {
+func (r *repository) UpdateConnectorID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, newID string) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
@@ -665,9 +666,9 @@ func (r *repository) UpdateConnectorID(id string, ownerPermalink string, connect
 	return nil
 }
 
-func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorStateByID(ctx context.Context, id string, ownerPermalink string, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ? AND connector_type = ?", id, ownerPermalink, connectorType).
@@ -701,9 +702,9 @@ func (r *repository) UpdateConnectorStateByID(id string, ownerPermalink string, 
 	return nil
 }
 
-func (r *repository) UpdateConnectorStateByUID(uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("uid = ? AND owner = ?", uid, ownerPermalink).

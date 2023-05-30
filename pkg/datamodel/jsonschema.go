@@ -1,6 +1,7 @@
 package datamodel
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -26,9 +27,9 @@ var SrcConnJSONSchema *jsonschema.Schema
 var DstConnJSONSchema *jsonschema.Schema
 
 // InitJSONSchema initialise JSON Schema instances with the given files
-func InitJSONSchema() {
+func InitJSONSchema(ctx context.Context) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	compiler := jsonschema.NewCompiler()
 

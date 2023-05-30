@@ -2,6 +2,7 @@ package datamodel
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -78,9 +79,9 @@ var TaskOutputAirbyteCatalog AirbyteCatalog
 var sch *jsonschema.Schema
 
 // InitAirbyteCatalog reads all task AirbyteCatalog files and stores the JSON content in the global TaskAirbyteCatalog variable
-func InitAirbyteCatalog() {
+func InitAirbyteCatalog(ctx context.Context) {
 
-	logger, _ := logger.GetZapLogger()
+	logger, _ := logger.GetZapLogger(ctx)
 
 	yamlFile, err := os.ReadFile("/etc/vdp/vdp_protocol.yaml")
 	if err != nil {

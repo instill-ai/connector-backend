@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -18,8 +19,8 @@ import (
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-func createSourceConnectorDefinition(db *gorm.DB, srcConnDef *connectorPB.SourceConnectorDefinition, connDef *connectorPB.ConnectorDefinition, spec datatypes.JSON) error {
-	logger, _ := logger.GetZapLogger()
+func createSourceConnectorDefinition(ctx context.Context, db *gorm.DB, srcConnDef *connectorPB.SourceConnectorDefinition, connDef *connectorPB.ConnectorDefinition, spec datatypes.JSON) error {
+	logger, _ := logger.GetZapLogger(ctx)
 
 	uid, err := uuid.FromString(srcConnDef.GetUid())
 	if err != nil {
