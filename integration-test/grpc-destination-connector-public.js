@@ -121,7 +121,7 @@ export function CheckCreate() {
                 destination_connector: mySQLDstConnector,
             },
             {
-                timeout: "360s",
+                timeout: "600s",
             }
         )
 
