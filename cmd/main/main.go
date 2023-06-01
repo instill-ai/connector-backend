@@ -91,13 +91,17 @@ func main() {
 	if tp, err := custom_otel.SetupTracing(ctx, "connector-backend"); err != nil {
 		panic(err)
 	} else {
-		defer tp.Shutdown(ctx)
+		defer func() {
+			err = tp.Shutdown(ctx)
+		}()
 	}
 
 	if mp, err := custom_otel.SetupMetrics(ctx, "connector-backend"); err != nil {
 		panic(err)
 	} else {
-		defer mp.Shutdown(ctx)
+		defer func() {
+			err = mp.Shutdown(ctx)
+		}()
 	}
 
 	ctx, span := otel.Tracer("main-tracer").Start(ctx,

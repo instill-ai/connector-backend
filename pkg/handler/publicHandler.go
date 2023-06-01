@@ -525,7 +525,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"CreateConnector",
 		false,
@@ -612,7 +612,7 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 			))
 		logger.Info(string(util.ConstructAuditLog(
 			span,
-			*owner,
+			owner,
 			*dbConnectors[idx],
 			"GetConnector",
 			false,
@@ -707,7 +707,7 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"GetConnector",
 		false,
@@ -1017,7 +1017,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"UpdateConnector",
 		false,
@@ -1087,7 +1087,7 @@ func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"UpdateConnector",
 		false,
@@ -1203,7 +1203,7 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"LookUpConnector",
 		false,
@@ -1363,7 +1363,7 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"ConnectConnector",
 		false,
@@ -1523,7 +1523,7 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"DisconnectConnector",
 		false,
@@ -1703,7 +1703,7 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"RenameConnector",
 		false,
@@ -1777,7 +1777,7 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"WatchConnector",
 		false,
@@ -1849,7 +1849,7 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 
 	logger.Info(string(util.ConstructAuditLog(
 		span,
-		*owner,
+		owner,
 		*dbConnector,
 		"TestConnector",
 		false,
