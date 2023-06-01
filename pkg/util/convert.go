@@ -29,7 +29,7 @@ func ConvertConnectorToResourceName(
 
 func ConstructAuditLog(
 	span trace.Span,
-	user mgmtPB.User,
+	user *mgmtPB.User,
 	connector datamodel.Connector,
 	eventName string,
 	billable bool,
