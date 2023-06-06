@@ -6,7 +6,8 @@ server:
     key:
   corsorigins:
   edition: local-ce:dev
-  usageenabled: true
+  usage:
+    enabled: true
   debug: true
 container:
   mountsource:

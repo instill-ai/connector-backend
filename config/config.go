@@ -36,10 +36,12 @@ type ServerConfig struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}
-	CORSOrigins  []string `koanf:"corsorigins"`
-	Edition      string   `koanf:"edition"`
-	UsageEnabled bool     `koanf:"usageenabled"`
-	Debug        bool     `koanf:"debug"`
+	CORSOrigins []string `koanf:"corsorigins"`
+	Edition     string   `koanf:"edition"`
+	Usage       struct {
+		Enabled bool `koanf:"enabled"`
+	}
+	Debug bool `koanf:"debug"`
 }
 
 // ContainerConfig defines the container configurations
