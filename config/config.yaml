@@ -6,7 +6,11 @@ server:
     key:
   corsorigins:
   edition: local-ce:dev
-  disableusage: false
+  usage:
+    enabled: true
+    tlsenabled: true
+    host: usage.instill.tech
+    port: 443
   debug: true
 container:
   mountsource:
@@ -45,10 +49,6 @@ controller:
   https:
     cert:
     key:
-usageserver:
-  tlsenabled: true
-  host: usage.instill.tech
-  port: 443
 log:
   external: false
   otelcollector:
