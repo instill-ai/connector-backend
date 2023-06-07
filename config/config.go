@@ -24,7 +24,6 @@ type AppConfig struct {
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
-	UsageServer     UsageServerConfig     `koanf:"usageserver"`
 	Log             LogConfig             `koanf:"log"`
 }
 
@@ -39,7 +38,10 @@ type ServerConfig struct {
 	CORSOrigins []string `koanf:"corsorigins"`
 	Edition     string   `koanf:"edition"`
 	Usage       struct {
-		Enabled bool `koanf:"enabled"`
+		Enabled    bool   `koanf:"enabled"`
+		TLSEnabled bool   `koanf:"tlsenabled"`
+		Host       string `koanf:"host"`
+		Port       int    `koanf:"port"`
 	}
 	Debug bool `koanf:"debug"`
 }
@@ -90,13 +92,6 @@ type PipelineBackendConfig struct {
 		Cert string `koanf:"cert"`
 		Key  string `koanf:"key"`
 	}
-}
-
-// UsageServerConfig related to usage-backend
-type UsageServerConfig struct {
-	TLSEnabled bool   `koanf:"tlsenabled"`
-	Host       string `koanf:"host"`
-	Port       int    `koanf:"port"`
 }
 
 // ControllerConfig related to controller
