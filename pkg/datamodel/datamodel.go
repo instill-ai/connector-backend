@@ -38,25 +38,6 @@ func (base *BaseDynamic) BeforeCreate(db *gorm.DB) error {
 	return nil
 }
 
-// ConnectorDefinition is the data model of the connector_definition table
-type ConnectorDefinition struct {
-	BaseStatic
-	ID                   string
-	Title                string
-	DockerRepository     string
-	DockerImageTag       string
-	DocumentationURL     string
-	Icon                 string
-	Tombstone            bool
-	Public               bool
-	Custom               bool
-	ReleaseDate          *time.Time
-	Spec                 datatypes.JSON `gorm:"type:jsonb"`
-	ResourceRequirements datatypes.JSON `gorm:"type:jsonb"`
-	ConnectorType        ConnectorType  `sql:"type:valid_connector_type"`
-	ReleaseStage         ReleaseStage   `sql:"type:valid_release_stage"`
-}
-
 // Connector is the data model of the connector table
 type Connector struct {
 	BaseDynamic

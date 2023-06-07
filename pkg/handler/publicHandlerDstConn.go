@@ -12,10 +12,11 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
+
+	connectorAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
@@ -125,7 +126,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 		}
 
 		// Validate TaskAirbyteCatalog's JSON schema
-		if err := datamodel.ValidateAirbyteCatalog(taskOutputs); err != nil {
+		if err := connectorAirbyte.ValidateAirbyteCatalog(taskOutputs); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] write destination connector error",
 				[]*errdetails.BadRequest_FieldViolation{
@@ -161,7 +162,7 @@ func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *conn
 	}
 
 	if err := h.service.WriteDestinationConnector(ctx, dstConnID, owner,
-		datamodel.WriteDestinationConnectorParam{
+		connectorAirbyte.WriteDestinationConnectorParam{
 			SyncMode:           syncMode,
 			DstSyncMode:        dstSyncMode,
 			Pipeline:           req.Pipeline,

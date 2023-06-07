@@ -1,36 +1,25 @@
 package service
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"strings"
-	"time"
-
-	"github.com/allegro/bigcache"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/gofrs/uuid"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/sterr"
 
-	dockerClient "github.com/docker/docker/client"
+	connectorDestination "github.com/instill-ai/connector-destination/pkg"
+	connectorAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
+	connectorSource "github.com/instill-ai/connector-source/pkg"
+	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
@@ -40,11 +29,6 @@ import (
 // Service interface
 type Service interface {
 	GetMgmtPrivateServiceClient() mgmtPB.MgmtPrivateServiceClient
-
-	// ConnectorDefinition
-	ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error)
-	GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error)
-	GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error)
 
 	// Connector common
 	CreateConnector(ctx context.Context, owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error)
@@ -63,10 +47,10 @@ type Service interface {
 	ReadSourceConnector(ctx context.Context, id string, owner *mgmtPB.User) ([]byte, error)
 
 	// Destination connector custom service
-	WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error
+	WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param connectorAirbyte.WriteDestinationConnectorParam) error
 
 	// Shared public/private method for checking connector's connection
-	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error)
+	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error)
 
 	// Controller custom service
 	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
@@ -76,11 +60,12 @@ type Service interface {
 
 type service struct {
 	repository                  repository.Repository
-	cache                       *bigcache.BigCache
 	mgmtPrivateServiceClient    mgmtPB.MgmtPrivateServiceClient
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
 	controllerClient            controllerPB.ControllerPrivateServiceClient
-	dockerClient                *dockerClient.Client
+	connectorAll                connectorBase.IConnector
+	connectorSource             connectorBase.IConnector
+	connectorDestination        connectorBase.IConnector
 }
 
 // NewService initiates a service instance
@@ -90,41 +75,22 @@ func NewService(
 	u mgmtPB.MgmtPrivateServiceClient,
 	p pipelinePB.PipelinePublicServiceClient,
 	c controllerPB.ControllerPrivateServiceClient,
-	d *dockerClient.Client,
 ) Service {
-
 	logger, _ := logger.GetZapLogger(t)
-
-	cache, err := bigcache.NewBigCache(bigcache.DefaultConfig(60 * time.Minute))
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
 	return &service{
 		repository:                  r,
-		cache:                       cache,
 		mgmtPrivateServiceClient:    u,
 		pipelinePublicServiceClient: p,
 		controllerClient:            c,
-		dockerClient:                d,
+		connectorAll:                connector.InitConnectorAll(logger),
+		connectorSource:             connectorSource.Init(logger),
+		connectorDestination:        connectorDestination.Init(logger, connector.GetConnectorDestinationOptions()),
 	}
 }
 
 // GetMgmtPrivateServiceClient returns the management private service client
 func (s *service) GetMgmtPrivateServiceClient() mgmtPB.MgmtPrivateServiceClient {
 	return s.mgmtPrivateServiceClient
-}
-
-func (s *service) ListConnectorDefinitions(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.ConnectorDefinition, int64, string, error) {
-	return s.repository.ListConnectorDefinitions(ctx, connectorType, pageSize, pageToken, isBasicView)
-}
-
-func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
-	return s.repository.GetConnectorDefinitionByID(ctx, id, connectorType, isBasicView)
-}
-
-func (s *service) GetConnectorDefinitionByUID(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorDefinition, error) {
-	return s.repository.GetConnectorDefinitionByUID(ctx, uid, isBasicView)
 }
 
 func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error) {
@@ -135,20 +101,20 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 
 	connector.Owner = ownerPermalink
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, connector.ConnectorDefinitionUID, true)
+	connDef, err := s.connectorAll.GetConnectorDefinitionByUid(connector.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Validation: HTTP and gRPC connector
-	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
-		if connector.ID != connDef.ID {
+	if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+		if connector.ID != connDef.GetId() {
 			st, err := sterr.CreateErrorBadRequest(
 				"[service] create connector",
 				[]*errdetails.BadRequest_FieldViolation{
 					{
 						Field:       "id",
-						Description: fmt.Sprintf("Connector id must be %s", connDef.ID),
+						Description: fmt.Sprintf("Connector id must be %s", connDef.GetId()),
 					},
 				},
 			)
@@ -164,7 +130,7 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 				[]*errdetails.BadRequest_FieldViolation{
 					{
 						Field:       "connector.configuration",
-						Description: fmt.Sprintf("%s connector configuration must be an empty JSON", connDef.ID),
+						Description: fmt.Sprintf("%s connector configuration must be an empty JSON", connDef.GetId()),
 					},
 				},
 			)
@@ -200,19 +166,12 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 	}
 
 	// Check connector state and update resource state in etcd
-	if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
-		// HTTP and gRPC connector is always with STATE_CONNECTED
-		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+	if state, err := s.CheckConnectorByUID(ctx, connector.UID); err == nil {
+		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, *state, nil); err != nil {
 			return nil, err
 		}
 	} else {
-		if state, err := s.CheckConnectorByUID(ctx, connector.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
-			if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, *state, nil); err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	dbConnector, err := s.repository.GetConnectorByID(ctx, connector.ID, ownerPermalink, connector.ConnectorType, false)
@@ -294,12 +253,12 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 		return nil, err
 	}
 
-	def, err := s.repository.GetConnectorDefinitionByUID(ctx, existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.connectorAll.GetConnectorDefinitionByUid(existingConnector.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
 	}
 
-	if strings.Contains(def.ID, "http") || strings.Contains(def.ID, "grpc") {
+	if strings.Contains(def.GetId(), "http") || strings.Contains(def.GetId(), "grpc") {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -320,7 +279,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 	}
 
 	// Check connector state
-	if state, err := s.CheckConnectorByUID(ctx, existingConnector.UID, def.DockerRepository, def.DockerImageTag); err == nil {
+	if state, err := s.CheckConnectorByUID(ctx, existingConnector.UID); err == nil {
 		if err := s.UpdateResourceState(updatedConnector.UID, connectorType, *state, nil); err != nil {
 			return nil, err
 		}
@@ -400,7 +359,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		return nil, err
 	}
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, true)
+	connDef, err := s.connectorAll.GetConnectorDefinitionByUid(conn.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
 	}
@@ -444,7 +403,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
 
-		if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
+		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
 			break
 		}
 
@@ -455,7 +414,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 
 		// Check resource state
 		if datamodel.ConnectorState(*connState) != state {
-			if state, err := s.CheckConnectorByUID(ctx, conn.UID, connDef.DockerRepository, connDef.DockerImageTag); err == nil {
+			if state, err := s.CheckConnectorByUID(ctx, conn.UID); err == nil {
 				if err := s.UpdateResourceState(conn.UID, connectorType, *state, nil); err != nil {
 					return nil, err
 				}
@@ -466,14 +425,14 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
 
-		if strings.Contains(connDef.ID, "http") || strings.Contains(connDef.ID, "grpc") {
+		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
 			st, err := sterr.CreateErrorPreconditionFailure(
 				"[service] update connector state",
 				[]*errdetails.PreconditionFailure_Violation{
 					{
 						Type:        "STATE",
 						Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
-						Description: fmt.Sprintf("Cannot disconnect a %s connector", connDef.ID),
+						Description: fmt.Sprintf("Cannot disconnect a %s connector", connDef.GetId()),
 					},
 				})
 			if err != nil {
@@ -510,19 +469,19 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 		return nil, err
 	}
 
-	def, err := s.repository.GetConnectorDefinitionByUID(ctx, existingConnector.ConnectorDefinitionUID, true)
+	def, err := s.connectorAll.GetConnectorDefinitionByUid(existingConnector.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
 	}
 
-	if strings.Contains(def.ID, "http") || strings.Contains(def.ID, "grpc") {
+	if strings.Contains(def.GetId(), "http") || strings.Contains(def.GetId(), "grpc") {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector id",
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "RENAME",
 					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
-					Description: fmt.Sprintf("Cannot rename a %s connector", def.ID),
+					Description: fmt.Sprintf("Cannot rename a %s connector", def.GetId()),
 				},
 			})
 		if err != nil {
@@ -556,7 +515,7 @@ func (s *service) ReadSourceConnector(ctx context.Context, id string, owner *mgm
 	return nil, nil
 }
 
-func (s *service) WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param datamodel.WriteDestinationConnectorParam) error {
+func (s *service) WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param connectorAirbyte.WriteDestinationConnectorParam) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -567,400 +526,78 @@ func (s *service) WriteDestinationConnector(ctx context.Context, id string, owne
 		return err
 	}
 
-	connDef, err := s.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, true)
-	if err != nil {
-		return err
-	}
-
-	// Create ConfiguredAirbyteCatalog
-	cfgAbCatalog := datamodel.ConfiguredAirbyteCatalog{
-		Streams: []datamodel.ConfiguredAirbyteStream{
-			{
-				Stream:              &datamodel.TaskOutputAirbyteCatalog.Streams[0],
-				SyncMode:            param.SyncMode,
-				DestinationSyncMode: param.DstSyncMode,
-			},
-		},
-	}
-
-	byteCfgAbCatalog, err := json.Marshal(&cfgAbCatalog)
-	if err != nil {
-		return fmt.Errorf("Marshal AirbyteMessage error: %w", err)
-	}
-
-	// Create AirbyteMessage RECORD type, i.e., AirbyteRecordMessage in JSON Line format
-	var byteAbMsgs []byte
-
-	for _, modelOutput := range param.ModelOutputs {
-
-		for idx, taskOutput := range modelOutput.TaskOutputs {
-
-			b, err := protojson.MarshalOptions{
-				UseProtoNames:   true,
-				EmitUnpopulated: true,
-			}.Marshal(taskOutput)
+	configuration := func() *structpb.Struct {
+		if conn.Configuration != nil {
+			str := structpb.Struct{}
+			err := str.UnmarshalJSON(conn.Configuration)
 			if err != nil {
-				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
+				logger.Fatal(err.Error())
 			}
-
-			dataStruct := structpb.Struct{}
-			err = protojson.Unmarshal(b, &dataStruct)
-			if err != nil {
-				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
-			}
-
-			b, err = protojson.MarshalOptions{
-				UseProtoNames:   true,
-				EmitUnpopulated: true,
-			}.Marshal(param.Recipe)
-			if err != nil {
-				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
-			}
-
-			recipeStruct := structpb.Struct{}
-			err = protojson.Unmarshal(b, &recipeStruct)
-			if err != nil {
-				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
-			}
-
-			pipelineStruct := structpb.Struct{}
-			pipelineStruct.Fields = make(map[string]*structpb.Value)
-			pipelineStruct.GetFields()["name"] = structpb.NewStringValue(param.Pipeline)
-			pipelineStruct.GetFields()["recipe"] = structpb.NewStructValue(&recipeStruct)
-
-			dataStruct.GetFields()["pipeline"] = structpb.NewStructValue(&pipelineStruct)
-			dataStruct.GetFields()["model"] = structpb.NewStringValue(modelOutput.Model)
-			dataStruct.GetFields()["index"] = structpb.NewStringValue(param.DataMappingIndices[idx])
-
-			b, err = protojson.Marshal(&dataStruct)
-			if err != nil {
-				return fmt.Errorf("task_outputs[%d] error: %w", idx, err)
-			}
-
-			abMsg := datamodel.AirbyteMessage{}
-			abMsg.Type = "RECORD"
-			abMsg.Record = &datamodel.AirbyteRecordMessage{
-				Stream:    datamodel.TaskOutputAirbyteCatalog.Streams[0].Name,
-				Data:      b,
-				EmittedAt: time.Now().UnixMilli(),
-			}
-
-			b, err = json.Marshal(&abMsg)
-			if err != nil {
-				return fmt.Errorf("Marshal AirbyteMessage error: %w", err)
-			}
-			b = []byte(string(b) + "\n")
-			byteAbMsgs = append(byteAbMsgs, b...)
+			return &str
 		}
-
-	}
-
-	// Remove the last "\n"
-	byteAbMsgs = byteAbMsgs[:len(byteAbMsgs)-1]
-
-	imageName := fmt.Sprintf("%s:%s", connDef.DockerRepository, connDef.DockerImageTag)
-	containerName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
-	configFileName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
-	catalogFileName := fmt.Sprintf("%s.%d.write", conn.UID, time.Now().UnixNano())
-
-	// If there is already a container run dispatched in the previous attempt, return exitCodeOK directly
-	if _, err := s.cache.Get(containerName); err == nil {
 		return nil
-	}
-
-	// Write config into a container local file (always overwrite)
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", config.Config.Container.MountTarget.VDP, configFileName)
-	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
-		return fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
-	}
-	if err := os.WriteFile(configFilePath, conn.Configuration, 0644); err != nil {
-		return fmt.Errorf(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
-	}
-
-	// Write catalog into a container local file (always overwrite)
-	catalogFilePath := fmt.Sprintf("%s/connector-data/catalog/%s.json", config.Config.Container.MountTarget.VDP, catalogFileName)
-	if err := os.MkdirAll(filepath.Dir(catalogFilePath), os.ModePerm); err != nil {
-		return fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", catalogFilePath), "WriteContainerLocalFileError", err)
-	}
-	if err := os.WriteFile(catalogFilePath, byteCfgAbCatalog, 0644); err != nil {
-		return fmt.Errorf(fmt.Sprintf("unable to write connector catalog file %s", catalogFilePath), "WriteContainerLocalFileError", err)
-	}
-
-	defer func() {
-		// Delete config local file
-		if _, err := os.Stat(configFilePath); err == nil {
-			if err := os.Remove(configFilePath); err != nil {
-				logger.Error(fmt.Sprintln("Activity", "ImageName", imageName, "ContainerName", containerName, "Error", err))
-			}
-		}
-
-		// Delete catalog local file
-		if _, err := os.Stat(catalogFilePath); err == nil {
-			if err := os.Remove(catalogFilePath); err != nil {
-				logger.Error(fmt.Sprintln("Activity", "ImageName", imageName, "ContainerName", containerName, "Error", err))
-			}
-		}
 	}()
 
-	out, err := s.dockerClient.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	con, err := s.connectorDestination.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
-
-	if _, err := io.Copy(os.Stdout, out); err != nil {
-		return err
-	}
-
-	resp, err := s.dockerClient.ContainerCreate(ctx,
-		&container.Config{
-			Image:        imageName,
-			AttachStdin:  true,
-			AttachStdout: true,
-			OpenStdin:    true,
-			StdinOnce:    true,
-			Tty:          true,
-			Cmd: []string{
-				"write",
-				"--config",
-				configFilePath,
-				"--catalog",
-				catalogFilePath,
-			},
-		},
-		&container.HostConfig{
-			Mounts: []mount.Mount{
-				{
-					Type: func() mount.Type {
-						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
-							return mount.TypeBind
-						}
-						return mount.TypeVolume
-					}(),
-					Source: config.Config.Container.MountSource.VDP,
-					Target: config.Config.Container.MountTarget.VDP,
-				},
-				{
-					Type: func() mount.Type {
-						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
-							return mount.TypeBind
-						}
-						return mount.TypeVolume
-					}(),
-					Source: config.Config.Container.MountSource.Airbyte,
-					Target: config.Config.Container.MountTarget.Airbyte,
-				},
-			},
-		},
-		nil, nil, containerName)
+	_, err = con.Execute(param)
 	if err != nil {
 		return err
-	}
-
-	hijackedResp, err := s.dockerClient.ContainerAttach(ctx, resp.ID, types.ContainerAttachOptions{
-		Stdout: true,
-		Stdin:  true,
-		Stream: true,
-	})
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	// need to append "\n" and "ctrl+D" at the end of the input message
-	_, err = hijackedResp.Conn.Write(append(byteAbMsgs, 10, 4))
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	if err := s.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		return err
-	}
-
-	var bufStdOut bytes.Buffer
-	if _, err := bufStdOut.ReadFrom(hijackedResp.Reader); err != nil {
-		return err
-	}
-
-	if err := s.dockerClient.ContainerRemove(ctx, resp.ID,
-		types.ContainerRemoveOptions{
-			RemoveVolumes: true,
-			Force:         true,
-		}); err != nil {
-		return err
-	}
-
-	// Set cache flag (empty value is fine since we need only the entry record)
-	if err := s.cache.Set(containerName, []byte{}); err != nil {
-		logger.Error(err.Error())
-	}
-
-	logger.Info(fmt.Sprintln("Activity",
-		"ImageName", imageName,
-		"ContainerName", containerName,
-		"Pipeline", param.Pipeline,
-		"Indices", param.DataMappingIndices,
-		"STDOUT", bufStdOut.String()))
-
-	// Delete the cache entry only after the write completed
-	if err := s.cache.Delete(containerName); err != nil {
-		logger.Error(err.Error())
 	}
 
 	return nil
 }
 
-func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID, dockerRepo string, dockerImgTag string) (*connectorPB.Connector_State, error) {
+func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
 	}
 
-	if strings.Contains(dbConnector.ID, "http") || strings.Contains(dbConnector.ID, "grpc") {
-		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
-	}
-
-	imageName := fmt.Sprintf("%s:%s", dockerRepo, dockerImgTag)
-	containerName := fmt.Sprintf("%s.%d.check", connUID, time.Now().UnixNano())
-	configFilePath := fmt.Sprintf("%s/connector-data/config/%s.json", config.Config.Container.MountTarget.VDP, containerName)
-	// Write config into a container local file
-	if err := os.MkdirAll(filepath.Dir(configFilePath), os.ModePerm); err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("unable to create folders for filepath %s", configFilePath), "WriteContainerLocalFileError", err)
-	}
-	if err := os.WriteFile(configFilePath, dbConnector.Configuration, 0644); err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("unable to write connector config file %s", configFilePath), "WriteContainerLocalFileError", err)
-	}
-
-	defer func() {
-		// Delete config local file
-		if _, err := os.Stat(configFilePath); err == nil {
-			if err := os.Remove(configFilePath); err != nil {
-				logger.Error(fmt.Sprintf("ImageName: %s, ContainerName: %s, Error: %v", imageName, containerName, err))
+	configuration := func() *structpb.Struct {
+		if dbConnector.Configuration != nil {
+			str := structpb.Struct{}
+			err := str.UnmarshalJSON(dbConnector.Configuration)
+			if err != nil {
+				logger.Fatal(err.Error())
 			}
+			return &str
 		}
+		return nil
 	}()
 
-	out, err := s.dockerClient.ImagePull(ctx, imageName, types.ImagePullOptions{})
+	con, err := s.connectorAll.CreateConnection(dbConnector.ConnectorDefinitionUID, configuration, logger)
+
 	if err != nil {
-		return nil, err
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(os.Stdout, out); err != nil {
-		return nil, err
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 	}
 
-	resp, err := s.dockerClient.ContainerCreate(ctx,
-		&container.Config{
-			Image: imageName,
-			Tty:   false,
-			Cmd: []string{
-				"check",
-				"--config",
-				configFilePath,
-			},
-		},
-		&container.HostConfig{
-			Mounts: []mount.Mount{
-				{
-					Type: func() mount.Type {
-						if string(config.Config.Container.MountSource.VDP[0]) == "/" {
-							return mount.TypeBind
-						}
-						return mount.TypeVolume
-					}(),
-					Source: config.Config.Container.MountSource.VDP,
-					Target: config.Config.Container.MountTarget.VDP,
-				},
-			},
-		},
-		nil, nil, containerName)
+	state, err := con.Test()
 	if err != nil {
-		return nil, err
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 	}
 
-	if err := s.dockerClient.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
-		return nil, err
-	}
-
-	statusCh, errCh := s.dockerClient.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		if err != nil {
-			return nil, err
+	switch state {
+	case connectorPB.Connector_STATE_CONNECTED:
+		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
-	case <-statusCh:
-	}
-
-	if out, err = s.dockerClient.ContainerLogs(ctx,
-		resp.ID,
-		types.ContainerLogsOptions{
-			ShowStdout: true,
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	if err := s.dockerClient.ContainerRemove(ctx, containerName,
-		types.ContainerRemoveOptions{
-			RemoveVolumes: true,
-			Force:         true,
-		}); err != nil {
-		return nil, err
-	}
-
-	var bufStdOut, bufStdErr bytes.Buffer
-	if _, err := stdcopy.StdCopy(&bufStdOut, &bufStdErr, out); err != nil {
-		return nil, err
-	}
-
-	var teeStdOut io.Reader = strings.NewReader(bufStdOut.String())
-	var teeStdErr io.Reader = strings.NewReader(bufStdErr.String())
-	teeStdOut = io.TeeReader(teeStdOut, &bufStdOut)
-	teeStdErr = io.TeeReader(teeStdErr, &bufStdErr)
-
-	var byteStdOut, byteStdErr []byte
-	if byteStdOut, err = io.ReadAll(teeStdOut); err != nil {
-		return nil, err
-	}
-	if byteStdErr, err = io.ReadAll(teeStdErr); err != nil {
-		return nil, err
-	}
-
-	logger.Info(fmt.Sprintf("ImageName, %s, ContainerName, %s, STDOUT, %v, STDERR, %v", imageName, containerName, byteStdOut, byteStdErr))
-
-	scanner := bufio.NewScanner(&bufStdOut)
-	for scanner.Scan() {
-
-		if err := scanner.Err(); err != nil {
-			return nil, err
+		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
+	case connectorPB.Connector_STATE_ERROR:
+		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
-
-		var jsonMsg map[string]interface{}
-		if err := json.Unmarshal(scanner.Bytes(), &jsonMsg); err == nil {
-			switch jsonMsg["type"] {
-			case "CONNECTION_STATUS":
-				switch jsonMsg["connectionStatus"].(map[string]interface{})["status"] {
-				case "SUCCEEDED":
-					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
-						return nil, err
-					}
-					return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
-				case "FAILED":
-					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-						return nil, err
-					}
-					return connectorPB.Connector_STATE_ERROR.Enum(), nil
-				default:
-					if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-						return nil, err
-					}
-					return connectorPB.Connector_STATE_ERROR.Enum(), fmt.Errorf("UNKNOWN STATUS")
-				}
-			}
+		return connectorPB.Connector_STATE_ERROR.Enum(), nil
+	default:
+		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
+		return connectorPB.Connector_STATE_ERROR.Enum(), fmt.Errorf("UNKNOWN STATUS")
 	}
-	return nil, fmt.Errorf("unable to scan container stdout and find the connection status successfully")
+
 }

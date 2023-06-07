@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"google.golang.org/genproto/googleapis/type/date"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -18,77 +16,6 @@ import (
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
-
-// DBToPBConnectorDefinition converts db data model to protobuf data model
-func DBToPBConnectorDefinition(ctx context.Context, dbSrcDef *datamodel.ConnectorDefinition, connectorType datamodel.ConnectorType) interface{} {
-	logger, _ := logger.GetZapLogger(ctx)
-	connDef := &connectorPB.ConnectorDefinition{
-		Title:            dbSrcDef.Title,
-		DockerRepository: dbSrcDef.DockerRepository,
-		DockerImageTag:   dbSrcDef.DockerImageTag,
-		DocumentationUrl: dbSrcDef.DocumentationURL,
-		Icon:             dbSrcDef.Icon,
-		Tombstone:        dbSrcDef.Tombstone,
-		Public:           dbSrcDef.Public,
-		Custom:           dbSrcDef.Custom,
-		CreateTime:       timestamppb.New(dbSrcDef.CreateTime),
-		UpdateTime:       timestamppb.New(dbSrcDef.UpdateTime),
-
-		ReleaseStage: func() connectorPB.ReleaseStage {
-			return connectorPB.ReleaseStage(dbSrcDef.ReleaseStage)
-		}(),
-
-		ReleaseDate: func() *date.Date {
-			if dbSrcDef.ReleaseDate != nil {
-				return &date.Date{
-					Year:  int32(dbSrcDef.ReleaseDate.Year()),
-					Month: int32(dbSrcDef.ReleaseDate.Month()),
-					Day:   int32(dbSrcDef.ReleaseDate.Day()),
-				}
-			}
-			return &date.Date{}
-		}(),
-
-		Spec: func() *connectorPB.Spec {
-			if dbSrcDef.Spec != nil {
-				spec := connectorPB.Spec{}
-				if err := protojson.Unmarshal(dbSrcDef.Spec, &spec); err != nil {
-					logger.Fatal(err.Error())
-					return nil
-				}
-				return &spec
-			}
-			return nil
-		}(),
-
-		ResourceRequirements: func() *structpb.Struct {
-			s := structpb.Struct{}
-			if err := protojson.Unmarshal(dbSrcDef.ResourceRequirements, &s); err != nil {
-				logger.Fatal(err.Error())
-				return nil
-			}
-			return &s
-		}(),
-	}
-
-	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
-		return &connectorPB.SourceConnectorDefinition{
-			Name:                "source-connector-definitions/" + dbSrcDef.ID,
-			Uid:                 dbSrcDef.UID.String(),
-			Id:                  dbSrcDef.ID,
-			ConnectorDefinition: connDef,
-		}
-	} else if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
-		return &connectorPB.DestinationConnectorDefinition{
-			Name:                "destination-connector-definitions/" + dbSrcDef.ID,
-			Uid:                 dbSrcDef.UID.String(),
-			Id:                  dbSrcDef.ID,
-			ConnectorDefinition: connDef,
-		}
-	}
-
-	return nil
-}
 
 // PBToDBConnector converts protobuf data model to db data model
 func PBToDBConnector(

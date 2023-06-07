@@ -5,26 +5,36 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/iancoleman/strcase"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/datatypes"
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
+	proto "google.golang.org/protobuf/proto"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
+	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
+	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/util"
 	"github.com/instill-ai/x/checkfield"
+	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
+	connectorDestination "github.com/instill-ai/connector-destination/pkg"
+	connectorSource "github.com/instill-ai/connector-source/pkg"
+	connectorBase "github.com/instill-ai/connector/pkg/base"
+	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
@@ -33,15 +43,21 @@ var tracer = otel.Tracer("connector-backend.public-handler.tracer")
 
 type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
-	service service.Service
+	service              service.Service
+	connectorAll         connectorBase.IConnector
+	connectorSource      connectorBase.IConnector
+	connectorDestination connectorBase.IConnector
 }
 
 // NewPublicHandler initiates a handler instance
 func NewPublicHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPublicServiceServer {
-	datamodel.InitJSONSchema(ctx)
-	datamodel.InitAirbyteCatalog(ctx)
+
+	logger, _ := logger.GetZapLogger(ctx)
 	return &PublicHandler{
-		service: s,
+		service:              s,
+		connectorAll:         connector.InitConnectorAll(logger),
+		connectorSource:      connectorSource.Init(logger),
+		connectorDestination: connectorDestination.Init(logger, connector.GetConnectorDestinationOptions()),
 	}
 }
 
@@ -83,52 +99,140 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 	var pageToken string
 	var isBasicView bool
 
-	var connType datamodel.ConnectorType
-
 	switch v := req.(type) {
 	case *connectorPB.ListSourceConnectorDefinitionsRequest:
 		resp = &connectorPB.ListSourceConnectorDefinitionsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	case *connectorPB.ListDestinationConnectorDefinitionsRequest:
 		resp = &connectorPB.ListDestinationConnectorDefinitionsResponse{}
 		pageSize = v.GetPageSize()
 		pageToken = v.GetPageToken()
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	}
 
-	dbDefs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(ctx, connType, pageSize, pageToken, isBasicView)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
+	prevLastUid := ""
+
+	if pageToken != "" {
+		_, prevLastUid, err = paginate.DecodeToken(pageToken)
+		if err != nil {
+			st, err := sterr.CreateErrorBadRequest(
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "page_token",
+						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
+		}
+
 	}
 
+	if pageSize == 0 {
+		pageSize = repository.DefaultPageSize
+	} else if pageSize > repository.MaxPageSize {
+		pageSize = repository.MaxPageSize
+	}
+
+	// TODO: refactor
 	switch v := resp.(type) {
 	case *connectorPB.ListSourceConnectorDefinitionsResponse:
-		for _, dbDef := range dbDefs {
+		defs := h.connectorSource.ListConnectorDefinitions()
+
+		startIdx := 0
+		lastUid := ""
+		for idx, def := range defs {
+			if def.(*connectorPB.SourceConnectorDefinition).Uid == prevLastUid {
+				startIdx = idx + 1
+				break
+			}
+		}
+
+		page := []*connectorPB.SourceConnectorDefinition{}
+		for i := 0; i < int(pageSize) && startIdx+i < len(defs); i++ {
+			def := proto.Clone(defs[startIdx+i].(*connectorPB.SourceConnectorDefinition)).(*connectorPB.SourceConnectorDefinition)
+			page = append(page, def)
+			lastUid = def.Uid
+		}
+
+		nextPageToken := ""
+
+		if startIdx+len(page) < len(defs) {
+			nextPageToken = paginate.EncodeToken(time.Time{}, lastUid)
+		}
+
+		for _, def := range page {
+			def.Name = fmt.Sprintf("source-connector-definitions/%s", def.Id)
+			def.ConnectorDefinition.ReleaseDate = func() *date.Date {
+				if def.ConnectorDefinition.ReleaseDate != nil {
+					return &date.Date{
+						Year:  int32(def.ConnectorDefinition.ReleaseDate.Year),
+						Month: int32(def.ConnectorDefinition.ReleaseDate.Month),
+						Day:   int32(def.ConnectorDefinition.ReleaseDate.Day),
+					}
+				}
+				return &date.Date{}
+			}()
+			if isBasicView {
+				def.GetConnectorDefinition().Spec = nil
+			}
 			v.SourceConnectorDefinitions = append(
 				v.SourceConnectorDefinitions,
-				DBToPBConnectorDefinition(
-					ctx,
-					dbDef,
-					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)).(*connectorPB.SourceConnectorDefinition))
+				def)
 		}
 		v.NextPageToken = nextPageToken
-		v.TotalSize = totalSize
+		v.TotalSize = int64(len(defs))
 	case *connectorPB.ListDestinationConnectorDefinitionsResponse:
-		for _, dbDef := range dbDefs {
+		defs := h.connectorDestination.ListConnectorDefinitions()
+
+		startIdx := 0
+		lastUid := ""
+		for idx, def := range defs {
+			if def.(*connectorPB.DestinationConnectorDefinition).Uid == prevLastUid {
+				startIdx = idx + 1
+				break
+			}
+		}
+
+		page := []*connectorPB.DestinationConnectorDefinition{}
+		for i := 0; i < int(pageSize) && startIdx+i < len(defs); i++ {
+			def := proto.Clone(defs[startIdx+i].(*connectorPB.DestinationConnectorDefinition)).(*connectorPB.DestinationConnectorDefinition)
+			page = append(page, def)
+			lastUid = def.Uid
+		}
+
+		nextPageToken := ""
+
+		if startIdx+len(page) < len(defs) {
+			nextPageToken = paginate.EncodeToken(time.Time{}, lastUid)
+		}
+		for _, def := range page {
+			def.Name = fmt.Sprintf("destination-connector-definitions/%s", def.Id)
+			def.ConnectorDefinition.ReleaseDate = func() *date.Date {
+				if def.ConnectorDefinition.ReleaseDate != nil {
+					return &date.Date{
+						Year:  int32(def.ConnectorDefinition.ReleaseDate.Year),
+						Month: int32(def.ConnectorDefinition.ReleaseDate.Month),
+						Day:   int32(def.ConnectorDefinition.ReleaseDate.Day),
+					}
+				}
+				return &date.Date{}
+			}()
+			if isBasicView {
+				def.GetConnectorDefinition().Spec = nil
+			}
 			v.DestinationConnectorDefinitions = append(
 				v.DestinationConnectorDefinitions,
-				DBToPBConnectorDefinition(
-					ctx,
-					dbDef,
-					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)).(*connectorPB.DestinationConnectorDefinition))
+				def)
 		}
 		v.NextPageToken = nextPageToken
-		v.TotalSize = totalSize
+		v.TotalSize = int64(len(defs))
 	}
 
 	logger.Info("ListConnectorDefinitions")
@@ -147,8 +251,6 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 	var connID string
 	var isBasicView bool
 
-	var connType datamodel.ConnectorType
-
 	switch v := req.(type) {
 	case *connectorPB.GetSourceConnectorDefinitionRequest:
 		resp = &connectorPB.GetSourceConnectorDefinitionResponse{}
@@ -156,7 +258,6 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	case *connectorPB.GetDestinationConnectorDefinitionRequest:
 		resp = &connectorPB.GetDestinationConnectorDefinitionResponse{}
@@ -164,24 +265,57 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
-		connType = datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)
 		isBasicView = (v.GetView() == connectorPB.View_VIEW_BASIC) || (v.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	}
 
-	dbDef, err := h.service.GetConnectorDefinitionByID(ctx, connID, connType, isBasicView)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
+	// TODO: refactor
 	switch v := resp.(type) {
 	case *connectorPB.GetSourceConnectorDefinitionResponse:
-		v.SourceConnectorDefinition = DBToPBConnectorDefinition(ctx, dbDef, connType).(*connectorPB.SourceConnectorDefinition)
-	case *connectorPB.GetDestinationConnectorDefinitionResponse:
-		v.DestinationConnectorDefinition = DBToPBConnectorDefinition(ctx, dbDef, connType).(*connectorPB.DestinationConnectorDefinition)
-	}
+		dbDef, err := h.connectorSource.GetConnectorDefinitionById(connID)
 
-	logger.Info(dbDef.Title)
+		if err != nil {
+			span.SetStatus(1, err.Error())
+			return resp, err
+		}
+		v.SourceConnectorDefinition = proto.Clone(dbDef.(*connectorPB.SourceConnectorDefinition)).(*connectorPB.SourceConnectorDefinition)
+		if isBasicView {
+			v.SourceConnectorDefinition.ConnectorDefinition.Spec = nil
+		}
+		v.SourceConnectorDefinition.Name = fmt.Sprintf("source-connector-definitions/%s", v.SourceConnectorDefinition.GetId())
+		v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate = func() *date.Date {
+			if v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate != nil {
+				return &date.Date{
+					Year:  int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Year),
+					Month: int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Month),
+					Day:   int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Day),
+				}
+			}
+			return &date.Date{}
+		}()
+		logger.Info(v.SourceConnectorDefinition.ConnectorDefinition.Title)
+	case *connectorPB.GetDestinationConnectorDefinitionResponse:
+		dbDef, err := h.connectorDestination.GetConnectorDefinitionById(connID)
+		if err != nil {
+			span.SetStatus(1, err.Error())
+			return resp, err
+		}
+		v.DestinationConnectorDefinition = proto.Clone(dbDef.(*connectorPB.DestinationConnectorDefinition)).(*connectorPB.DestinationConnectorDefinition)
+		if isBasicView {
+			v.DestinationConnectorDefinition.ConnectorDefinition.Spec = nil
+		}
+		v.DestinationConnectorDefinition.Name = fmt.Sprintf("destination-connector-definitions/%s", v.DestinationConnectorDefinition.GetId())
+		v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate = func() *date.Date {
+			if v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate != nil {
+				return &date.Date{
+					Year:  int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Year),
+					Month: int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Month),
+					Day:   int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Day),
+				}
+			}
+			return &date.Date{}
+		}()
+		logger.Info(v.DestinationConnectorDefinition.ConnectorDefinition.Title)
+	}
 
 	return resp, nil
 
@@ -245,7 +379,8 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		}
 
 		// Validate SourceConnector JSON Schema
-		if err := datamodel.ValidateJSONSchema(datamodel.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
+		configLoader := connectorConfigLoader.InitJSONSchema(logger)
+		if err := connectorConfigLoader.ValidateJSONSchema(configLoader.SrcConnJSONSchema, v.GetSourceConnector(), false); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] create connector error",
 				[]*errdetails.BadRequest_FieldViolation{
@@ -307,7 +442,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			return resp, st.Err()
 		}
 
-		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetSourceConnector().GetConnector().GetConfiguration()); err != nil {
+		if err := connectorConfigLoader.ValidateJSONSchemaString(string(b), v.GetSourceConnector().GetConnector().GetConfiguration()); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] create connector error",
 				[]*errdetails.BadRequest_FieldViolation{
@@ -384,7 +519,8 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		}
 
 		// Validate DestinationConnector JSON Schema
-		if err := datamodel.ValidateJSONSchema(datamodel.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
+		configLoader := connectorConfigLoader.InitJSONSchema(logger)
+		if err := connectorConfigLoader.ValidateJSONSchema(configLoader.DstConnJSONSchema, v.GetDestinationConnector(), false); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] create connector error",
 				[]*errdetails.BadRequest_FieldViolation{
@@ -446,7 +582,7 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 			return resp, st.Err()
 		}
 
-		if err := datamodel.ValidateJSONSchemaString(string(b), v.GetDestinationConnector().GetConnector().GetConfiguration()); err != nil {
+		if err := connectorConfigLoader.ValidateJSONSchemaString(string(b), v.GetDestinationConnector().GetConnector().GetConfiguration()); err != nil {
 			st, err := sterr.CreateErrorBadRequest(
 				"[handler] create connector error",
 				[]*errdetails.BadRequest_FieldViolation{
@@ -596,7 +732,7 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 
 	var pbConnectors []interface{}
 	for idx := range dbConnectors {
-		dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnectors[idx].ConnectorDefinitionUID, true)
+		dbConnDef, err := h.connectorAll.GetConnectorDefinitionByUid(dbConnectors[idx].ConnectorDefinitionUID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
@@ -608,7 +744,7 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 				dbConnectors[idx],
 				connType,
 				dbConnectors[idx].Owner,
-				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 			))
 		logger.Info(string(util.ConstructAuditLog(
 			span,
@@ -691,7 +827,8 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.connectorAll.GetConnectorDefinitionByUid(dbConnector.ConnectorDefinitionUID)
+
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -702,7 +839,7 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 		dbConnector,
 		connType,
 		dbConnector.Owner,
-		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
 
 	logger.Info(string(util.ConstructAuditLog(
@@ -749,7 +886,7 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 	case *connectorPB.UpdateSourceConnectorRequest:
 		resp = &connectorPB.UpdateSourceConnectorResponse{}
 		if ownerErr != nil {
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, ownerErr.Error())
 			return resp, ownerErr
 		}
 
@@ -861,19 +998,19 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorSource.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
-		connDefUID = dbConnDef.UID
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.GetId())
+		connDefUID = uuid.FromStringOrNil(dbConnDef.GetUid())
 
 	case *connectorPB.UpdateDestinationConnectorRequest:
 		resp = &connectorPB.UpdateDestinationConnectorResponse{}
 		if ownerErr != nil {
-			span.SetStatus(1, err.Error())
+			span.SetStatus(1, ownerErr.Error())
 			return resp, ownerErr
 		}
 
@@ -987,14 +1124,15 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorDestination.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
-		connDefUID = dbConnDef.UID
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.GetId())
+		connDefUID = uuid.FromStringOrNil(dbConnDef.GetUid())
+
 	}
 
 	if ownerErr != nil {
@@ -1195,7 +1333,7 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.connectorAll.GetConnectorDefinitionByUid(dbConnector.ConnectorDefinitionUID)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1215,7 +1353,7 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 		dbConnector,
 		connType,
 		dbConnector.Owner,
-		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
 
 	switch v := resp.(type) {
@@ -1287,13 +1425,13 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorSource.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.GetId())
 
 	case *connectorPB.ConnectDestinationConnectorRequest:
 		resp = &connectorPB.ConnectDestinationConnectorResponse{}
@@ -1340,13 +1478,13 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorDestination.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.GetId())
 	}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
@@ -1447,13 +1585,13 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorSource.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.GetId())
 
 	case *connectorPB.DisconnectDestinationConnectorRequest:
 		resp = &connectorPB.DisconnectDestinationConnectorResponse{}
@@ -1500,13 +1638,13 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorDestination.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.GetId())
 	}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
@@ -1609,13 +1747,13 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorSource.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("source-connector-definitions/%s", dbConnDef.GetId())
 
 	case *connectorPB.RenameDestinationConnectorRequest:
 		resp = &connectorPB.RenameDestinationConnectorResponse{}
@@ -1662,13 +1800,13 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 			return resp, err
 		}
 
-		dbConnDef, err := h.service.GetConnectorDefinitionByID(ctx, dbConnDefID, connType, true)
+		dbConnDef, err := h.connectorDestination.GetConnectorDefinitionById(dbConnDefID)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
 
-		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.ID)
+		connDefRscName = fmt.Sprintf("destination-connector-definitions/%s", dbConnDef.GetId())
 	}
 
 	// Return error if resource ID does not follow RFC-1034
@@ -1834,13 +1972,7 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
+	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
 
 	if err != nil {
 		span.SetStatus(1, err.Error())

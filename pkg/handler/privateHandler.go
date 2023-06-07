@@ -8,26 +8,36 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
+	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
+	connectorDestination "github.com/instill-ai/connector-destination/pkg"
+	connectorSource "github.com/instill-ai/connector-source/pkg"
+	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 type PrivateHandler struct {
 	connectorPB.UnimplementedConnectorPrivateServiceServer
-	service service.Service
+	service              service.Service
+	connectorAll         connectorBase.IConnector
+	connectorSource      connectorBase.IConnector
+	connectorDestination connectorBase.IConnector
 }
 
 // NewPrivateHandler initiates a handler instance
 func NewPrivateHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPrivateServiceServer {
-	datamodel.InitJSONSchema(ctx)
-	datamodel.InitAirbyteCatalog(ctx)
+	logger, _ := logger.GetZapLogger(ctx)
+
 	return &PrivateHandler{
-		service: s,
+		service:              s,
+		connectorAll:         connector.InitConnectorAll(logger),
+		connectorSource:      connectorSource.Init(logger),
+		connectorDestination: connectorDestination.Init(logger, connector.GetConnectorDestinationOptions()),
 	}
 }
 
@@ -74,7 +84,7 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 
 	var pbConnectors []interface{}
 	for idx := range dbConnectors {
-		dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnectors[idx].ConnectorDefinitionUID, true)
+		dbConnDef, err := h.connectorAll.GetConnectorDefinitionByUid(dbConnectors[idx].ConnectorDefinitionUID)
 		if err != nil {
 			return resp, err
 		}
@@ -85,7 +95,7 @@ func (h *PrivateHandler) listConnectors(ctx context.Context, req interface{}) (r
 				dbConnectors[idx],
 				connType,
 				dbConnectors[idx].Owner,
-				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 			))
 	}
 
@@ -193,7 +203,7 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
+	dbConnDef, err := h.connectorAll.GetConnectorDefinitionByUid(dbConnector.ConnectorDefinitionUID)
 	if err != nil {
 		return resp, err
 	}
@@ -203,7 +213,7 @@ func (h *PrivateHandler) lookUpConnector(ctx context.Context, req interface{}) (
 		dbConnector,
 		connType,
 		dbConnector.Owner,
-		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.ID),
+		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
 
 	switch v := resp.(type) {
@@ -239,16 +249,11 @@ func (h *PrivateHandler) checkConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	dbConnDef, err := h.service.GetConnectorDefinitionByUID(ctx, dbConnector.ConnectorDefinitionUID, true)
 	if err != nil {
 		return resp, err
 	}
 
-	if err != nil {
-		return resp, err
-	}
-
-	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID, dbConnDef.DockerRepository, dbConnDef.DockerImageTag)
+	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
 
 	if err != nil {
 		return resp, err
