@@ -28,7 +28,6 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
-	dockerclient "github.com/docker/docker/client"
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
@@ -174,12 +173,6 @@ func main() {
 		defer controllerClientConn.Close()
 	}
 
-	dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
-	if err != nil {
-		logger.Error(err.Error())
-	}
-	defer dockerClient.Close()
-
 	repository := repository.NewRepository(db)
 
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
@@ -198,7 +191,6 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
-				dockerClient,
 			)))
 
 	connectorPB.RegisterConnectorPublicServiceServer(
@@ -211,7 +203,6 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
-				dockerClient,
 			)))
 
 	privateServeMux := runtime.NewServeMux(

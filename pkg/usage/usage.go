@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/repo"
 
+	connectorDestination "github.com/instill-ai/connector-destination/pkg"
+	connectorSource "github.com/instill-ai/connector-source/pkg"
+	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
@@ -30,6 +34,8 @@ type usage struct {
 	mgmtPrivateServiceClient mgmtPB.MgmtPrivateServiceClient
 	reporter                 usageReporter.Reporter
 	version                  string
+	connectorSource          connectorBase.IConnector
+	connectorDestination     connectorBase.IConnector
 }
 
 // NewUsage initiates a usage instance
@@ -53,6 +59,8 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivat
 		mgmtPrivateServiceClient: ma,
 		reporter:                 reporter,
 		version:                  version,
+		connectorDestination:     connectorDestination.Init(logger, connector.GetConnectorDestinationOptions()),
+		connectorSource:          connectorSource.Init(logger),
 	}
 }
 
@@ -106,11 +114,11 @@ func (u *usage) RetrieveUsageData() interface{} {
 					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
 						srcConnDisconnectedStateNum++
 					}
-					srcConnDef, err := u.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, false)
+					srcConnDef, err := u.connectorSource.GetConnectorDefinitionByUid(conn.ConnectorDefinitionUID)
 					if err != nil {
 						logger.Error(fmt.Sprintf("%s", err))
 					}
-					srcConnDefSet[srcConnDef.ID] = struct{}{}
+					srcConnDefSet[srcConnDef.GetId()] = struct{}{}
 				}
 
 				if connNextPageToken == "" {
@@ -150,11 +158,11 @@ func (u *usage) RetrieveUsageData() interface{} {
 					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
 						dstConnDisconnectedStateNum++
 					}
-					dstConnDef, err := u.repository.GetConnectorDefinitionByUID(ctx, conn.ConnectorDefinitionUID, false)
+					dstConnDef, err := u.connectorDestination.GetConnectorDefinitionByUid(conn.ConnectorDefinitionUID)
 					if err != nil {
 						logger.Error(fmt.Sprintf("%s", err))
 					}
-					dstConnDefSet[dstConnDef.ID] = struct{}{}
+					dstConnDefSet[dstConnDef.GetId()] = struct{}{}
 				}
 
 				if connNextPageToken == "" {
