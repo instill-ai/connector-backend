@@ -5,6 +5,9 @@ import (
 	"os"
 	"sync"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -65,33 +68,34 @@ func GetZapLogger(ctx context.Context) (*zap.Logger, error) {
 				),
 			)
 		}
-
 	})
+	// finally construct the logger with the tee core
+	// and add hooks to inject logs to traces
+	logger := zap.New(core).WithOptions(
+		zap.Hooks(func(entry zapcore.Entry) error {
+			span := trace.SpanFromContext(ctx)
+			if !span.IsRecording() {
+				return nil
+			}
 
-	// hooks to inject logs to traces
-	logger := zap.New(core)
-	// .WithOptions(
-	// 	zap.Hooks(func(entry zapcore.Entry) error {
-	// 		span := trace.SpanFromContext(ctx)
-	// 		if !span.IsRecording() {
-	// 			return nil
-	// 		}
+			span.AddEvent("log", trace.WithAttributes(
+				attribute.KeyValue{
+					Key: "log.severity",
+					Value: attribute.StringValue(entry.Level.String()),
+				},
+				attribute.KeyValue{
+					Key: "log.message",
+					Value: attribute.StringValue(entry.Message),
+				},
+			))
+			if entry.Level >= zap.ErrorLevel {
+				span.SetStatus(codes.Error, string(entry.Message))
+			} else {
+				span.SetStatus(codes.Ok, "")
+			}
 
-	// 		attrs := make([]attribute.KeyValue, 0)
-	// 		logSeverityKey := attribute.Key("log.severity")
-	// 		logMessageKey := attribute.Key("log.message")
-	// 		attrs = append(attrs, logSeverityKey.String(entry.Level.String()))
-	// 		attrs = append(attrs, logMessageKey.String(entry.Message))
-
-	// 		span.AddEvent("log", trace.WithAttributes(attrs...))
-	// 		if entry.Level >= zap.ErrorLevel {
-	// 			span.SetStatus(codes.Error, string(entry.Message))
-	// 		} else {
-	// 			span.SetStatus(codes.Ok, "")
-	// 		}
-
-	// 		return nil
-	// 	}))
+			return nil
+		}))
 
 	return logger, err
 }
