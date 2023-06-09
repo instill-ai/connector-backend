@@ -26,11 +26,11 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
-	"github.com/instill-ai/connector-backend/pkg/util"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
+	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
@@ -659,13 +659,15 @@ func (h *PublicHandler) createConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"CreateConnector",
+		"request",
+		"CreateConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -746,15 +748,17 @@ func (h *PublicHandler) listConnectors(ctx context.Context, req interface{}) (re
 				dbConnectors[idx].Owner,
 				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 			))
-		logger.Info(string(util.ConstructAuditLog(
-			span,
-			owner,
-			*dbConnectors[idx],
-			"GetConnector",
-			false,
-			"",
-		)))
 	}
+
+	logger.Info(string(custom_otel.NewLogMessage(
+		span,
+		owner,
+		false,
+		"ListConnectors",
+		"request",
+		"ListConnectors done",
+		false,
+	)))
 
 	switch v := resp.(type) {
 	case *connectorPB.ListSourceConnectorsResponse:
@@ -842,13 +846,15 @@ func (h *PublicHandler) getConnector(ctx context.Context, req interface{}) (resp
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
-		"GetConnector",
 		false,
-		"",
+		"GetConnector",
+		"request",
+		"GetConnector done",
+		false,
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	switch v := resp.(type) {
@@ -1153,13 +1159,15 @@ func (h *PublicHandler) updateConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"UpdateConnector",
+		"request",
+		"UpdateConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -1223,13 +1231,15 @@ func (h *PublicHandler) deleteConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
-		"UpdateConnector",
+		true,
+		"DeleteConnector",
+		"request",
+		"DeleteConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	return resp, nil
@@ -1339,13 +1349,15 @@ func (h *PublicHandler) lookUpConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
-		"LookUpConnector",
 		false,
-		"",
+		"LookUpConnector",
+		"request",
+		"LookUpConnector done",
+		false,
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -1499,13 +1511,15 @@ func (h *PublicHandler) connectConnector(ctx context.Context, req interface{}) (
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"ConnectConnector",
+		"request",
+		"ConnectConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -1659,13 +1673,15 @@ func (h *PublicHandler) disconnectConnector(ctx context.Context, req interface{}
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"DisconnectConnector",
+		"request",
+		"DisconnectConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -1839,13 +1855,15 @@ func (h *PublicHandler) renameConnector(ctx context.Context, req interface{}) (r
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"RenameConnector",
+		"request",
+		"RenameConnector done",
 		false,
-		"",
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	pbConnector := DBToPBConnector(
@@ -1897,12 +1915,32 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
 		span.SetStatus(1, err.Error())
+		logger.Info(string(custom_otel.NewLogMessage(
+			span,
+			owner,
+			true,
+			"WatchConnector",
+			"request",
+			"WatchConnector error",
+			false,
+			custom_otel.SetErrorMessage(err.Error()),
+		)))
 		return resp, err
 	}
 
 	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, connType, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
+		logger.Info(string(custom_otel.NewLogMessage(
+			span,
+			owner,
+			true,
+			"WatchConnector",
+			"request",
+			"WatchConnector error",
+			false,
+			custom_otel.SetErrorMessage(err.Error()),
+		)))
 		return resp, err
 	}
 
@@ -1910,17 +1948,19 @@ func (h *PublicHandler) watchConnector(ctx context.Context, req interface{}) (re
 
 	if err != nil {
 		span.SetStatus(1, err.Error())
+		logger.Info(string(custom_otel.NewLogMessage(
+			span,
+			owner,
+			true,
+			"WatchConnector",
+			"request",
+			"WatchConnector error",
+			false,
+			custom_otel.SetErrorMessage(err.Error()),
+			custom_otel.SetEventResource(dbConnector),
+		)))
 		return resp, err
 	}
-
-	logger.Info(string(util.ConstructAuditLog(
-		span,
-		owner,
-		*dbConnector,
-		"WatchConnector",
-		false,
-		state.String(),
-	)))
 
 	switch v := resp.(type) {
 	case *connectorPB.WatchSourceConnectorResponse:
@@ -1979,13 +2019,15 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 		return resp, err
 	}
 
-	logger.Info(string(util.ConstructAuditLog(
+	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
-		*dbConnector,
+		true,
 		"TestConnector",
+		"request",
+		"TestConnector done",
 		false,
-		state.String(),
+		custom_otel.SetEventResource(dbConnector),
 	)))
 
 	switch v := resp.(type) {
