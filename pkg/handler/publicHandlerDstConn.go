@@ -2,21 +2,11 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 
-	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/logger"
-	"github.com/instill-ai/x/checkfield"
-	"github.com/instill-ai/x/sterr"
-
-	connectorAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
@@ -81,99 +71,9 @@ func (h *PublicHandler) RenameDestinationConnector(ctx context.Context, req *con
 	return resp.(*connectorPB.RenameDestinationConnectorResponse), err
 }
 
-func (h *PublicHandler) WriteDestinationConnector(ctx context.Context, req *connectorPB.WriteDestinationConnectorRequest) (*connectorPB.WriteDestinationConnectorResponse, error) {
-
-	ctx, span := tracer.Start(ctx, "WriteDestinationConnector",
-		trace.WithSpanKind(trace.SpanKindServer))
-	defer span.End()
-
-	logger, _ := logger.GetZapLogger(ctx)
-
-	resp := &connectorPB.WriteDestinationConnectorResponse{}
-
-	// Return error if REQUIRED fields are not provided in the requested payload
-	if err := checkfield.CheckRequiredFields(req, writeDestinationRequiredFields); err != nil {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] write destination connector error",
-			[]*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "required fields",
-					Description: err.Error(),
-				},
-			},
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		return resp, st.Err()
-	}
-
-	dstConnID, err := resource.GetRscNameID(req.GetName())
-	if err != nil {
-		return resp, err
-	}
-
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		return resp, err
-	}
-
-	// Validate batch outputs of each model
-	for _, modelOutput := range req.ModelOutputs {
-		taskOutputs := modelOutput.TaskOutputs
-		if len(req.DataMappingIndices) != len(taskOutputs) {
-			return resp, fmt.Errorf("indices list size %d and data list size %d are not equal", len(req.DataMappingIndices), len(taskOutputs))
-		}
-
-		// Validate TaskAirbyteCatalog's JSON schema
-		if err := connectorAirbyte.ValidateAirbyteCatalog(taskOutputs); err != nil {
-			st, err := sterr.CreateErrorBadRequest(
-				"[handler] write destination connector error",
-				[]*errdetails.BadRequest_FieldViolation{
-					{
-						Field:       "data",
-						Description: err.Error(),
-					},
-				},
-			)
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return resp, st.Err()
-		}
-	}
-
-	var syncMode string
-	switch req.SyncMode {
-	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_FULL_REFRESH:
-		syncMode = "full_refresh"
-	case connectorPB.SupportedSyncModes_SUPPORTED_SYNC_MODES_INCREMENTAL:
-		syncMode = "incremental"
-	}
-
-	var dstSyncMode string
-	switch req.DestinationSyncMode {
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE:
-		dstSyncMode = "overwrite"
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND:
-		dstSyncMode = "append"
-	case connectorPB.SupportedDestinationSyncModes_SUPPORTED_DESTINATION_SYNC_MODES_APPEND_DEDUP:
-		dstSyncMode = "append_dedup"
-	}
-
-	if err := h.service.WriteDestinationConnector(ctx, dstConnID, owner,
-		connectorAirbyte.WriteDestinationConnectorParam{
-			SyncMode:           syncMode,
-			DstSyncMode:        dstSyncMode,
-			Pipeline:           req.Pipeline,
-			Recipe:             req.Recipe,
-			DataMappingIndices: req.DataMappingIndices,
-			ModelOutputs:       req.ModelOutputs,
-		}); err != nil {
-		return resp, err
-	}
-
-	return resp, nil
+func (h *PublicHandler) ExecuteDestinationConnector(ctx context.Context, req *connectorPB.ExecuteDestinationConnectorRequest) (*connectorPB.ExecuteDestinationConnectorResponse, error) {
+	resp, err := h.executeConnector(ctx, req)
+	return resp.(*connectorPB.ExecuteDestinationConnectorResponse), err
 }
 
 func (h *PublicHandler) WatchDestinationConnector(ctx context.Context, req *connectorPB.WatchDestinationConnectorRequest) (*connectorPB.WatchDestinationConnectorResponse, error) {

@@ -369,7 +369,7 @@ export function CheckRename() {
     });
 }
 
-export function CheckWrite() {
+export function CheckExecute() {
 
     group(`Connector API: Write destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -402,23 +402,11 @@ export function CheckWrite() {
         })
 
         // Cannot write destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.clsModelOutputs
+            "input": constant.clsModelOutputs
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it

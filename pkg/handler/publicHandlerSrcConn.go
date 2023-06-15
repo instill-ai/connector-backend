@@ -6,9 +6,7 @@ import (
 	"strconv"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
@@ -73,8 +71,9 @@ func (h *PublicHandler) RenameSourceConnector(ctx context.Context, req *connecto
 	return resp.(*connectorPB.RenameSourceConnectorResponse), err
 }
 
-func (h *PublicHandler) ReadSourceConnector(context.Context, *connectorPB.ReadSourceConnectorRequest) (*connectorPB.ReadSourceConnectorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadSourceConnector not implemented")
+func (h *PublicHandler) ExecuteSourceConnector(ctx context.Context, req *connectorPB.ExecuteSourceConnectorRequest) (*connectorPB.ExecuteSourceConnectorResponse, error) {
+	resp, err := h.executeConnector(ctx, req)
+	return resp.(*connectorPB.ExecuteSourceConnectorResponse), err
 }
 
 func (h *PublicHandler) WatchSourceConnector(ctx context.Context, req *connectorPB.WatchSourceConnectorRequest) (*connectorPB.WatchSourceConnectorResponse, error) {

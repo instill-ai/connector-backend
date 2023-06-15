@@ -641,7 +641,7 @@ export function CheckRename() {
     });
 }
 
-export function CheckWrite() {
+export function CheckExecute() {
 
     group("Connector API: Write destination connectors", () => {
 
@@ -673,23 +673,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.clsModelOutputs
+            "input": constant.clsModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -723,23 +711,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-            "model_outputs": constant.detectionEmptyModelOutputs
+            "input": constant.detectionEmptyModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -773,24 +749,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "m02", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-            "model_outputs": constant.detectionModelOutputs
+            "input": constant.detectionModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -825,23 +788,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.keypointModelOutputs
+            "input": constant.keypointModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -876,23 +827,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.ocrModelOutputs
+            "input": constant.ocrModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
@@ -925,23 +864,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.semanticSegModelOutputs
+            "input": constant.semanticSegModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -975,23 +902,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.instSegModelOutputs
+            "input": constant.instSegModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -1025,23 +940,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.textToImageModelOutputs
+            "input": constant.textToImageModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -1075,23 +978,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.textGenerationModelOutputs
+            "input": constant.textGenerationModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -1125,23 +1016,11 @@ export function CheckWrite() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
             "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-            "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-            "pipeline": "pipelines/dummy-pipeline",
-            "recipe": {
-                "version": "v1alpha",
-                "components": [
-                    {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                    {"id": "m01", "resource_name": "models/dummy-model"},
-                    {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                ]
-            },
-            "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-            "model_outputs": constant.unspecifiedModelOutputs
+            "input": constant.unspecifiedModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/WriteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it

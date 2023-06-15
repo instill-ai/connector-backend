@@ -2039,3 +2039,52 @@ func (h *PublicHandler) testConnector(ctx context.Context, req interface{}) (res
 
 	return resp, nil
 }
+
+func (h *PublicHandler) executeConnector(ctx context.Context, req interface{}) (interface{}, error) {
+
+	ctx, span := tracer.Start(ctx, "ExecuteConnector",
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	switch req := req.(type) {
+	case *connectorPB.ExecuteSourceConnectorRequest:
+		resp := &connectorPB.ExecuteSourceConnectorResponse{}
+
+		dstConnID, err := resource.GetRscNameID(req.GetName())
+		if err != nil {
+			return resp, err
+		}
+
+		owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+		if err != nil {
+			return resp, err
+		}
+
+		if output, err := h.service.Execute(ctx, dstConnID, owner, req.GetInput(), datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE)); err != nil {
+			resp.Output = output
+			return nil, err
+		}
+		return resp, nil
+
+	case *connectorPB.ExecuteDestinationConnectorRequest:
+		resp := &connectorPB.ExecuteDestinationConnectorResponse{}
+		dstConnID, err := resource.GetRscNameID(req.GetName())
+		if err != nil {
+			return resp, err
+		}
+
+		owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+		if err != nil {
+			return resp, err
+		}
+
+		if output, err := h.service.Execute(ctx, dstConnID, owner, req.GetInput(), datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION)); err != nil {
+			resp.Output = output
+			return nil, err
+		}
+		return resp, nil
+
+	}
+
+	return nil, fmt.Errorf("error executeConnector")
+}

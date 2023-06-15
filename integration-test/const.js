@@ -87,29 +87,55 @@ export const paramsHTTPWithJwt = {
   },
 }
 
-export const clsModelOutputs = [
-  {
-    "task": "TASK_CLASSIFICATION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPS",
-        "classification": {
-          "category": "person",
-          "score": 0.99
-        }
+const singleModelPipelineMetadata = {
+  "pipeline": {
+      "name": "pipelines/dummy-pipeline",
+      "recipe": {
+          "version": "v1alpha",
+          "components": [
+              {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+              {"id": "m01", "resource_name": "models/dummy-model"},
+              {"id": "d01", "resource_name": "destination-connectors/dummy-destination"}
+          ]
       }
-    ]
   }
-]
+}
+
+const multipleModelOutputsMetadata = {
+  "pipeline": {
+    "name": "pipelines/dummy-pipeline",
+    "recipe": {
+        "version": "v1alpha",
+        "components": [
+          {"id": "s01", "resource_name": "source-connectors/dummy-source"},
+          {"id": "m01", "resource_name": "models/dummy-model-1"},
+          {"id": "m02", "resource_name": "models/dummy-model-2"},
+          {"id": "d01", "resource_name": "destination-connectors/dummy-destination"}
+        ]
+    }
+  }
+}
+
+export const clsModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPA",
+  "json": {
+    "models/dummy-model": {
+      "classification": {
+        "category": "person",
+        "score": 0.99
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+
 
 export const detectionModelOutputs = [
   {
-    "task": "TASK_DETECTION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
+    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
+    "json": {
+      "models/dummy-model-1": {
         "detection": {
           "objects": [
             {
@@ -125,29 +151,11 @@ export const detectionModelOutputs = [
           ]
         }
       },
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
+      "models/dummy-model-2": {
         "detection": {
           "objects": [
             {
-              "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
-      },
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
+              "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
               "category": "dog",
               "score": 0.980409
             },
@@ -159,31 +167,13 @@ export const detectionModelOutputs = [
           ]
         }
       }
-    ]
+    },
+    "metadata": multipleModelOutputsMetadata
   },
   {
-    "task": "TASK_DETECTION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
-      },
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
+    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
+    "json": {
+      "models/dummy-model-1": {
         "detection": {
           "objects": [
             {
@@ -199,8 +189,45 @@ export const detectionModelOutputs = [
           ]
         }
       },
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
+      "models/dummy-model-2": {
+        "detection": {
+          "objects": [
+            {
+              "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+              "category": "dog",
+              "score": 0.980409
+            },
+            {
+              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+              "category": "dog",
+              "score": 0.9009272
+            }
+          ]
+        }
+      }
+    },
+    "metadata": multipleModelOutputsMetadata
+  },
+  {
+    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
+    "json": {
+      "models/dummy-model-1": {
+        "detection": {
+          "objects": [
+            {
+              "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
+              "category": "dog",
+              "score": 0.980409
+            },
+            {
+              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+              "category": "dog",
+              "score": 0.9009272
+            }
+          ]
+        }
+      },
+      "models/dummy-model-2": {
         "detection": {
           "objects": [
             {
@@ -216,194 +243,172 @@ export const detectionModelOutputs = [
           ]
         }
       }
-    ]
+    },
+    "metadata": multipleModelOutputsMetadata
   }
 ]
 
-export const detectionEmptyModelOutputs = [
-  {
-    "task": "TASK_DETECTION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-        "detection": {
-          "objects": []
-        }
-      },
-    ]
-  }
-]
-
-export const keypointModelOutputs = [
-  {
-    "task": "TASK_KEYPOINT",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
-        "keypoint": {
-          "objects": [
-            {
-              "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
-              "score": 0.99
-            },
-            {
-              "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
-              "score": 0.99
-            },
-          ]
-        }
+export const detectionEmptyModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
+  "json": {
+    "models/dummy-model": {
+      "detection": {
+        "objects": []
       }
-    ]
-  }
-]
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
 
-export const ocrModelOutputs = [
-  {
-    "task": "TASK_OCR",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-        "ocr": {
-          "objects": [
-            {
-              "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "text": "some text",
-              "score": 0.99
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "text": "some text",
-              "score": 0.99
-            },
-          ],
-        }
-      }
-    ]
-  }
-]
 
-export const semanticSegModelOutputs = [
-  {
-    "task": "TASK_SEMANTIC_SEGMENTATION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-        "semantic_segmentation": {
-          "stuffs": [
-            {
-              "rle": "2918,12,382,33,...",
-              "category": "person"
-            },
-            {
-              "rle": "34,18,230,18,...",
-              "category": "sky"
-            },
-            {
-              "rle": "34,18,230,18,...",
-              "category": "dog"
-            }
-          ]
-        }
+export const keypointModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
+  "json": {
+    "models/dummy-model": {
+      "keypoint": {
+        "objects": [
+          {
+            "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
+            "score": 0.99
+          },
+          {
+            "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
+            "score": 0.99
+          },
+        ]
       }
-    ]
-  }
-]
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
 
-export const instSegModelOutputs = [
-  {
-    "task": "TASK_INSTANCE_SEGMENTATION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-        "instance_segmentation": {
-          "objects": [
-            {
-              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
-              "score": 0.9996394,
-              "bounding_box": {
-                "top": 375,
-                "left": 166,
-                "width": 25,
-                "height": 70
-              },
-              "category": "dog"
+export const ocrModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "ocr": {
+        "objects": [
+          {
+            "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+            "text": "some text",
+            "score": 0.99
+          },
+          {
+            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+            "text": "some text",
+            "score": 0.99
+          },
+        ],
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+export const semanticSegModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "semantic_segmentation": {
+        "stuffs": [
+          {
+            "rle": "2918,12,382,33,...",
+            "category": "person"
+          },
+          {
+            "rle": "34,18,230,18,...",
+            "category": "sky"
+          },
+          {
+            "rle": "34,18,230,18,...",
+            "category": "dog"
+          }
+        ]
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+export const instSegModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "instance_segmentation": {
+        "objects": [
+          {
+            "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
+            "score": 0.9996394,
+            "bounding_box": {
+              "top": 375,
+              "left": 166,
+              "width": 25,
+              "height": 70
             },
-            {
-              "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
-              "score": 0.9990727,
-              "bounding_box": {
-                "top": 107,
-                "left": 240,
-                "width": 27,
-                "height": 27
-              },
-              "category": "car"
-            }
-          ]
-        }
-      }
-    ]
-  }
-]
-
-export const textToImageModelOutputs = [
-  {
-    "task": "TASK_TEXT_TO_IMAGE",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-        "text_to_image": {
-          "images": [
-            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-            "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE"
-          ]
-        }
-      }
-    ]
-  }
-]
-
-export const textGenerationModelOutputs = [
-  {
-    "task": "TASK_TEXT_GENERATION",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-        "text_generation": {
-          "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
-        }
-      }
-    ]
-  }
-]
-
-export const unspecifiedModelOutputs = [
-  {
-    "task": "TASK_UNSPECIFIED",
-    "model": "models/dummy-model",
-    "task_outputs": [
-      {
-        "index": "01GB5T5ZK9W9C2VXMWWRYM8WPV",
-        "unspecified": {
-          "raw_outputs": [
-            {
-              "name": "some unspecified model output",
-              "data_type": "INT8",
-              "shape": [3, 3, 3],
-              "data": [1, 2, 3, 4, 5, 6, 7]
+            "category": "dog"
+          },
+          {
+            "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
+            "score": 0.9990727,
+            "bounding_box": {
+              "top": 107,
+              "left": 240,
+              "width": 27,
+              "height": 27
             },
-          ],
-        }
+            "category": "car"
+          }
+        ]
       }
-    ]
-  }
-]
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+export const textToImageModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "text_to_image": {
+        "images": [
+          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE"
+        ]
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+export const textGenerationModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "text_generation": {
+        "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
+
+export const unspecifiedModelOutputs = [{
+  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
+  "json": {
+    "models/dummy-model": {
+      "unspecified": {
+        "raw_outputs": [
+          {
+            "name": "some unspecified model output",
+            "data_type": "INT8",
+            "shape": [3, 3, 3],
+            "data": [1, 2, 3, 4, 5, 6, 7]
+          },
+        ],
+      }
+    }
+  },
+  "metadata": singleModelPipelineMetadata
+}]
