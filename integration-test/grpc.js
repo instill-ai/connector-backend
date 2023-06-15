@@ -100,7 +100,7 @@ export default function (data) {
     destinationConnectorPublicWithJwt.CheckLookUp()
     destinationConnectorPublicWithJwt.CheckState()
     destinationConnectorPublicWithJwt.CheckRename()
-    destinationConnectorPublicWithJwt.CheckWrite()
+    destinationConnectorPublicWithJwt.CheckExecute()
     destinationConnectorPublicWithJwt.CheckTest()
   }
 
@@ -131,7 +131,7 @@ export default function (data) {
   destinationConnectorPublic.CheckLookUp()
   destinationConnectorPublic.CheckState()
   destinationConnectorPublic.CheckRename()
-  destinationConnectorPublic.CheckWrite()
+  destinationConnectorPublic.CheckExecute()
   destinationConnectorPublic.CheckTest()
 
 }

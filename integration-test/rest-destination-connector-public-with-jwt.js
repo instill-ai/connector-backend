@@ -220,7 +220,7 @@ export function CheckRename() {
     });
 }
 
-export function CheckWrite() {
+export function CheckExecute() {
 
     group(`Connector API: Write destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -246,23 +246,11 @@ export function CheckWrite() {
         })
 
         // Cannot write to destination connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.clsModelOutputs
+                "input": constant.clsModelOutputs
             }), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 404 (classification)`]: (r) => r.status === 404,
+            [`[with random "jwt-sub" header] POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 404 (classification)`]: (r) => r.status === 404,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it

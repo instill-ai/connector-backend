@@ -520,7 +520,7 @@ export function CheckRename() {
     });
 }
 
-export function CheckWrite() {
+export function CheckExecute() {
 
     group("Connector API: Write destination connectors", () => {
 
@@ -547,25 +547,13 @@ export function CheckWrite() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.clsModelOutputs
+                "input": constant.clsModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (classification)`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 200 (classification)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -596,26 +584,13 @@ export function CheckWrite() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "m02", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM"],
-                "model_outputs": constant.detectionEmptyModelOutputs
+                "input": constant.detectionEmptyModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 200 (detection)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -646,26 +621,13 @@ export function CheckWrite() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "m02", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPM", "01GB5T5ZK9W9C2VXMWWRYM8WPN", "01GB5T5ZK9W9C2VXMWWRYM8WPO"],
-                "model_outputs": constant.detectionModelOutputs
+                "input": constant.detectionModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (detection)`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 200 (detection)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -696,25 +658,13 @@ export function CheckWrite() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.keypointModelOutputs
+                "input": constant.keypointModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (keypoint)`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 200 (keypoint)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -745,25 +695,13 @@ export function CheckWrite() {
             [`GET /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.ocrModelOutputs
+                "input": constant.ocrModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
-            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write response status 200 (ocr)`]: (r) => r.status === 200,
+            [`POST /v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/execute response status 200 (ocr)`]: (r) => r.status === 200,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
@@ -796,19 +734,7 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.semanticSegModelOutputs
+                "input": constant.instSegModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -845,19 +771,7 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.instSegModelOutputs
+                "input": constant.instSegModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -894,19 +808,7 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.textToImageModelOutputs
+                "input": constant.textGenerationModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -943,19 +845,7 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.textGenerationModelOutputs
+                "input": constant.textGenerationModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {
@@ -992,19 +882,7 @@ export function CheckWrite() {
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors/${resCSVDst.json().destination_connector.id}/write`,
             JSON.stringify({
-                "sync_mode": "SUPPORTED_SYNC_MODES_FULL_REFRESH",
-                "destination_sync_mode": "SUPPORTED_DESTINATION_SYNC_MODES_OVERWRITE",
-                "pipeline": "pipelines/dummy-pipeline",
-                "recipe": {
-                    "version": "v1alpha",
-                    "components": [
-                        {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-                        {"id": "m01", "resource_name": "models/dummy-model"},
-                        {"id": "d01", "resource_name": "destination-connectors/dummy-destination"},
-                    ]
-                },
-                "data_mapping_indices": ["01GB5T5ZK9W9C2VXMWWRYM8WPA"],
-                "model_outputs": constant.unspecifiedModelOutputs
+                "input": constant.unspecifiedModelOutputs
             }), {
             headers: { "Content-Type": "application/json" }
         }), {

@@ -17,7 +17,6 @@ import (
 	"github.com/instill-ai/x/sterr"
 
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
-	connectorAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -43,11 +42,8 @@ type Service interface {
 	ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
-	// Source connector custom service
-	ReadSourceConnector(ctx context.Context, id string, owner *mgmtPB.User) ([]byte, error)
-
-	// Destination connector custom service
-	WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param connectorAirbyte.WriteDestinationConnectorParam) error
+	// Execute connector
+	Execute(ctx context.Context, id string, owner *mgmtPB.User, input []*connectorPB.DataPayload, connectorType datamodel.ConnectorType) ([]*connectorPB.DataPayload, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error)
@@ -510,20 +506,15 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 	return dbConnector, nil
 }
 
-func (s *service) ReadSourceConnector(ctx context.Context, id string, owner *mgmtPB.User) ([]byte, error) {
-	// TODO: Implement async source destination
-	return nil, nil
-}
-
-func (s *service) WriteDestinationConnector(ctx context.Context, id string, owner *mgmtPB.User, param connectorAirbyte.WriteDestinationConnectorParam) error {
+func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, input []*connectorPB.DataPayload, connectorType datamodel.ConnectorType) ([]*connectorPB.DataPayload, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), false)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	configuration := func() *structpb.Struct {
@@ -540,14 +531,10 @@ func (s *service) WriteDestinationConnector(ctx context.Context, id string, owne
 
 	con, err := s.connectorDestination.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
-		return err
-	}
-	_, err = con.Execute(param)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return con.Execute(input)
 }
 
 func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error) {

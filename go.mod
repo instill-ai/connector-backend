@@ -9,10 +9,10 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/connector v0.0.0-20230607085408-06a038e17b8e
-	github.com/instill-ai/connector-destination v0.0.0-20230615044647-2b6ad2169bf6
-	github.com/instill-ai/connector-source v0.0.0-20230607092012-398b5a8c9310
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230523000406-299e9451af13
+	github.com/instill-ai/connector v0.0.0-20230615093707-edf8710c4ddb
+	github.com/instill-ai/connector-destination v0.0.0-20230615101827-30b3dec806b2
+	github.com/instill-ai/connector-source v0.0.0-20230615094018-a0432abee5e8
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230615091607-d5e75c7bc0dd
 	github.com/instill-ai/usage-client v0.2.3-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
