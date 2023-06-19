@@ -12,8 +12,10 @@ import (
 	"syscall"
 	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/rs/cors"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -25,48 +27,35 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-
 	"github.com/instill-ai/connector-backend/config"
+	database "github.com/instill-ai/connector-backend/pkg/db"
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
 	"github.com/instill-ai/connector-backend/pkg/logger"
+	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	"github.com/instill-ai/connector-backend/pkg/middleware"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/usage"
-
-	database "github.com/instill-ai/connector-backend/pkg/db"
-	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 var propagator propagation.TextMapPropagator
 
-func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler, CORSOrigins []string) http.Handler {
+func grpcHandlerFunc(grpcServer *grpc.Server, gwHandler http.Handler) http.Handler {
 	return h2c.NewHandler(
-		cors.New(cors.Options{
-			AllowedOrigins:   CORSOrigins,
-			AllowCredentials: true,
-			Debug:            false,
-			AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "HEAD"},
-		}).Handler(
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			propagator = b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader))
+			ctx := propagator.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+			r = r.WithContext(ctx)
 
-				propagator = b3.New(b3.WithInjectEncoding(b3.B3MultipleHeader))
-				ctx := propagator.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
-				r = r.WithContext(ctx)
-
-				if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-					grpcServer.ServeHTTP(w, r)
-				} else {
-					gwHandler.ServeHTTP(w, r)
-				}
-			})),
-		&http2.Server{},
-	)
+			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+				grpcServer.ServeHTTP(w, r)
+			} else {
+				gwHandler.ServeHTTP(w, r)
+			}
+		}),
+		&http2.Server{})
 }
 
 func main() {
@@ -268,12 +257,12 @@ func main() {
 
 	privateHTTPServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", config.Config.Server.PrivatePort),
-		Handler: grpcHandlerFunc(privateGrpcS, privateServeMux, config.Config.Server.CORSOrigins),
+		Handler: grpcHandlerFunc(privateGrpcS, privateServeMux),
 	}
 
 	publicHTTPServer := &http.Server{
 		Addr:    fmt.Sprintf(":%v", config.Config.Server.PublicPort),
-		Handler: grpcHandlerFunc(publicGrpcS, publicServeMux, config.Config.Server.CORSOrigins),
+		Handler: grpcHandlerFunc(publicGrpcS, publicServeMux),
 	}
 
 	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 5 seconds.
