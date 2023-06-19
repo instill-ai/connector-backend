@@ -65,20 +65,6 @@ func (c ConnectorType) Value() (driver.Value, error) {
 	return connectorPB.ConnectorType(c).String(), nil
 }
 
-// ReleaseStage is an alias type for Protobuf enum ReleaseStage
-type ReleaseStage connectorPB.ReleaseStage
-
-// Scan function for custom GORM type ReleaseStage
-func (r *ReleaseStage) Scan(value interface{}) error {
-	*r = ReleaseStage(connectorPB.ReleaseStage_value[value.(string)])
-	return nil
-}
-
-// Value function for custom GORM type ReleaseStage
-func (r ReleaseStage) Value() (driver.Value, error) {
-	return connectorPB.ReleaseStage(r).String(), nil
-}
-
 // ConnectorState is an alias type for Protobuf enum ConnectorState
 type ConnectorState connectorPB.Connector_State
 

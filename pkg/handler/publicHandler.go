@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/genproto/googleapis/type/date"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gorm.io/datatypes"
@@ -169,19 +168,10 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 
 		for _, def := range page {
 			def.Name = fmt.Sprintf("source-connector-definitions/%s", def.Id)
-			def.ConnectorDefinition.ReleaseDate = func() *date.Date {
-				if def.ConnectorDefinition.ReleaseDate != nil {
-					return &date.Date{
-						Year:  int32(def.ConnectorDefinition.ReleaseDate.Year),
-						Month: int32(def.ConnectorDefinition.ReleaseDate.Month),
-						Day:   int32(def.ConnectorDefinition.ReleaseDate.Day),
-					}
-				}
-				return &date.Date{}
-			}()
 			if isBasicView {
 				def.GetConnectorDefinition().Spec = nil
 			}
+			def.GetConnectorDefinition().VendorAttributes = nil
 			v.SourceConnectorDefinitions = append(
 				v.SourceConnectorDefinitions,
 				def)
@@ -214,19 +204,10 @@ func (h *PublicHandler) listConnectorDefinitions(ctx context.Context, req interf
 		}
 		for _, def := range page {
 			def.Name = fmt.Sprintf("destination-connector-definitions/%s", def.Id)
-			def.ConnectorDefinition.ReleaseDate = func() *date.Date {
-				if def.ConnectorDefinition.ReleaseDate != nil {
-					return &date.Date{
-						Year:  int32(def.ConnectorDefinition.ReleaseDate.Year),
-						Month: int32(def.ConnectorDefinition.ReleaseDate.Month),
-						Day:   int32(def.ConnectorDefinition.ReleaseDate.Day),
-					}
-				}
-				return &date.Date{}
-			}()
 			if isBasicView {
 				def.GetConnectorDefinition().Spec = nil
 			}
+			def.GetConnectorDefinition().VendorAttributes = nil
 			v.DestinationConnectorDefinitions = append(
 				v.DestinationConnectorDefinitions,
 				def)
@@ -281,17 +262,8 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 		if isBasicView {
 			v.SourceConnectorDefinition.ConnectorDefinition.Spec = nil
 		}
+		v.SourceConnectorDefinition.ConnectorDefinition.VendorAttributes = nil
 		v.SourceConnectorDefinition.Name = fmt.Sprintf("source-connector-definitions/%s", v.SourceConnectorDefinition.GetId())
-		v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate = func() *date.Date {
-			if v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate != nil {
-				return &date.Date{
-					Year:  int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Year),
-					Month: int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Month),
-					Day:   int32(v.SourceConnectorDefinition.ConnectorDefinition.ReleaseDate.Day),
-				}
-			}
-			return &date.Date{}
-		}()
 		logger.Info(v.SourceConnectorDefinition.ConnectorDefinition.Title)
 	case *connectorPB.GetDestinationConnectorDefinitionResponse:
 		dbDef, err := h.connectorDestination.GetConnectorDefinitionById(connID)
@@ -303,17 +275,8 @@ func (h *PublicHandler) getConnectorDefinition(ctx context.Context, req interfac
 		if isBasicView {
 			v.DestinationConnectorDefinition.ConnectorDefinition.Spec = nil
 		}
+		v.DestinationConnectorDefinition.ConnectorDefinition.VendorAttributes = nil
 		v.DestinationConnectorDefinition.Name = fmt.Sprintf("destination-connector-definitions/%s", v.DestinationConnectorDefinition.GetId())
-		v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate = func() *date.Date {
-			if v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate != nil {
-				return &date.Date{
-					Year:  int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Year),
-					Month: int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Month),
-					Day:   int32(v.DestinationConnectorDefinition.ConnectorDefinition.ReleaseDate.Day),
-				}
-			}
-			return &date.Date{}
-		}()
 		logger.Info(v.DestinationConnectorDefinition.ConnectorDefinition.Title)
 	}
 
