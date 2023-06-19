@@ -43,7 +43,7 @@ export const pipelinePublicHost = `${proto}://${pHost}:${pPublicPort}`;
 export const pipelineGRPCPublicHost = `${pHost}:${pPublicPort}`;
 export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 
-export const csvDstDefRscName = "destination-connector-definitions/destination-csv"
+export const csvDstDefRscName = "destination-connector-definitions/airbyte-destination-csv"
 export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
 export const httpSrcDefRscName = "source-connector-definitions/source-http"
@@ -58,7 +58,7 @@ export const httpDstDefRscPermalink = "destination-connector-definitions/909c327
 export const gRPCDstDefRscName = "destination-connector-definitions/destination-grpc"
 export const gRPCDstDefRscPermalink = "destination-connector-definitions/c0e4a82c-9620-4a72-abd1-18586f2acccd"
 
-export const mySQLDstDefRscName = "destination-connector-definitions/destination-mysql"
+export const mySQLDstDefRscName = "destination-connector-definitions/airbyte-destination-mysql"
 export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
 export const csvDstConfig = {

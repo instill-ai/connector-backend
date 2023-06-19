@@ -10,7 +10,6 @@ import (
 	"github.com/instill-ai/connector-backend/config"
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
-	connectorDestinationNumbers "github.com/instill-ai/connector-destination/pkg/numbers"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -30,9 +29,6 @@ func GetConnectorDestinationOptions() connectorDestination.ConnectorOptions {
 			MountSourceAirbyte: config.Config.Container.MountSource.Airbyte,
 			MountTargetAirbyte: config.Config.Container.MountTarget.Airbyte,
 			VDPProtocolPath:    "/etc/vdp/vdp_protocol.yaml",
-		},
-		Numbers: connectorDestinationNumbers.ConnectorOptions{
-			APIToken: "",
 		},
 	}
 

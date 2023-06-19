@@ -9,10 +9,10 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/connector v0.0.0-20230615093707-edf8710c4ddb
-	github.com/instill-ai/connector-destination v0.0.0-20230615155538-767ce2bfdb8c
-	github.com/instill-ai/connector-source v0.0.0-20230615094018-a0432abee5e8
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230615091607-d5e75c7bc0dd
+	github.com/instill-ai/connector v0.0.0-20230619103836-51161aed8f55
+	github.com/instill-ai/connector-destination v0.0.0-20230619105746-7a4e77337421
+	github.com/instill-ai/connector-source v0.0.0-20230619105805-a476c83cbc9c
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230619103359-cde5e4f5e898
 	github.com/instill-ai/usage-client v0.2.3-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
@@ -30,7 +30,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/net v0.10.0
-	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230526203410-71b5a4ffd15e
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
@@ -87,6 +86,7 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
+	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230526203410-71b5a4ffd15e // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
