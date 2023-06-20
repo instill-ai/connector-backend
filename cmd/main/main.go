@@ -12,9 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
@@ -27,16 +24,21 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+
 	"github.com/instill-ai/connector-backend/config"
-	database "github.com/instill-ai/connector-backend/pkg/db"
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
 	"github.com/instill-ai/connector-backend/pkg/logger"
-	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	"github.com/instill-ai/connector-backend/pkg/middleware"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/usage"
+
+	database "github.com/instill-ai/connector-backend/pkg/db"
+	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
