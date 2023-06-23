@@ -3,7 +3,7 @@ package objectmapper
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 type Nested struct {
@@ -84,8 +84,8 @@ func TestTemp(t *testing.T) {
 					I: "xyz",
 					J: 3,
 				}
-				assert.NilError(t, om.Map(s, &d))
-				assert.DeepEqual(t, expectedRes, d)
+				assert.Nil(t, om.Map(s, &d))
+				assert.Equal(t, expectedRes, d)
 			},
 		},
 		{
@@ -105,8 +105,8 @@ func TestTemp(t *testing.T) {
 					J: 3,
 					K: []bool{true},
 				}
-				assert.NilError(t, om.Map(s, &d))
-				assert.DeepEqual(t, expectedRes, d)
+				assert.Nil(t, om.Map(s, &d))
+				assert.Equal(t, expectedRes, d)
 			},
 		},
 	}
