@@ -110,3 +110,6 @@ x
 # air related files and folders
 .air*
 tmp
+
+# intellij
+.idea/
