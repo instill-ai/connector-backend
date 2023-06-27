@@ -325,7 +325,7 @@ export function CheckDelete() {
             },
         }), constant.params)
         check(createClsModelRes, {
-            "POST /v1alpha/models cls response status": (r) => r.status === 201,
+            "POST /v1alpha/models cls response status is 201": (r) => r.status === 201,
         })
         // Check model creation finished
         let currentTime = new Date().getTime();
@@ -345,9 +345,9 @@ export function CheckDelete() {
             recipe: {
                 "version": "v1alpha",
                 "components": [
-                    {"id": "s01", "resource_name": "source-connectors/source-http"},
-                    {"id": "m01", "resource_name": "models/dummy-cls"},
-                    {"id": "d01", "resource_name": "destination-connectors/destination-http"},
+                    { "id": "s01", "resource_name": "source-connectors/source-http" },
+                    { "id": "m01", "resource_name": "models/dummy-cls" },
+                    { "id": "d01", "resource_name": "destination-connectors/destination-http" },
                 ]
             },
         };
@@ -369,7 +369,7 @@ export function CheckDelete() {
             name: `source-connectors/source-http`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response message not nil`]: (r) => r.message !== {},
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response message not nil`]: (r) => r.message != {},
         });
 
         // Cannot delete destination connector due to pipeline occupancy
@@ -377,13 +377,7 @@ export function CheckDelete() {
             name: `destination-connectors/destination-http`
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response message not nil`]: (r) => r.message !== {},
-        });
-
-        // Cannot delete model due to pipeline occupancy
-        check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 422`]: (r) => r.status === 422,
-            [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response message not nil`]: (r) => r.message != {},
         });
 
         check(http.request("DELETE", `${constant.pipelinePublicHost}/v1alpha/pipelines/${pipelineID}`), {

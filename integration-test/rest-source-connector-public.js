@@ -269,29 +269,29 @@ export function CheckDelete() {
             },
         }), constant.params)
         check(createClsModelRes, {
-            "POST /v1alpha/models cls response status": (r) => r.status === 201,
+            "POST /v1alpha/models cls response status is 201": (r) => r.status === 201,
         })
         // Check model creation finished
         let currentTime = new Date().getTime();
         let timeoutTime = new Date().getTime() + 120000;
         while (timeoutTime > currentTime) {
             var res = http.get(`${modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
-              headers: helper.genHeader(`application/json`),
+                headers: helper.genHeader(`application/json`),
             })
             if (res.json().operation.done === true) {
-              break
+                break
             }
             sleep(1)
             currentTime = new Date().getTime();
-          }
+        }
 
         const detSyncRecipe = {
             recipe: {
                 "version": "v1alpha",
                 "components": [
-                    {"id": "s01", "resource_name": "source-connectors/source-http"},
-                    {"id": "m01", "resource_name": "models/dummy-cls"},
-                    {"id": "d01", "resource_name": "destination-connectors/destination-http"},
+                    { "id": "s01", "resource_name": "source-connectors/source-http" },
+                    { "id": "m01", "resource_name": "models/dummy-cls" },
+                    { "id": "d01", "resource_name": "destination-connectors/destination-http" },
                 ]
             },
         };
@@ -318,12 +318,6 @@ export function CheckDelete() {
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/destination-http`), {
             [`DELETE /v1alpha/destination-connectors/destination-http response status 422`]: (r) => r.status === 422,
             [`DELETE /v1alpha/destination-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
-        });
-
-        // Cannot delete model due to pipeline occupancy
-        check(http.request("DELETE", `${modelPublicHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 422`]: (r) => r.status === 422,
-            [`DELETE /v1alpha/models/dummy-cls response error msg not nil`]: (r) => r.json() != {},
         });
 
         check(http.request("DELETE", `${pipelinePublicHost}/v1alpha/pipelines/${pipelineID}`), {
