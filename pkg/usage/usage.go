@@ -15,9 +15,9 @@ import (
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
+	usagePB "github.com/instill-ai/protogen-go/base/usage/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
-	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
-	usagePB "github.com/instill-ai/protogen-go/vdp/usage/v1alpha"
 	usageClient "github.com/instill-ai/usage-client/client"
 	usageReporter "github.com/instill-ai/usage-client/reporter"
 )

@@ -11,7 +11,7 @@ export
 .PHONY: dev
 dev:							## Run dev container
 	@docker compose ls -q | grep -q "instill-vdp" && true || \
-		(echo "Error: Run \"make latest PROFILE=connector ITMODE_ENABLED=true\" in vdp repository (https://github.com/instill-ai/vdp) in your local machine first." && exit 1)
+		(echo "Error: Run \"make latest PROFILE=connector\" in vdp repository (https://github.com/instill-ai/vdp) in your local machine first." && exit 1)
 	@docker inspect --type container ${SERVICE_NAME} >/dev/null 2>&1 && echo "A container named ${SERVICE_NAME} is already running." || \
 		echo "Run dev container ${SERVICE_NAME}. To stop it, run \"make stop\"."
 	@docker run -d --rm \
@@ -70,5 +70,5 @@ integration-test-protocol:		## Run integration test for VDP protocol
 
 .PHONY: help
 help:       	 				## Show this help
-	@echo "\nMakefile for locel development"
+	@echo "\nMakefile for local development"
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m (default: help)\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)

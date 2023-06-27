@@ -43,7 +43,7 @@ mgmtbackend:
     cert:
     key:
 controller:
-  host: controller
+  host: controller-vdp
   privateport: 3085
   https:
     cert:

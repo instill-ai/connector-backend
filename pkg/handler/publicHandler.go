@@ -34,8 +34,8 @@ import (
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
+	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
-	healthcheckPB "github.com/instill-ai/protogen-go/vdp/healthcheck/v1alpha"
 )
 
 var tracer = otel.Tracer("connector-backend.public-handler.tracer")
