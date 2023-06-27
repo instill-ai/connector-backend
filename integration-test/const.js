@@ -21,9 +21,13 @@ if (__ENV.API_GATEWAY_PROTOCOL) {
 
 if (apiGatewayMode) {
   // api gateway mode
-  pHost = cHost = mHost = __ENV.API_GATEWAY_HOST
+  pHost = cHost = __ENV.API_GATEWAY_HOST
   cPrivatePort = 3082
-  pPublicPort = cPublicPort = mPublicPort = __ENV.API_GATEWAY_PORT
+  pPublicPort = cPublicPort = __ENV.API_GATEWAY_PORT
+
+  // TODO: remove model-backend dependency
+  mHost = "api-gateway-model"
+  mPublicPort = 9080
 } else {
   // direct microservice mode
   pHost = "pipeline-backend"
@@ -89,15 +93,15 @@ export const paramsHTTPWithJwt = {
 
 const singleModelPipelineMetadata = {
   "pipeline": {
-      "name": "pipelines/dummy-pipeline",
-      "recipe": {
-          "version": "v1alpha",
-          "components": [
-              {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-              {"id": "m01", "resource_name": "models/dummy-model"},
-              {"id": "d01", "resource_name": "destination-connectors/dummy-destination"}
-          ]
-      }
+    "name": "pipelines/dummy-pipeline",
+    "recipe": {
+      "version": "v1alpha",
+      "components": [
+        { "id": "s01", "resource_name": "source-connectors/dummy-source" },
+        { "id": "m01", "resource_name": "models/dummy-model" },
+        { "id": "d01", "resource_name": "destination-connectors/dummy-destination" }
+      ]
+    }
   }
 }
 
@@ -105,13 +109,13 @@ const multipleModelOutputsMetadata = {
   "pipeline": {
     "name": "pipelines/dummy-pipeline",
     "recipe": {
-        "version": "v1alpha",
-        "components": [
-          {"id": "s01", "resource_name": "source-connectors/dummy-source"},
-          {"id": "m01", "resource_name": "models/dummy-model-1"},
-          {"id": "m02", "resource_name": "models/dummy-model-2"},
-          {"id": "d01", "resource_name": "destination-connectors/dummy-destination"}
-        ]
+      "version": "v1alpha",
+      "components": [
+        { "id": "s01", "resource_name": "source-connectors/dummy-source" },
+        { "id": "m01", "resource_name": "models/dummy-model-1" },
+        { "id": "m02", "resource_name": "models/dummy-model-2" },
+        { "id": "d01", "resource_name": "destination-connectors/dummy-destination" }
+      ]
     }
   }
 }
