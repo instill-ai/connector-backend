@@ -19,9 +19,9 @@ import (
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
-	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
 	pipelinePB "github.com/instill-ai/protogen-go/vdp/pipeline/v1alpha"
 )
 

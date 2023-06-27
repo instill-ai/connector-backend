@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	mgmtPB "github.com/instill-ai/protogen-go/vdp/mgmt/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	"google.golang.org/grpc/metadata"
 )
 
