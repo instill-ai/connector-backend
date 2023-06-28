@@ -11,6 +11,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/repo"
+	"go.einride.tech/aip/filtering"
 
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorSource "github.com/instill-ai/connector-source/pkg"
@@ -76,6 +77,42 @@ func (u *usage) RetrieveUsageData() interface{} {
 	// Roll over all users and update the metrics with the cached uuid
 	userPageToken := ""
 	userPageSizeMax := int64(repository.MaxPageSize)
+
+	var connType connectorPB.ConnectorType
+	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
+		filtering.DeclareStandardFunctions(),
+		filtering.DeclareEnumIdent("connector_type", connType.Type()),
+	}...)
+	if err != nil {
+		logger.Error(fmt.Sprintf("%s", err))
+	}
+
+	var srcParser filtering.Parser
+	srcParser.Init("connector_type=CONNECTOR_TYPE_SOURCE")
+	srcParsedExpr, err := srcParser.Parse()
+	if err != nil {
+		logger.Error(fmt.Sprintf("%s", err))
+	}
+	var srcChecker filtering.Checker
+	srcChecker.Init(srcParsedExpr.Expr, srcParsedExpr.SourceInfo, declarations)
+	srcCheckedExpr, err := srcChecker.Check()
+	if err != nil {
+		logger.Error(fmt.Sprintf("%s", err))
+	}
+
+	var dstParser filtering.Parser
+	dstParser.Init("connector_type=CONNECTOR_TYPE_DESTINATION")
+	dstParsedExpr, err := dstParser.Parse()
+	if err != nil {
+		logger.Error(fmt.Sprintf("%s", err))
+	}
+	var dstChecker filtering.Checker
+	dstChecker.Init(dstParsedExpr.Expr, dstParsedExpr.SourceInfo, declarations)
+	dstCheckedExpr, err := dstChecker.Check()
+	if err != nil {
+		logger.Error(fmt.Sprintf("%s", err))
+	}
+
 	for {
 		userResp, err := u.mgmtPrivateServiceClient.ListUsersAdmin(ctx, &mgmtPB.ListUsersAdminRequest{
 			PageSize:  &userPageSizeMax,
@@ -98,10 +135,13 @@ func (u *usage) RetrieveUsageData() interface{} {
 				dbSrcConns, _, connNextPageToken, err := u.repository.ListConnectors(
 					ctx,
 					fmt.Sprintf("users/%s", user.GetUid()),
-					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE),
 					int64(repository.MaxPageSize),
 					connPageToken,
-					true)
+					true,
+					filtering.Filter{
+						CheckedExpr: srcCheckedExpr,
+					},
+				)
 
 				if err != nil {
 					logger.Error(fmt.Sprintf("%s", err))
@@ -142,10 +182,13 @@ func (u *usage) RetrieveUsageData() interface{} {
 				dbDstConns, _, connNextPageToken, err := u.repository.ListConnectors(
 					ctx,
 					fmt.Sprintf("users/%s", user.GetUid()),
-					datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION),
 					int64(repository.MaxPageSize),
 					connPageToken,
-					true)
+					true,
+					filtering.Filter{
+						CheckedExpr: dstCheckedExpr,
+					},
+				)
 
 				if err != nil {
 					logger.Error(fmt.Sprintf("%s", err))

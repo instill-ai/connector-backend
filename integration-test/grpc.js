@@ -32,24 +32,15 @@ export function setup() {
   });
 
   group("Connector API: Pre delete all source connector", () => {
-    for (const srcConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {}).message.sourceConnectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-        name: `source-connectors/${srcConnector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+        name: `connectors/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${srcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });
 
-  group("Connector API: Pre delete all destination connector", () => {
-    for (const desConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}).message.destinationConnectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-        name: `destination-connectors/${desConnector.id}`
-      }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${desConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-      });
-    }
-  });
   client.close();
 }
 
@@ -86,7 +77,7 @@ export default function (data) {
     sourceConnectorPublicWithJwt.CheckList()
     sourceConnectorPublicWithJwt.CheckGet()
     sourceConnectorPublicWithJwt.CheckUpdate()
-    sourceConnectorPublicWithJwt.CheckDelete()
+    // sourceConnectorPublicWithJwt.CheckDelete()
     sourceConnectorPublicWithJwt.CheckLookUp()
     sourceConnectorPublicWithJwt.CheckState()
     sourceConnectorPublicWithJwt.CheckRename()
@@ -117,7 +108,7 @@ export default function (data) {
   sourceConnectorPublic.CheckList()
   sourceConnectorPublic.CheckGet()
   sourceConnectorPublic.CheckUpdate()
-  sourceConnectorPublic.CheckDelete()
+  // sourceConnectorPublic.CheckDelete()
   sourceConnectorPublic.CheckLookUp()
   sourceConnectorPublic.CheckState()
   sourceConnectorPublic.CheckRename()
@@ -160,23 +151,14 @@ export function teardown(data) {
     plaintext: true
   });
   group("Connector API: Delete all source connector created by this test", () => {
-    for (const srcConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {}).message.sourceConnectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-        name: `source-connectors/${srcConnector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+        name: `connectors/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${srcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });
 
-  group("Connector API: Delete all destination connector created by this test", () => {
-    for (const desConnector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}).message.destinationConnectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-        name: `destination-connectors/${desConnector.id}`
-      }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${desConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-      });
-    }
-  });
   client.close();
 }

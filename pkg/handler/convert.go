@@ -20,10 +20,9 @@ import (
 // PBToDBConnector converts protobuf data model to db data model
 func PBToDBConnector(
 	ctx context.Context,
-	pbConnector interface{},
-	connectorType datamodel.ConnectorType,
+	pbConnector *connectorPB.Connector,
 	ownerRscName string,
-	connectorDefinitionUID uuid.UUID) *datamodel.Connector {
+	connectorDefinition *connectorPB.ConnectorDefinition) *datamodel.Connector {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -37,51 +36,31 @@ func PBToDBConnector(
 	var updateTime time.Time
 	var err error
 
-	switch v := pbConnector.(type) {
-	case *connectorPB.SourceConnector:
-		id = v.GetId()
-		state = datamodel.ConnectorState(v.GetConnector().GetState())
-		tombstone = v.GetConnector().GetTombstone()
-		configuration = v.GetConnector().GetConfiguration()
-		createTime = v.GetConnector().GetCreateTime().AsTime()
-		updateTime = v.GetConnector().GetUpdateTime().AsTime()
+	id = pbConnector.GetId()
+	state = datamodel.ConnectorState(pbConnector.GetState())
+	tombstone = pbConnector.GetTombstone()
+	configuration = pbConnector.GetConfiguration()
+	createTime = pbConnector.GetCreateTime().AsTime()
+	updateTime = pbConnector.GetUpdateTime().AsTime()
 
-		uid, err = uuid.FromString(v.GetUid())
-		if err != nil {
-			logger.Fatal(err.Error())
-		}
+	uid, err = uuid.FromString(pbConnector.GetUid())
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
 
-		description = sql.NullString{
-			String: v.GetConnector().GetDescription(),
-			Valid:  true,
-		}
-	case *connectorPB.DestinationConnector:
-		id = v.GetId()
-		state = datamodel.ConnectorState(v.GetConnector().GetState())
-		tombstone = v.GetConnector().GetTombstone()
-		configuration = v.GetConnector().GetConfiguration()
-		createTime = v.GetConnector().GetCreateTime().AsTime()
-		updateTime = v.GetConnector().GetUpdateTime().AsTime()
-
-		uid, err = uuid.FromString(v.GetUid())
-		if err != nil {
-			logger.Fatal(err.Error())
-		}
-
-		description = sql.NullString{
-			String: v.GetConnector().GetDescription(),
-			Valid:  true,
-		}
+	description = sql.NullString{
+		String: pbConnector.GetDescription(),
+		Valid:  true,
 	}
 
 	return &datamodel.Connector{
 		Owner:                  ownerRscName,
 		ID:                     id,
-		ConnectorType:          connectorType,
+		ConnectorType:          datamodel.ConnectorType(connectorDefinition.ConnectorType),
 		Description:            description,
 		State:                  state,
 		Tombstone:              tombstone,
-		ConnectorDefinitionUID: connectorDefinitionUID,
+		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
 
 		Configuration: func() []byte {
 			if configuration != nil {
@@ -106,19 +85,22 @@ func PBToDBConnector(
 func DBToPBConnector(
 	ctx context.Context,
 	dbConnector *datamodel.Connector,
-	connectorType datamodel.ConnectorType,
 	owner string,
-	connectorDefinition string) interface{} {
+	connectorDefinition string) *connectorPB.Connector {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	connector := &connectorPB.Connector{
-
-		Description: &dbConnector.Description.String,
-		State:       connectorPB.Connector_State(dbConnector.State),
-		Tombstone:   dbConnector.Tombstone,
-		CreateTime:  timestamppb.New(dbConnector.CreateTime),
-		UpdateTime:  timestamppb.New(dbConnector.UpdateTime),
+	pbConnector := &connectorPB.Connector{
+		Uid:                 dbConnector.UID.String(),
+		Name:                fmt.Sprintf("connectors/%s", dbConnector.ID),
+		Id:                  dbConnector.ID,
+		ConnectorDefinition: connectorDefinition,
+		ConnectorType:       connectorPB.ConnectorType(dbConnector.ConnectorType),
+		Description:         &dbConnector.Description.String,
+		State:               connectorPB.Connector_State(dbConnector.State),
+		Tombstone:           dbConnector.Tombstone,
+		CreateTime:          timestamppb.New(dbConnector.CreateTime),
+		UpdateTime:          timestamppb.New(dbConnector.UpdateTime),
 
 		Configuration: func() *structpb.Struct {
 			if dbConnector.Configuration != nil {
@@ -132,34 +114,12 @@ func DBToPBConnector(
 			return nil
 		}(),
 	}
-	if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE) {
-		pbConnector := connectorPB.SourceConnector{
-			Uid:                       dbConnector.UID.String(),
-			Name:                      fmt.Sprintf("source-connectors/%s", dbConnector.ID),
-			Id:                        dbConnector.ID,
-			SourceConnectorDefinition: connectorDefinition,
-			Connector:                 connector,
-		}
-		if strings.HasPrefix(owner, "users/") {
-			pbConnector.GetConnector().Owner = &connectorPB.Connector_User{User: owner}
-		} else if strings.HasPrefix(owner, "organizations/") {
-			pbConnector.GetConnector().Owner = &connectorPB.Connector_Org{Org: owner}
-		}
-		return &pbConnector
-	} else if connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION) {
-		pbConnector := connectorPB.DestinationConnector{
-			Uid:                            dbConnector.UID.String(),
-			Name:                           fmt.Sprintf("destination-connectors/%s", dbConnector.ID),
-			Id:                             dbConnector.ID,
-			DestinationConnectorDefinition: connectorDefinition,
-			Connector:                      connector,
-		}
-		if strings.HasPrefix(owner, "users/") {
-			pbConnector.GetConnector().Owner = &connectorPB.Connector_User{User: owner}
-		} else if strings.HasPrefix(owner, "organizations/") {
-			pbConnector.GetConnector().Owner = &connectorPB.Connector_Org{Org: owner}
-		}
-		return &pbConnector
+
+	if strings.HasPrefix(owner, "users/") {
+		pbConnector.Owner = &connectorPB.Connector_User{User: owner}
+	} else if strings.HasPrefix(owner, "organizations/") {
+		pbConnector.Owner = &connectorPB.Connector_Org{Org: owner}
 	}
-	return nil
+	return pbConnector
+
 }

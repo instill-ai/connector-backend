@@ -47,23 +47,23 @@ export const pipelinePublicHost = `${proto}://${pHost}:${pPublicPort}`;
 export const pipelineGRPCPublicHost = `${pHost}:${pPublicPort}`;
 export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 
-export const csvDstDefRscName = "destination-connector-definitions/airbyte-destination-csv"
-export const csvDstDefRscPermalink = "destination-connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
+export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
+export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
-export const httpSrcDefRscName = "source-connector-definitions/source-http"
-export const httpSrcDefRscPermalink = "source-connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
+export const httpSrcDefRscName = "connector-definitions/source-http"
+export const httpSrcDefRscPermalink = "connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
 
-export const gRPCSrcDefRscName = "source-connector-definitions/source-grpc"
-export const gRPCSrcDefRscPermalink = "source-connector-definitions/82ca7d29-a35c-4222-b900-8d6878195e7a"
+export const gRPCSrcDefRscName = "connector-definitions/source-grpc"
+export const gRPCSrcDefRscPermalink = "connector-definitions/82ca7d29-a35c-4222-b900-8d6878195e7a"
 
-export const httpDstDefRscName = "destination-connector-definitions/destination-http"
-export const httpDstDefRscPermalink = "destination-connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
+export const httpDstDefRscName = "connector-definitions/destination-http"
+export const httpDstDefRscPermalink = "connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
 
-export const gRPCDstDefRscName = "destination-connector-definitions/destination-grpc"
-export const gRPCDstDefRscPermalink = "destination-connector-definitions/c0e4a82c-9620-4a72-abd1-18586f2acccd"
+export const gRPCDstDefRscName = "connector-definitions/destination-grpc"
+export const gRPCDstDefRscPermalink = "connector-definitions/c0e4a82c-9620-4a72-abd1-18586f2acccd"
 
-export const mySQLDstDefRscName = "destination-connector-definitions/airbyte-destination-mysql"
-export const mySQLDstDefRscPermalink = "destination-connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
+export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
+export const mySQLDstDefRscPermalink = "connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
 export const csvDstConfig = {
   "destination_path": "/local/test"
@@ -122,7 +122,7 @@ const multipleModelOutputsMetadata = {
 
 export const clsModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPA",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "classification": {
         "category": "person",
@@ -138,7 +138,7 @@ export const clsModelOutputs = [{
 export const detectionModelOutputs = [
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-    "json": {
+    "structured_data": {
       "models/dummy-model-1": {
         "detection": {
           "objects": [
@@ -176,7 +176,7 @@ export const detectionModelOutputs = [
   },
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
-    "json": {
+    "structured_data": {
       "models/dummy-model-1": {
         "detection": {
           "objects": [
@@ -214,7 +214,7 @@ export const detectionModelOutputs = [
   },
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
-    "json": {
+    "structured_data": {
       "models/dummy-model-1": {
         "detection": {
           "objects": [
@@ -254,7 +254,7 @@ export const detectionModelOutputs = [
 
 export const detectionEmptyModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "detection": {
         "objects": []
@@ -267,7 +267,7 @@ export const detectionEmptyModelOutputs = [{
 
 export const keypointModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "keypoint": {
         "objects": [
@@ -288,7 +288,7 @@ export const keypointModelOutputs = [{
 
 export const ocrModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "ocr": {
         "objects": [
@@ -311,7 +311,7 @@ export const ocrModelOutputs = [{
 
 export const semanticSegModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "semantic_segmentation": {
         "stuffs": [
@@ -336,7 +336,7 @@ export const semanticSegModelOutputs = [{
 
 export const instSegModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "instance_segmentation": {
         "objects": [
@@ -371,7 +371,7 @@ export const instSegModelOutputs = [{
 
 export const textToImageModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "text_to_image": {
         "images": [
@@ -388,7 +388,7 @@ export const textToImageModelOutputs = [{
 
 export const textGenerationModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "text_generation": {
         "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
@@ -400,7 +400,7 @@ export const textGenerationModelOutputs = [{
 
 export const unspecifiedModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "json": {
+  "structured_data": {
     "models/dummy-model": {
       "unspecified": {
         "raw_outputs": [

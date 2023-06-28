@@ -6,7 +6,6 @@ package vdp.pipeline.v1alpha;
 import "google/api/annotations.proto";
 import "google/api/client.proto";
 
-import "../../../vdp/pipeline/v1alpha/healthcheck.proto";
 import "../../../vdp/pipeline/v1alpha/pipeline.proto";
 
 // Pipeline service responds to external access
@@ -26,7 +25,7 @@ service PipelinePublicService {
   // Readiness method receives a ReadinessRequest message and returns a
   // ReadinessResponse message.
   // See https://github.com/grpc/grpc/blob/master/doc/health-checking.md
-  rpc Readiness(ReadinessRequest) returns (ReadinessResponse) {
+  rpc Readiness(ReadinessRequest) returns (v1alpha.ReadinessResponse) {
     option (google.api.http) = {
       get : "/v1alpha/__readiness"
     };
@@ -123,34 +122,68 @@ service PipelinePublicService {
     option (google.api.method_signature) = "name,new_pipeline_id";
   }
 
-  // TriggerPipeline method receives a TriggerPipelineRequest message and
-  // returns a TriggerPipelineResponse.
-  rpc TriggerPipeline(TriggerPipelineRequest)
-      returns (TriggerPipelineResponse) {
+  // TriggerSyncPipeline method receives a TriggerSyncPipelineRequest message
+  // and returns a TriggerSyncPipelineResponse.
+  rpc TriggerSyncPipeline(TriggerSyncPipelineRequest)
+      returns (TriggerSyncPipelineResponse) {
     option (google.api.http) = {
-      post : "/v1alpha/{name=pipelines/*}/trigger"
+      post : "/v1alpha/{name=pipelines/*}/triggerSync"
       body : "*"
     };
     option (google.api.method_signature) = "name,inputs";
   }
 
-  // TriggerPipelineBinaryFileUpload method receives a
-  // TriggerPipelineBinaryFileUploadRequest message and returns a
-  // TriggerPipelineBinaryFileUploadResponse message.
+  // TriggerSyncPipelineBinaryFileUpload method receives a
+  // TriggerSyncPipelineBinaryFileUploadRequest message and returns a
+  // TriggerSyncPipelineBinaryFileUploadResponse message.
   //
-  // Endpoint: "POST /v1alpha/{name=pipelines/*}/trigger-multipart"
-  rpc TriggerPipelineBinaryFileUpload(
-      stream TriggerPipelineBinaryFileUploadRequest)
-      returns (TriggerPipelineBinaryFileUploadResponse) {
+  // Endpoint: "POST /v1alpha/{name=pipelines/*}/triggerSyncMultipart"
+  rpc TriggerSyncPipelineBinaryFileUpload(
+      stream TriggerSyncPipelineBinaryFileUploadRequest)
+      returns (TriggerSyncPipelineBinaryFileUploadResponse) {
+    option (google.api.method_signature) = "name,file";
+  }
+
+  // TriggerAsyncPipeline method receives a TriggerPipelineRequest message and
+  // returns a TriggerAsyncPipelineResponse.
+  rpc TriggerAsyncPipeline(TriggerAsyncPipelineRequest)
+      returns (TriggerAsyncPipelineResponse) {
+    option (google.api.http) = {
+      post : "/v1alpha/{name=pipelines/*}/triggerAsync"
+      body : "*"
+    };
+    option (google.api.method_signature) = "name,inputs";
+  }
+
+  // TriggerAsyncPipelineBinaryFileUpload method receives a
+  // TriggerPipelineBinaryFileUploadRequest message and returns a
+  // TriggerAsyncPipelineResponse message.
+  //
+  // Endpoint: "POST /v1alpha/{name=pipelines/*}/triggerAsyncMultipart"
+  rpc TriggerAsyncPipelineBinaryFileUpload(
+      stream TriggerAsyncPipelineBinaryFileUploadRequest)
+      returns (TriggerAsyncPipelineBinaryFileUploadResponse) {
     option (google.api.method_signature) = "name,file";
   }
 
   // WatchPipeline method receives a WatchPipelineRequest message
   // and returns a WatchPipelineResponse
-  rpc WatchPipeline(WatchPipelineRequest)
-      returns (WatchPipelineResponse) {
+  rpc WatchPipeline(WatchPipelineRequest) returns (WatchPipelineResponse) {
     option (google.api.http) = {
       get : "/v1alpha/{name=pipelines/*}/watch"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // *Longrunning operation methods
+
+  // GetTriggerAsyncOperation method receives a
+  // GetTriggerAsyncOperationRequest message and returns a
+  // GetTriggerAsyncOperationResponse message.
+  rpc GetTriggerAsyncOperation(GetTriggerAsyncOperationRequest)
+      returns (GetTriggerAsyncOperationResponse) {
+    option (google.api.http) = {
+      get : "/v1alpha/{name=triggerAsyncOperations/*}"
     };
     option (google.api.method_signature) = "name";
   }

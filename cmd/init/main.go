@@ -4,17 +4,16 @@ import (
 	"context"
 	"log"
 
+	"go.einride.tech/aip/filtering"
 	"go.opentelemetry.io/otel"
 
 	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
-	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 func main() {
@@ -44,7 +43,8 @@ func main() {
 		VDPProtocolPath:    "/etc/vdp/vdp_protocol.yaml",
 	})
 
-	conns, _, _, err := repository.ListConnectorsAdmin(ctx, datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION), 1000, "", false)
+	// TODO: use pagination
+	conns, _, _, err := repository.ListConnectorsAdmin(ctx, 1000, "", false, filtering.Filter{})
 	if err != nil {
 		panic(err)
 	}
