@@ -25,100 +25,92 @@ export function CheckCreate() {
         // destination-http
         var httpDstConnector = {
             "id": "destination-http",
-            "destination_connector_definition": constant.httpDstDefRscName,
-            "connector": {
-                "description": "HTTP source",
-                "configuration": {},
-            }
+            "connector_definition": constant.httpDstDefRscName,
+            "description": "HTTP source",
+            "configuration": {},
         }
 
-        var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: httpDstConnector
+        var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpDstConnector
         })
 
         check(resDstHTTP, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector name": (r) => r.message.destinationConnector.name == `destination-connectors/${httpDstConnector.id}`,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector uid": (r) => helper.isUUID(r.message.destinationConnector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.httpDstDefRscName,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector HTTP response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector name": (r) => r.message.connector.name == `connectors/${httpDstConnector.id}`,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector uid": (r) => helper.isUUID(r.message.connector.uid),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.httpDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: httpDstConnector
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpDstConnector
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector response StatusAlreadyExists": (r) => r.status === grpc.StatusAlreadyExists,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusAlreadyExists": (r) => r.status === grpc.StatusAlreadyExists,
         });
 
         // destination-grpc
         var gRPCDstConnector = {
             "id": "destination-grpc",
-            "destination_connector_definition": constant.gRPCDstDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.gRPCDstDefRscName,
+            "configuration": {}
         }
 
-        var resDstGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: gRPCDstConnector
+        var resDstGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: gRPCDstConnector
         })
 
         check(resDstGRPC, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector gRPC response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector gRPC response StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {}), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector response StatusInvalidArgument": (r) => r.status === grpc.StatusInvalidArgument,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {}), {
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusInvalidArgument": (r) => r.status === grpc.StatusInvalidArgument,
         });
 
         // destination-csv
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
         check(resCSVDst, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV response StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response STATE_CONNECTED`]: (r) => r.message.destinationConnector.connector.state === "STATE_CONNECTED",
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response STATE_CONNECTED`]: (r) => r.message.connector.state === "STATE_CONNECTED",
         });
 
         // destination-mysql (will end up with STATE_ERROR)
         var mySQLDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.mySQLDstDefRscName,
-            "connector": {
-                "configuration": {
-                    "host": randomString(10),
-                    "port": 3306,
-                    "username": randomString(10),
-                    "database": randomString(10),
-                }
+            "connector_definition": constant.mySQLDstDefRscName,
+            "configuration": {
+                "host": randomString(10),
+                "port": 3306,
+                "username": randomString(10),
+                "database": randomString(10),
             }
         }
 
-        var resDstMySQL = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector',
+        var resDstMySQL = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector',
             {
-                destination_connector: mySQLDstConnector,
+                connector: mySQLDstConnector,
             },
             {
                 timeout: "600s",
@@ -126,78 +118,74 @@ export function CheckCreate() {
         )
 
         check(resDstMySQL, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response StatusOK": (r) => r.status === grpc.StatusOK,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector name": (r) => r.message.destinationConnector.name == `destination-connectors/${mySQLDstConnector.id}`,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector uid": (r) => helper.isUUID(r.message.destinationConnector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector destinationConnectorDefinition": (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.mySQLDstDefRscName,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector name": (r) => r.message.connector.name == `connectors/${mySQLDstConnector.id}`,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector uid": (r) => helper.isUUID(r.message.connector.uid),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.mySQLDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resDstMySQL.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resDstMySQL.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector MySQL destination connector ended up STATE_ERROR": (r) => r.message.state === "STATE_ERROR",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL destination connector ended up STATE_ERROR": (r) => r.message.state === "STATE_ERROR",
         })
 
         // check JSON Schema failure cases
         var jsonSchemaFailedBodyCSV = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {} // required destination_path
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {} // required destination_path
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: jsonSchemaFailedBodyCSV
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: jsonSchemaFailedBodyCSV
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === grpc.StatusInvalidArgument,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === grpc.StatusInvalidArgument,
         });
 
         var jsonSchemaFailedBodyMySQL = {
             "id": randomString(10),
-            "destination_connector_definition": constant.mySQLDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "host": randomString(10),
-                    "port": "3306",
-                    "username": randomString(10),
-                    "database": randomString(10),
-                } // required port integer type
-            }
+            "connector_definition": constant.mySQLDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "host": randomString(10),
+                "port": "3306",
+                "username": randomString(10),
+                "database": randomString(10),
+            } // required port integer type
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: jsonSchemaFailedBodyMySQL
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: jsonSchemaFailedBodyMySQL
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === grpc.StatusInvalidArgument,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === grpc.StatusInvalidArgument,
         });
 
         // Delete test records
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resDstHTTP.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resDstHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resDstHTTP.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resDstHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resDstGRPC.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resDstGRPC.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resDstGRPC.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resDstGRPC.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resDstMySQL.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resDstMySQL.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resDstMySQL.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resDstMySQL.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -213,11 +201,13 @@ export function CheckList() {
             plaintext: true
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response destinationConnectors array is 0 length`]: (r) => r.message.destinationConnectors.length === 0,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response totalSize is 0`]: (r) => r.message.totalSize == 0,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
+        }, {}), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response connectors array is 0 length`]: (r) => r.message.connectors.length === 0,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response totalSize is 0`]: (r) => r.message.totalSize == 0,
         });
 
         const numConnectors = 10
@@ -225,98 +215,108 @@ export function CheckList() {
         for (var i = 0; i < numConnectors; i++) {
             reqBodies[i] = {
                 "id": randomString(10),
-                "destination_connector_definition": constant.csvDstDefRscName,
-                "connector": {
-                    "description": randomString(50),
-                    "configuration": constant.csvDstConfig
-                }
+                "connector_definition": constant.csvDstDefRscName,
+                "description": randomString(50),
+                "configuration": constant.csvDstConfig
             }
         }
 
         // Create connectors
         for (const reqBody of reqBodies) {
-            var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-                destination_connector: reqBody
+            var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+                connector: reqBody
             })
 
             check(resDstHTTP, {
-                [`vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector x${reqBodies.length} HTTP response StatusOK`]: (r) => r.status === grpc.StatusOK,
+                [`vdp.connector.v1alpha.ConnectorPublicService/CreateConnector x${reqBodies.length} HTTP response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response has destinationConnectors array`]: (r) => Array.isArray(r.message.destinationConnectors),
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors response has totalSize = ${reqBodies.length}`]: (r) => r.message.totalSize == reqBodies.length,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
+        }, {}), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response has connectors array`]: (r) => Array.isArray(r.message.connectors),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response has totalSize = ${reqBodies.length}`]: (r) => r.message.totalSize == reqBodies.length,
         });
 
-        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {}, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
+        }, {})
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 0
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=0 response all records`]: (r) => r.message.destinationConnectors.length === limitedRecords.message.destinationConnectors.length,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=0 response all records`]: (r) => r.message.connectors.length === limitedRecords.message.connectors.length,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response size 1`]: (r) => r.message.destinationConnectors.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response size 1`]: (r) => r.message.connectors.length === 1,
         });
 
-        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1
         }, {})
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             pageToken: `${pageRes.message.nextPageToken}`
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response size 1`]: (r) => r.message.destinationConnectors.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response size 1`]: (r) => r.message.connectors.length === 1,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             view: "VIEW_BASIC"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_BASIC response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             view: "VIEW_FULL"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration !== null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 view=VIEW_FULL response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response destinationConnectors[0].connector.configuration is null`]: (r) => r.message.destinationConnectors[0].connector.configuration === null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=1 response destinationConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: `${limitedRecords.message.totalSize}`,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectors pageSize=${limitedRecords.message.totalSize} response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=${limitedRecords.message.totalSize} response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
         });
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-                name: `destination-connectors/${reqBody.id}`
+            check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+                name: `connectors/${reqBody.id}`
             }), {
-                [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+                [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
 
@@ -334,36 +334,34 @@ export function CheckGet() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector id`]: (r) => r.message.destinationConnector.id === csvDstConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector id`]: (r) => r.message.connector.id === csvDstConnector.id,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -380,83 +378,75 @@ export function CheckUpdate() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
-            "name": `destination-connectors/${csvDstConnector.id}`,
-            "destination_connector_definition": csvDstConnector.destination_connector_definition,
-            "connector": {
-                "tombstone": true,
-                "description": randomString(50),
-                "configuration": {
-                    destination_path: "/tmp"
-                }
+            "name": `connectors/${csvDstConnector.id}`,
+            "connector_definition": csvDstConnector.connector_definition,
+            "tombstone": true,
+            "description": randomString(50),
+            "configuration": {
+                destination_path: "/tmp"
             }
         }
 
-        var resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector', {
-            destination_connector: csvDstConnectorUpdate,
-            update_mask: "connector.description,connector.configuration",
+        var resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector', {
+            connector: csvDstConnectorUpdate,
+            update_mask: "description,configuration",
         })
 
         check(resCSVDstUpdate, {
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector connectorDefinition`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector description`]: (r) => r.message.destinationConnector.connector.description === csvDstConnectorUpdate.connector.description,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector tombstone`]: (r) => r.message.destinationConnector.connector.tombstone === false,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector configuration`]: (r) => r.message.destinationConnector.connector.configuration.destination_path === csvDstConnectorUpdate.connector.configuration.destination_path,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector connectorDefinition`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector description`]: (r) => r.message.connector.description === csvDstConnectorUpdate.description,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector tombstone`]: (r) => r.message.connector.tombstone === false,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector configuration`]: (r) => r.message.connector.configuration.destination_path === csvDstConnectorUpdate.configuration.destination_path,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
         // Try to update with empty description
         csvDstConnectorUpdate = {
-            "name": `destination-connectors/${csvDstConnector.id}`,
-            "connector": {
-                "description": "",
-            }
+            "name": `connectors/${csvDstConnector.id}`,
+            "description": "",
         }
 
-        resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector', {
-            destination_connector: csvDstConnectorUpdate,
-            update_mask: "connector.description",
+        resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector', {
+            connector: csvDstConnectorUpdate,
+            update_mask: "description",
         })
 
         check(resCSVDstUpdate, {
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response connector description`]: (r) => r.message.destinationConnector.connector.description === csvDstConnectorUpdate.connector.description,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector ${resCSVDstUpdate.message.destinationConnector.id} with empty description response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} with empty description response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} with empty description response connector description`]: (r) => r.message.connector.description === csvDstConnectorUpdate.description,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} with empty description response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
         // Try to update with a non-existing name field (which should be ignored because name field is OUTPUT_ONLY)
         csvDstConnectorUpdate = {
-            "name": `destination-connectors/${randomString(5)}`,
-            "connector": {
-                "description": randomString(50),
-            }
+            "name": `connectors/${randomString(5)}`,
+            "description": randomString(50),
         }
 
-        resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector', {
-            destination_connector: csvDstConnectorUpdate,
-            update_mask: "connector.description",
+        resCSVDstUpdate = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector', {
+            connector: csvDstConnectorUpdate,
+            update_mask: "description",
         })
         check(resCSVDstUpdate, {
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateDestinationConnector with non-existing name field response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector with non-existing name field response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -473,30 +463,28 @@ export function CheckLookUp() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector', {
-            permalink: `destination_connector/${resCSVDst.message.destinationConnector.uid}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector', {
+            permalink: `destination_connector/${resCSVDst.message.connector.uid}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector id`]: (r) => r.message.destinationConnector.uid === resCSVDst.message.destinationConnector.uid,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector destinationConnectorDefinition permalink`]: (r) => r.message.destinationConnector.destinationConnectorDefinition === constant.csvDstDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpDestinationConnector CSV ${resCSVDst.message.destinationConnector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.destinationConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector id`]: (r) => r.message.connector.uid === resCSVDst.message.connector.uid,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -513,87 +501,85 @@ export function CheckState() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector ${resCSVDst.message.connector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector ${resCSVDst.message.connector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector ${resCSVDst.message.connector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector ${resCSVDst.message.connector.id} response at STATE_CONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector ${resCSVDst.message.connector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectDestinationConnector ${resCSVDst.message.destinationConnector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector ${resCSVDst.message.connector.id} response at STATE_DISCONNECTED state StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -610,31 +596,29 @@ export function CheckRename() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        let new_id = `some-id-not-${resCSVDst.message.destinationConnector.id}`
+        let new_id = `some-id-not-${resCSVDst.message.connector.id}`
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector', {
-            name: resCSVDst.message.destinationConnector.id,
-            new_destination_connector_id: new_id
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameConnector', {
+            name: resCSVDst.message.connector.id,
+            new_connector_id: new_id
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/RenameDestinationConnector ${resCSVDst.message.destinationConnector.id} response id is some-id-not-${resCSVDst.message.destinationConnector.id}`]: (r) => r.message.destinationConnector.id === `some-id-not-${resCSVDst.message.destinationConnector.id}`,
+            [`vdp.connector.v1alpha.ConnectorPublicService/RenameConnector ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/RenameConnector ${resCSVDst.message.connector.id} response id is some-id-not-${resCSVDst.message.connector.id}`]: (r) => r.message.connector.id === `some-id-not-${resCSVDst.message.connector.id}`,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${new_id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${new_id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${new_id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${new_id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -654,382 +638,362 @@ export function CheckExecute() {
         // Write classification output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-classification"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-classification"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.clsModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.clsModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write detection output (empty bounding_boxes)
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-detection-empty-bounding-boxes"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-detection-empty-bounding-boxes"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.detectionEmptyModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.detectionEmptyModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write detection output (multiple models)
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-detection-multi-models"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-detection-multi-models"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.detectionModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.detectionModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (detection) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write keypoint output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-keypoint"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-keypoint"
+            },
         }
 
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.keypointModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.keypointModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (keypoint) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write ocr output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-ocr"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-ocr"
+            },
         }
 
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.ocrModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.ocrModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (ocr) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write semantic segmentation output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-semantic-segmentation"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-semantic-segmentation"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.semanticSegModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.semanticSegModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (semantic-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write instance segmentation output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-instance-segmentation"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-instance-segmentation"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.instSegModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.instSegModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (instance-segmentation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write text-to-image output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-text-to-image"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-text-to-image"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.textToImageModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.textToImageModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (text-to-image) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write text-generation output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-text-generation"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-text-generation"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.textGenerationModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.textGenerationModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (text-generation) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Write unspecified output
         csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": {
-                    "destination_path": "/local/test-unspecified"
-                },
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {
+                "destination_path": "/local/test-unspecified"
+            },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector', {
-            "name": `destination_connector/${resCSVDst.message.destinationConnector.id}`,
-            "input": constant.unspecifiedModelOutputs
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector', {
+            "name": `destination_connector/${resCSVDst.message.connector.id}`,
+            "inputs": constant.unspecifiedModelOutputs
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnector ${resCSVDst.message.connector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response (unspecified) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -1046,28 +1010,26 @@ export function CheckTest() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "destination_connector_definition": constant.csvDstDefRscName,
-            "connector": {
-                "description": randomString(50),
-                "configuration": constant.csvDstConfig
-            }
+            "connector_definition": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: csvDstConnector
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestDestinationConnector', {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/TestDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/TestDestinationConnector CSV ${resCSVDst.message.destinationConnector.id} response connector STATE_CONNECTED`]: (r) => r.message.state === "STATE_CONNECTED",
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestConnector CSV ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestConnector CSV ${resCSVDst.message.connector.id} response connector STATE_CONNECTED`]: (r) => r.message.state === "STATE_CONNECTED",
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/${resCSVDst.message.destinationConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resCSVDst.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector ${resCSVDst.message.destinationConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();

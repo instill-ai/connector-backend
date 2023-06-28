@@ -5,17 +5,16 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/util"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
-func (s *service) GetResourceState(connectorUID uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error) {
+func (s *service) GetResourceState(connectorUID uuid.UUID) (*connectorPB.Connector_State, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String(), connectorType)
+	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String())
 
 	resp, err := s.controllerClient.GetResource(ctx, &controllerPB.GetResourceRequest{
 		ResourcePermalink: resourcePermalink,
@@ -28,11 +27,11 @@ func (s *service) GetResourceState(connectorUID uuid.UUID, connectorType datamod
 	return resp.Resource.GetConnectorState().Enum(), nil
 }
 
-func (s *service) UpdateResourceState(connectorUID uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32) error {
+func (s *service) UpdateResourceState(connectorUID uuid.UUID, state connectorPB.Connector_State, progress *int32) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String(), connectorType)
+	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String())
 
 	_, err := s.controllerClient.UpdateResource(ctx, &controllerPB.UpdateResourceRequest{
 		Resource: &controllerPB.Resource{
@@ -52,11 +51,11 @@ func (s *service) UpdateResourceState(connectorUID uuid.UUID, connectorType data
 	return nil
 }
 
-func (s *service) DeleteResourceState(connectorUID uuid.UUID, connectorType datamodel.ConnectorType) error {
+func (s *service) DeleteResourceState(connectorUID uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String(), connectorType)
+	resourcePermalink := util.ConvertConnectorToResourceName(connectorUID.String())
 
 	_, err := s.controllerClient.DeleteResource(ctx, &controllerPB.DeleteResourceRequest{
 		ResourcePermalink: resourcePermalink,

@@ -13,64 +13,60 @@ export function CheckCreate() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "description": "HTTP source",
-                "configuration": {},
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "description": "HTTP source",
+            "configuration": {},
         }
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "description": "gRPC source",
-                "configuration": {},
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "description": "gRPC source",
+            "configuration": {},
         }
 
         var resSrcHTTP = http.request(
             "POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
+            `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
         check(resSrcHTTP, {
-            "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
-            "POST /v1alpha/source-connectors response connector name": (r) => r.json().source_connector.name == `source-connectors/${httpSrcConnector.id}`,
-            "POST /v1alpha/source-connectors response connector uid": (r) => helper.isUUID(r.json().source_connector.uid),
-            "POST /v1alpha/source-connectors response connector source_connector_definition": (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
-            "POST /v1alpha/source-connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().source_connector.connector.user),
+            "POST /v1alpha/connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${httpSrcConnector.id}`,
+            "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
+            "POST /v1alpha/connectors response connector connector_definition": (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
         });
 
         check(http.request(
             "POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
+            `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params), {
-            "POST /v1alpha/source-connectors response duplicate HTTP source connector status 409": (r) => r.status === 409
+            "POST /v1alpha/connectors response duplicate HTTP source connector status 409": (r) => r.status === 409
         });
 
         var resSrcGRPC = http.request(
             "POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
+            `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(gRPCSrcConnector), constant.params)
 
         check(resSrcGRPC, {
-            "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
         check(http.request(
             "POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
+            `${connectorPublicHost}/v1alpha/connectors`,
             {}, constant.params), {
-            "POST /v1alpha/source-connectors response status for creating empty body 400": (r) => r.status === 400,
+            "POST /v1alpha/connectors response status for creating empty body 400": (r) => r.status === 400,
         });
 
         // Delete test records
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resSrcHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resSrcHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resSrcHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resSrcHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resSrcGRPC.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resSrcGRPC.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resSrcGRPC.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resSrcGRPC.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
@@ -79,91 +75,87 @@ export function CheckList() {
 
     group("Connector API: List source connectors", () => {
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`), {
-            [`GET /v1alpha/source-connectors response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors response source_connectors array is 0 length`]: (r) => r.json().source_connectors.length === 0,
-            [`GET /v1alpha/source-connectors response next_page_token is empty`]: (r) => r.json().next_page_token === "",
-            [`GET /v1alpha/source-connectors response total_size is 0`]: (r) => r.json().next_page_token == 0,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE`), {
+            [`GET /v1alpha/connectors response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors response connectors array is 0 length`]: (r) => r.json().connectors.length === 0,
+            [`GET /v1alpha/connectors response next_page_token is empty`]: (r) => r.json().next_page_token === "",
+            [`GET /v1alpha/connectors response total_size is 0`]: (r) => r.json().next_page_token == 0,
         });
 
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "configuration": {}
         }
 
         // Create connectors
         for (const reqBody of reqBodies) {
             check(http.request(
                 "POST",
-                `${connectorPublicHost}/v1alpha/source-connectors`,
+                `${connectorPublicHost}/v1alpha/connectors`,
                 JSON.stringify(reqBody), constant.params), {
-                [`POST /v1alpha/source-connectors x${reqBodies.length} response status 201`]: (r) => r.status === 201,
+                [`POST /v1alpha/connectors x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
         }
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`), {
-            [`GET /v1alpha/source-connectors response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors response has source_connectors array`]: (r) => Array.isArray(r.json().source_connectors),
-            [`GET /v1alpha/source-connectors response has total_size = ${reqBodies.length}`]: (r) => r.json().total_size == reqBodies.length,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE`), {
+            [`GET /v1alpha/connectors response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors response has connectors array`]: (r) => Array.isArray(r.json().connectors),
+            [`GET /v1alpha/connectors response has total_size = ${reqBodies.length}`]: (r) => r.json().total_size == reqBodies.length,
         });
 
-        var limitedRecords = http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors`)
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=0`), {
-            "GET /v1alpha/source-connectors?page_size=0 response status is 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=0 response all records": (r) => r.json().source_connectors.length === limitedRecords.json().source_connectors.length,
+        var limitedRecords = http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE`)
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=0`), {
+            "GET /v1alpha/connectors?page_size=0 response status is 200": (r) => r.status === 200,
+            "GET /v1alpha/connectors?page_size=0 response all records": (r) => r.json().connectors.length === limitedRecords.json().connectors.length,
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1`), {
-            "GET /v1alpha/source-connectors?page_size=1 response status is 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1 response source_connectors size 1": (r) => r.json().source_connectors.length === 1,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1`), {
+            "GET /v1alpha/connectors?page_size=1 response status is 200": (r) => r.status === 200,
+            "GET /v1alpha/connectors?page_size=1 response connectors size 1": (r) => r.json().connectors.length === 1,
         });
 
-        var pageRes = http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1`)
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1&page_token=${pageRes.json().next_page_token}`), {
-            [`GET /v1alpha/source-connectors?page_size=1&page_token=${pageRes.json().next_page_token} response status is 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors?page_size=1&page_token=${pageRes.json().next_page_token} response source_connectors size 1`]: (r) => r.json().source_connectors.length === 1,
+        var pageRes = http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1`)
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?page_size=1&page_token=${pageRes.json().next_page_token}`), {
+            [`GET /v1alpha/connectors?page_size=1&page_token=${pageRes.json().next_page_token} response status is 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors?page_size=1&page_token=${pageRes.json().next_page_token} response connectors size 1`]: (r) => r.json().connectors.length === 1,
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1&view=VIEW_BASIC`), {
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response source_connectors[0]connector.configuration is null": (r) => r.json().source_connectors[0].connector.configuration === null,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response source_connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().source_connectors[0].connector.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1&view=VIEW_BASIC`), {
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0]connector.configuration is null": (r) => r.json().connectors[0].configuration === null,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1&view=VIEW_FULL`), {
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response source_connectors[0]connector.configuration is not null": (r) => r.json().source_connectors[0].connector.configuration !== null,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response source_connectors[0]connector.configuration is {}": (r) => Object.keys(r.json().source_connectors[0].connector.configuration).length === 0,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_FULL response source_connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().source_connectors[0].connector.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1&view=VIEW_FULL`), {
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.configuration is not null": (r) => r.json().connectors[0].configuration !== null,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.configuration is {}": (r) => Object.keys(r.json().connectors[0].configuration).length === 0,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=1`), {
-            "GET /v1alpha/source-connectors?page_size=1 response status 200": (r) => r.status === 200,
-            "GET /v1alpha/source-connectors?page_size=1 response source_connectors[0]connector.configuration is null": (r) => r.json().source_connectors[0].connector.configuration === null,
-            "GET /v1alpha/source-connectors?page_size=1&view=VIEW_BASIC response source_connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().source_connectors[0].connector.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1`), {
+            "GET /v1alpha/connectors?page_size=1 response status 200": (r) => r.status === 200,
+            "GET /v1alpha/connectors?page_size=1 response connectors[0]connector.configuration is null": (r) => r.json().connectors[0].configuration === null,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors?page_size=${limitedRecords.json().total_size}`), {
-            [`GET /v1alpha/source-connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === ""
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=${limitedRecords.json().total_size}`), {
+            [`GET /v1alpha/connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === ""
         });
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${reqBody.id}`), {
-                [`DELETE /v1alpha/source-connectors x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
+            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${reqBody.id}`), {
+                [`DELETE /v1alpha/connectors x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
     });
@@ -175,24 +167,22 @@ export function CheckGet() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector id`]: (r) => r.json().source_connector.id === httpSrcConnector.id,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().source_connector.connector.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector id`]: (r) => r.json().connector.id === httpSrcConnector.id,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector connector_definition`]: (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -204,30 +194,28 @@ export function CheckUpdate() {
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "configuration": {}
         }
 
         check(http.request(
             "POST",
-            `${connectorPublicHost}/v1alpha/source-connectors`,
+            `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(gRPCSrcConnector), constant.params), {
-            "POST /v1alpha/source-connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
-        gRPCSrcConnector.connector.description = randomString(20)
+        gRPCSrcConnector.description = randomString(20)
 
         check(http.request(
             "PATCH",
-            `${connectorPublicHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`,
+            `${connectorPublicHost}/v1alpha/connectors/${gRPCSrcConnector.id}`,
             JSON.stringify(gRPCSrcConnector), constant.params), {
-            [`PATCH /v1alpha/source-connectors/${gRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
+            [`PATCH /v1alpha/connectors/${gRPCSrcConnector.id} response status for updating gRPC source connector 422`]: (r) => r.status === 422,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${gRPCSrcConnector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${gRPCSrcConnector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${gRPCSrcConnector.id}`), {
+            [`DELETE /v1alpha/connectors/${gRPCSrcConnector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -238,26 +226,22 @@ export function CheckDelete() {
 
     group("Connector API: Delete source connectors", () => {
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify({
                 "id": "source-http",
-                "source_connector_definition": "source-connector-definitions/source-http",
-                "connector": {
-                    "configuration": {}
-                }
+                "connector_definition": "connector-definitions/source-http",
+                "configuration": {}
             }), constant.params), {
-            "POST /v1alpha/source-connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
         })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/destination-connectors`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify({
                 "id": "destination-http",
-                "destination_connector_definition": "destination-connector-definitions/destination-http",
-                "connector": {
-                    "configuration": {}
-                }
+                "connector_definition": "connector-definitions/destination-http",
+                "configuration": {}
             }), constant.params), {
-            "POST /v1alpha/destination-connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
         })
 
         let createClsModelRes = http.request("POST", `${modelPublicHost}/v1alpha/models`, JSON.stringify({
@@ -289,9 +273,9 @@ export function CheckDelete() {
             recipe: {
                 "version": "v1alpha",
                 "components": [
-                    { "id": "s01", "resource_name": "source-connectors/source-http" },
+                    { "id": "s01", "resource_name": "connectors/source-http" },
                     { "id": "m01", "resource_name": "models/dummy-cls" },
-                    { "id": "d01", "resource_name": "destination-connectors/destination-http" },
+                    { "id": "d01", "resource_name": "connectors/destination-http" },
                 ]
             },
         };
@@ -309,15 +293,15 @@ export function CheckDelete() {
         })
 
         // Cannot delete source connector due to pipeline occupancy
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/source-http`), {
-            [`DELETE /v1alpha/source-connectors/source-http response status 422`]: (r) => r.status === 422,
-            [`DELETE /v1alpha/source-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/source-http`), {
+            [`DELETE /v1alpha/connectors/source-http response status 422`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/connectors/source-http response error msg not nil`]: (r) => r.json() != {},
         });
 
         // Cannot delete destination connector due to pipeline occupancy
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/destination-http`), {
-            [`DELETE /v1alpha/destination-connectors/destination-http response status 422`]: (r) => r.status === 422,
-            [`DELETE /v1alpha/destination-connectors/source-http response error msg not nil`]: (r) => r.json() != {},
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/destination-http`), {
+            [`DELETE /v1alpha/connectors/destination-http response status 422`]: (r) => r.status === 422,
+            [`DELETE /v1alpha/connectors/source-http response error msg not nil`]: (r) => r.json() != {},
         });
 
         check(http.request("DELETE", `${pipelinePublicHost}/v1alpha/pipelines/${pipelineID}`), {
@@ -325,13 +309,13 @@ export function CheckDelete() {
         });
 
         // Can delete source connector now
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/source-http`), {
-            [`DELETE /v1alpha/source-connectors/source-http response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/source-http`), {
+            [`DELETE /v1alpha/connectors/source-http response status 204`]: (r) => r.status === 204,
         });
 
         // Can delete destination connector now
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/destination-connectors/destination-http`), {
-            [`DELETE /v1alpha/destination-connectors/destination-http response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/destination-http`), {
+            [`DELETE /v1alpha/connectors/destination-http response status 204`]: (r) => r.status === 204,
         });
 
         // Wait for model state to be updated
@@ -362,24 +346,22 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp`), {
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector uid`]: (r) => r.json().source_connector.uid === resHTTP.json().source_connector.uid,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector source_connector_definition`]: (r) => r.json().source_connector.source_connector_definition === constant.httpSrcDefRscName,
-            [`GET /v1alpha/source-connectors/${resHTTP.json().source_connector.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().source_connector.connector.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp`), {
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector uid`]: (r) => r.json().connector.uid === resHTTP.json().connector.uid,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector connector_definition`]: (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -390,25 +372,23 @@ export function CheckState() {
     group("Connector API: Change state source connectors", () => {
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect`, null, constant.params), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/connect response status 200`]: (r) => r.status === 200,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}/connect`, null, constant.params), {
+            [`POST /v1alpha/connectors/${resHTTP.json().connector.id}/connect response status 200`]: (r) => r.status === 200,
         });
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect`, null, constant.params), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/disconnect response status 422`]: (r) => r.status === 422,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}/disconnect`, null, constant.params), {
+            [`POST /v1alpha/connectors/${resHTTP.json().connector.id}/disconnect response status 422`]: (r) => r.status === 422,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -420,24 +400,22 @@ export function CheckRename() {
     group("Connector API: Rename source connectors", () => {
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}/rename`,
             JSON.stringify({
-                "new_source_connector_id": "some-id-not-http"
+                "new_connector_id": "some-id-not-http"
             }), constant.params), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/rename response status 422`]: (r) => r.status === 422,
+            [`POST /v1alpha/connectors/${resHTTP.json().connector.id}/rename response status 422`]: (r) => r.status === 422,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 
@@ -449,22 +427,20 @@ export function CheckTest() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors`,
+        var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpSrcConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection`), {
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response status 200`]: (r) => r.status === 200,
-            [`POST /v1alpha/source-connectors/${resHTTP.json().source_connector.id}/testConnection response connector STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}/testConnection`), {
+            [`POST /v1alpha/connectors/${resHTTP.json().connector.id}/testConnection response status 200`]: (r) => r.status === 200,
+            [`POST /v1alpha/connectors/${resHTTP.json().connector.id}/testConnection response connector STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/source-connectors/${resHTTP.json().source_connector.id}`), {
-            [`DELETE /v1alpha/source-connectors/${resHTTP.json().source_connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
 
     });

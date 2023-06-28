@@ -14,7 +14,6 @@ import * as helper from "./helper.js"
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
-client.load(['proto/vdp/model/v1alpha'], 'model_public_service.proto');
 
 export function CheckCreate() {
 
@@ -25,61 +24,57 @@ export function CheckCreate() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "description": "HTTP source",
-                "configuration": {},
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "description": "HTTP source",
+            "configuration": {},
         }
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "description": "gRPC source",
-                "configuration": {},
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "description": "gRPC source",
+            "configuration": {},
         }
 
-        var resSrcHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resSrcHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
         check(resSrcHTTP, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response StatusOK": (r) => r.status === grpc.StatusOK,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response sourceConnector name": (r) => r.message.sourceConnector.name == `source-connectors/${httpSrcConnector.id}`,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response sourceConnector uid": (r) => helper.isUUID(r.message.sourceConnector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response sourceConnector sourceConnectorDefinition": (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response sourceConnector owner is UUID": (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector name": (r) => r.message.connector.name == `connectors/${httpSrcConnector.id}`,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector uid": (r) => helper.isUUID(r.message.connector.uid),
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response StatusAlreadyExists": (r) => r.status === grpc.StatusAlreadyExists,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusAlreadyExists": (r) => r.status === grpc.StatusAlreadyExists,
         });
 
 
-        var resSrcGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: gRPCSrcConnector
+        var resSrcGRPC = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: gRPCSrcConnector
         })
         check(resSrcGRPC, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response gRPCSrcConnector StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response gRPCSrcConnector StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {}), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response StatusInvalidArgument": (r) => r.status === grpc.StatusInvalidArgument,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {}), {
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusInvalidArgument": (r) => r.status === grpc.StatusInvalidArgument,
         });
 
         // Delete test records
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${resSrcHTTP.message.sourceConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resSrcHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resSrcHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resSrcHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${resSrcGRPC.message.sourceConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resSrcGRPC.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resSrcGRPC.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resSrcGRPC.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -93,110 +88,120 @@ export function CheckList() {
             plaintext: true
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response sourceConnectors array is 0 length`]: (r) => r.message.sourceConnectors.length === 0,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response totalSize is 0`]: (r) => r.message.totalSize == 0,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+        }, {}), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response connectors array is 0 length`]: (r) => r.message.connectors.length === 0,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response totalSize is 0`]: (r) => r.message.totalSize == 0,
         });
 
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "configuration": {}
         }
 
         // Create connectors
         for (const reqBody of reqBodies) {
-            check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-                source_connector: reqBody
+            check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+                connector: reqBody
             }), {
-                [`vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+                [`vdp.connector.v1alpha.ConnectorPublicService/CreateConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response has sourceConnectors array`]: (r) => Array.isArray(r.message.sourceConnectors),
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors response has totalSize = ${reqBodies.length}`]: (r) => r.message.totalSize == reqBodies.length,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+        }, {}), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response has connectors array`]: (r) => Array.isArray(r.message.connectors),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response has totalSize = ${reqBodies.length}`]: (r) => r.message.totalSize == reqBodies.length,
         });
 
-        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {}, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+        }, {})
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 0
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=0 response has sourceConnectors length`]: (r) => r.message.sourceConnectors.length === limitedRecords.message.sourceConnectors.length,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=0 response has connectors length`]: (r) => r.message.connectors.length === limitedRecords.message.connectors.length,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 response has sourceConnectors length`]: (r) => r.message.sourceConnectors.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response has connectors length`]: (r) => r.message.connectors.length === 1,
         });
 
-        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1
         }, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1,
             pageToken: pageRes.message.nextPageToken
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response has sourceConnectors length`]: (r) => r.message.sourceConnectors.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 pageToken=${pageRes.message.nextPageToken} response has connectors length`]: (r) => r.message.connectors.length === 1,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1,
             view: "VIEW_BASIC"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_BASIC response has sourceConnectors[0].connector.configuration is null`]: (r) => r.message.sourceConnectors[0].connector.configuration === null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_BASIC response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response has connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_BASIC response has connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1,
             view: "VIEW_FULL"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.configuration is not null`]: (r) => r.message.sourceConnectors[0].connector.configuration !== null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.configuration is {}`]: (r) => Object.keys(r.message.sourceConnectors[0].connector.configuration).length === 0,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 view=VIEW_FULL response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].configuration is not null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].configuration is {}`]: (r) => Object.keys(r.message.connectors[0].configuration).length === 0,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: 1,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 response has sourceConnectors[0].connector.configuration is null`]: (r) => r.message.sourceConnectors[0].connector.configuration === null,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=1 response has sourceConnectors[0].connector.owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnectors[0].connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response has connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 response has connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
+            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
             pageSize: `${limitedRecords.message.totalSize}`,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListSourceConnectors pageSize=${limitedRecords.message.totalSize} response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=${limitedRecords.message.totalSize} response nextPageToken is empty`]: (r) => r.message.nextPageToken === "",
         });
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-                name: `source-connectors/${reqBody.id}`
+            check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+                name: `connectors/${reqBody.id}`
             }), {
-                [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+                [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
 
@@ -213,29 +218,27 @@ export function CheckGet() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetSourceConnector', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnector', {
+            name: `connectors/${resHTTP.message.connector.id}`
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response connector id`]: (r) => r.message.sourceConnector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector id`]: (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.sourceConnectorDefinition} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.id} response connector id`]: (r) => r.message.connector.id === httpSrcConnector.id,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinition} response connector id`]: (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinition} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -252,30 +255,28 @@ export function CheckUpdate() {
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "source_connector_definition": constant.gRPCSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.gRPCSrcDefRscName,
+            "configuration": {}
         }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: gRPCSrcConnector
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: gRPCSrcConnector
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response CreateSourceConnector StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response CreateConnector StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
-        gRPCSrcConnector.connector.description = randomString(20)
+        gRPCSrcConnector.description = randomString(20)
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateSourceConnector', {
-            source_connector: gRPCSrcConnector
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector', {
+            connector: gRPCSrcConnector
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateSourceConnector ${gRPCSrcConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${gRPCSrcConnector.id} response StatusUnknown`]: (r) => r.status === grpc.StatusUnknown,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${gRPCSrcConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${gRPCSrcConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${gRPCSrcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${gRPCSrcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -291,28 +292,24 @@ export function CheckDelete() {
             plaintext: true
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: {
                 "id": "source-http",
-                "source_connector_definition": "source-connector-definitions/source-http",
-                "connector": {
-                    "configuration": {}
-                }
+                "connector_definition": "connector-definitions/source-http",
+                "configuration": {}
             }
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector response CreateSourceConnector StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response CreateConnector StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector', {
-            destination_connector: {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: {
                 "id": "destination-http",
-                "destination_connector_definition": "destination-connector-definitions/destination-http",
-                "connector": {
-                    "configuration": {}
-                }
+                "connector_definition": "connector-definitions/destination-http",
+                "configuration": {}
             }
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateDestinationConnector response StatusOK": (r) => r.status === grpc.StatusOK,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
 
@@ -345,9 +342,9 @@ export function CheckDelete() {
             recipe: {
                 "version": "v1alpha",
                 "components": [
-                    { "id": "s01", "resource_name": "source-connectors/source-http" },
+                    { "id": "s01", "resource_name": "connectors/source-http" },
                     { "id": "m01", "resource_name": "models/dummy-cls" },
-                    { "id": "d01", "resource_name": "destination-connectors/destination-http" },
+                    { "id": "d01", "resource_name": "connectors/destination-http" },
                 ]
             },
         };
@@ -365,19 +362,19 @@ export function CheckDelete() {
         })
 
         // Cannot delete source connector due to pipeline occupancy
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/source-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/source-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response message not nil`]: (r) => r.message != {},
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response message not nil`]: (r) => r.message != {},
         });
 
         // Cannot delete destination connector due to pipeline occupancy
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/destination-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/destination-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response message not nil`]: (r) => r.message != {},
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector destination-http response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector destination-http response message not nil`]: (r) => r.message != {},
         });
 
         check(http.request("DELETE", `${constant.pipelinePublicHost}/v1alpha/pipelines/${pipelineID}`), {
@@ -385,17 +382,17 @@ export function CheckDelete() {
         });
 
         // Can delete source connector now
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/source-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/source-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Can delete destination connector now
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector`, {
-            name: `destination-connectors/destination-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/destination-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteDestinationConnector destination-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector destination-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         // Wait for model state to be updated
@@ -431,29 +428,27 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpSourceConnector', {
-            permalink: `source-connectors/${resHTTP.message.sourceConnector.uid}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector', {
+            permalink: `connectors/${resHTTP.message.connector.uid}`
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpSourceConnector permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpSourceConnector permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector uid`]: (r) => r.message.sourceConnector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpSourceConnector permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector id`]: (r) => r.message.sourceConnector.sourceConnectorDefinition === constant.httpSrcDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpSourceConnector permalink=source-connectors/${resHTTP.message.sourceConnector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.sourceConnector.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector uid`]: (r) => r.message.connector.id === httpSrcConnector.id,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector id`]: (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/source-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/source-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -470,32 +465,30 @@ export function CheckState() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectSourceConnector', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector ${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectSourceConnector', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector', {
+            name: `connectors/${resHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectSourceConnector ${resHTTP.message.sourceConnector.id} response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnector ${resHTTP.message.connector.id} response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/source-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/source-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -512,27 +505,25 @@ export function CheckRename() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameSourceConnector', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`,
-            new_source_connector_id: "some-id-not-http"
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameConnector', {
+            name: `connectors/${resHTTP.message.connector.id}`,
+            new_connector_id: "some-id-not-http"
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/RenameSourceConnector ${resHTTP.message.sourceConnector.id} response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
+            [`vdp.connector.v1alpha.ConnectorPublicService/RenameConnector ${resHTTP.message.connector.id} response StatusFailedPrecondition`]: (r) => r.status === grpc.StatusFailedPrecondition,
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/source-http`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/source-http`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -548,29 +539,27 @@ export function CheckTest() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "source_connector_definition": constant.httpSrcDefRscName,
-            "connector": {
-                "configuration": {}
-            }
+            "connector_definition": constant.httpSrcDefRscName,
+            "configuration": {}
         }
 
-        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateSourceConnector', {
-            source_connector: httpSrcConnector
+        var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+            connector: httpSrcConnector
         })
 
-        var testRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector', {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        var testRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestConnector', {
+            name: `connectors/${resHTTP.message.connector.id}`
         }, {})
 
         check(testRes, {
-            [`vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/TestSourceConnector name=source-connectors/${resHTTP.message.sourceConnector.id} response connector STATE_CONNECTED`]: (r) => r.message.state === "STATE_CONNECTED",
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestConnector name=connectors/${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/TestConnector name=connectors/${resHTTP.message.connector.id} response connector STATE_CONNECTED`]: (r) => r.message.state === "STATE_CONNECTED",
         });
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector`, {
-            name: `source-connectors/${resHTTP.message.sourceConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
+            name: `connectors/${resHTTP.message.connector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteSourceConnector ${resHTTP.message.sourceConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();

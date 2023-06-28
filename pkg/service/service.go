@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
+	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -31,27 +32,27 @@ type Service interface {
 
 	// Connector common
 	CreateConnector(ctx context.Context, owner *mgmtPB.User, connector *datamodel.Connector) (*datamodel.Connector, error)
-	ListConnectors(ctx context.Context, owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error)
+	ListConnectors(ctx context.Context, owner *mgmtPB.User, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
+	GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error)
 	GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
-	UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error)
-	UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error)
-	DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error
+	UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
+	UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, newID string) (*datamodel.Connector, error)
+	UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, state datamodel.ConnectorState) (*datamodel.Connector, error)
+	DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User) error
 
-	ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error)
+	ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
 	// Execute connector
-	Execute(ctx context.Context, id string, owner *mgmtPB.User, input []*connectorPB.DataPayload, connectorType datamodel.ConnectorType) ([]*connectorPB.DataPayload, error)
+	Execute(ctx context.Context, id string, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error)
 
 	// Controller custom service
-	GetResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) (*connectorPB.Connector_State, error)
-	UpdateResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType, state connectorPB.Connector_State, progress *int32) error
-	DeleteResourceState(uid uuid.UUID, connectorType datamodel.ConnectorType) error
+	GetResourceState(uid uuid.UUID) (*connectorPB.Connector_State, error)
+	UpdateResourceState(uid uuid.UUID, state connectorPB.Connector_State, progress *int32) error
+	DeleteResourceState(uid uuid.UUID) error
 }
 
 type service struct {
@@ -136,12 +137,12 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 			return nil, st.Err()
 		}
 
-		if existingConnector, _ := s.GetConnectorByID(ctx, connector.ID, owner, connector.ConnectorType, true); existingConnector != nil {
+		if existingConnector, _ := s.GetConnectorByID(ctx, connector.ID, owner, true); existingConnector != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.AlreadyExists,
 				"[service] create connector",
 				"connectors",
-				fmt.Sprintf("Connector id %s and connector_type %s", connector.ID, connectorPB.ConnectorType(connector.ConnectorType)),
+				fmt.Sprintf("Connector id %s", connector.ID),
 				connector.Owner,
 				"Already exists",
 			)
@@ -157,20 +158,20 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 	}
 
 	// User desire state = CONNECTED
-	if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, connector.ConnectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+	if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 		return nil, err
 	}
 
 	// Check connector state and update resource state in etcd
 	if state, err := s.CheckConnectorByUID(ctx, connector.UID); err == nil {
-		if err := s.UpdateResourceState(connector.UID, connector.ConnectorType, *state, nil); err != nil {
+		if err := s.UpdateResourceState(connector.UID, *state, nil); err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, connector.ID, ownerPermalink, connector.ConnectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, connector.ID, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
@@ -179,11 +180,11 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 
 }
 
-func (s *service) ListConnectors(ctx context.Context, owner *mgmtPB.User, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectors(ctx context.Context, owner *mgmtPB.User, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error) {
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ctx, ownerPermalink, connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectors(ctx, ownerPermalink, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -191,9 +192,9 @@ func (s *service) ListConnectors(ctx context.Context, owner *mgmtPB.User, connec
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) ListConnectorsAdmin(ctx context.Context, connectorType datamodel.ConnectorType, pageSize int64, pageToken string, isBasicView bool) ([]*datamodel.Connector, int64, string, error) {
+func (s *service) ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error) {
 
-	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorsAdmin(ctx, connectorType, pageSize, pageToken, isBasicView)
+	dbConnectors, pageSize, pageToken, err := s.repository.ListConnectorsAdmin(ctx, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -201,11 +202,11 @@ func (s *service) ListConnectorsAdmin(ctx context.Context, connectorType datamod
 	return dbConnectors, pageSize, pageToken, nil
 }
 
-func (s *service) GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, isBasicView bool) (*datamodel.Connector, error) {
+func (s *service) GetConnectorByID(ctx context.Context, id string, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error) {
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, isBasicView)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, isBasicView)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (s *service) GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isB
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
+func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, updatedConnector *datamodel.Connector) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -244,7 +245,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 	updatedConnector.Owner = ownerPermalink
 
 	// Validation: HTTP and gRPC connector cannot be updated
-	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
+	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +261,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "UPDATE",
-					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Subject:     fmt.Sprintf("id %s", id),
 					Description: fmt.Sprintf("Cannot update a %s connector", id),
 				},
 			})
@@ -270,20 +271,20 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 		return nil, st.Err()
 	}
 
-	if err := s.repository.UpdateConnector(ctx, id, ownerPermalink, connectorType, updatedConnector); err != nil {
+	if err := s.repository.UpdateConnector(ctx, id, ownerPermalink, updatedConnector); err != nil {
 		return nil, err
 	}
 
 	// Check connector state
 	if state, err := s.CheckConnectorByUID(ctx, existingConnector.UID); err == nil {
-		if err := s.UpdateResourceState(updatedConnector.UID, connectorType, *state, nil); err != nil {
+		if err := s.UpdateResourceState(updatedConnector.UID, *state, nil); err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, updatedConnector.ID, ownerPermalink, updatedConnector.ConnectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, updatedConnector.ID, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
@@ -291,23 +292,17 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 	return dbConnector, nil
 }
 
-func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType) error {
+func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User) error {
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
 	if err != nil {
 		return err
 	}
 
-	var filter string
-	switch {
-	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_SOURCE):
-		filter = fmt.Sprintf("recipe.components.resource_name:\"source-connectors/%s\"", dbConnector.UID)
-	case connectorType == datamodel.ConnectorType(connectorPB.ConnectorType_CONNECTOR_TYPE_DESTINATION):
-		filter = fmt.Sprintf("recipe.components.resource_name:\"destination-connectors/%s\"", dbConnector.UID)
-	}
+	filter := fmt.Sprintf("recipe.components.resource_name:\"connectors/%s\"", dbConnector.UID)
 
 	pipeResp, err := s.pipelinePublicServiceClient.ListPipelines(InjectOwnerToContext(context.Background(), owner), &pipelinePB.ListPipelinesRequest{
 		Filter: &filter,
@@ -326,7 +321,7 @@ func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "DELETE",
-					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Subject:     fmt.Sprintf("id %s", id),
 					Description: fmt.Sprintf("The connector is still in use by pipeline: %s", strings.Join(pipeIDs, " ")),
 				},
 			})
@@ -336,21 +331,21 @@ func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.
 		return st.Err()
 	}
 
-	if err := s.DeleteResourceState(dbConnector.UID, connectorType); err != nil {
+	if err := s.DeleteResourceState(dbConnector.UID); err != nil {
 		return err
 	}
 
-	return s.repository.DeleteConnector(ctx, id, ownerPermalink, connectorType)
+	return s.repository.DeleteConnector(ctx, id, ownerPermalink)
 }
 
-func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, state datamodel.ConnectorState) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, state datamodel.ConnectorState) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connector cannot be disconnected
-	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +355,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		return nil, err
 	}
 
-	connState, err := s.GetResourceState(conn.UID, connectorType)
+	connState, err := s.GetResourceState(conn.UID)
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +367,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "STATE",
-					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Subject:     fmt.Sprintf("id %s", id),
 					Description: "The connector is in STATE_ERROR",
 				},
 			})
@@ -386,7 +381,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "STATE",
-					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Subject:     fmt.Sprintf("id %s", id),
 					Description: "The connector is in STATE_UNSPECIFIED",
 				},
 			})
@@ -404,14 +399,14 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		}
 
 		// Set connector state to user desire state
-		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, connectorType, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 
 		// Check resource state
 		if datamodel.ConnectorState(*connState) != state {
 			if state, err := s.CheckConnectorByUID(ctx, conn.UID); err == nil {
-				if err := s.UpdateResourceState(conn.UID, connectorType, *state, nil); err != nil {
+				if err := s.UpdateResourceState(conn.UID, *state, nil); err != nil {
 					return nil, err
 				}
 			} else {
@@ -427,7 +422,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 				[]*errdetails.PreconditionFailure_Violation{
 					{
 						Type:        "STATE",
-						Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+						Subject:     fmt.Sprintf("id %s", id),
 						Description: fmt.Sprintf("Cannot disconnect a %s connector", connDef.GetId()),
 					},
 				})
@@ -437,15 +432,15 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			return nil, st.Err()
 		}
 
-		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, connectorType, state); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, state); err != nil {
 			return nil, err
 		}
-		if err := s.UpdateResourceState(conn.UID, connectorType, connectorPB.Connector_State(state), nil); err != nil {
+		if err := s.UpdateResourceState(conn.UID, connectorPB.Connector_State(state), nil); err != nil {
 			return nil, err
 		}
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
@@ -453,14 +448,14 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 	return dbConnector, nil
 }
 
-func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, connectorType datamodel.ConnectorType, newID string) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, newID string) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connectors cannot be renamed
-	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, true)
+	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +471,7 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 			[]*errdetails.PreconditionFailure_Violation{
 				{
 					Type:        "RENAME",
-					Subject:     fmt.Sprintf("id %s and connector_type %s", id, connectorPB.ConnectorType(connectorType)),
+					Subject:     fmt.Sprintf("id %s ", id),
 					Description: fmt.Sprintf("Cannot rename a %s connector", def.GetId()),
 				},
 			})
@@ -486,19 +481,19 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 		return nil, st.Err()
 	}
 
-	// if err := s.DeleteResourceState(id, connectorType); err != nil {
+	// if err := s.DeleteResourceState(id); err != nil {
 	// 	return nil, err
 	// }
 
-	// if err := s.UpdateResourceState(newID, connectorType, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
+	// if err := s.UpdateResourceState(newID, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
 	// 	return nil, err
 	// }
 
-	if err := s.repository.UpdateConnectorID(ctx, id, ownerPermalink, connectorType, newID); err != nil {
+	if err := s.repository.UpdateConnectorID(ctx, id, ownerPermalink, newID); err != nil {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetConnectorByID(ctx, newID, ownerPermalink, connectorType, false)
+	dbConnector, err := s.repository.GetConnectorByID(ctx, newID, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
@@ -506,13 +501,13 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 	return dbConnector, nil
 }
 
-func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, input []*connectorPB.DataPayload, connectorType datamodel.ConnectorType) ([]*connectorPB.DataPayload, error) {
+func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, connectorType, false)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +529,7 @@ func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, in
 		return nil, err
 	}
 
-	return con.Execute(input)
+	return con.Execute(inputs)
 }
 
 func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error) {
@@ -571,17 +566,17 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 
 	switch state {
 	case connectorPB.Connector_STATE_CONNECTED:
-		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
 			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
 		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
 	case connectorPB.Connector_STATE_ERROR:
-		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
 			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
 		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	default:
-		if err := s.UpdateResourceState(dbConnector.UID, dbConnector.ConnectorType, connectorPB.Connector_STATE_ERROR, nil); err != nil {
+		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
 			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
 		}
 		return connectorPB.Connector_STATE_ERROR.Enum(), fmt.Errorf("UNKNOWN STATUS")

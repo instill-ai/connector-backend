@@ -21,66 +21,78 @@ export function CheckList() {
             plaintext: true
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {}, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions response destinationConnectorDefinitions array`]: (r) => Array.isArray(r.message.destinationConnectorDefinitions),
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions response totalSize > 0`]: (r) => r.message.totalSize > 0,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION"
+        }, {}), {
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions response connectorDefinitions array`]: (r) => Array.isArray(r.message.connectorDefinitions),
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions response totalSize > 0`]: (r) => r.message.totalSize > 0,
         });
 
-        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {}, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION"
+        }, {})
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 0
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=0 response destinationConnectorDefinitions length = 1`]: (r) => r.message.destinationConnectorDefinitions.length === limitedRecords.message.destinationConnectorDefinitions.length,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=0 response connectorDefinitions length = 1`]: (r) => r.message.connectorDefinitions.length === limitedRecords.message.connectorDefinitions.length,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 response destinationConnectorDefinitions length = 1`]: (r) => r.message.destinationConnectorDefinitions.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response connectorDefinitions length = 1`]: (r) => r.message.connectorDefinitions.length === 1,
         });
 
-        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1
         }, {})
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             pageToken: pageRes.message.nextPageToken
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 pageToken=${pageRes.message.nextPageToken} response destinationConnectorDefinitions length = 1`]: (r) => r.message.destinationConnectorDefinitions.length === 1,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 pageToken=${pageRes.message.nextPageToken} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 pageToken=${pageRes.message.nextPageToken} response connectorDefinitions length = 1`]: (r) => r.message.connectorDefinitions.length === 1,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             view: "VIEW_BASIC"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 view=VIEW_BASIC response destinationConnectorDefinitions connectorDefinition spec is null`]: (r) => r.message.destinationConnectorDefinitions[0].connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 view=VIEW_BASIC response connectorDefinitions connectorDefinition spec is null`]: (r) => r.message.connectorDefinitions[0].spec === null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
             view: "VIEW_FULL"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 view=VIEW_FULL response destinationConnectorDefinitions connectorDefinition spec is not null`]: (r) => r.message.destinationConnectorDefinitions[0].connectorDefinition.spec !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 view=VIEW_FULL response connectorDefinitions connectorDefinition spec is not null`]: (r) => r.message.connectorDefinitions[0].spec !== null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: 1,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=1 response destinationConnectorDefinitions connectorDefinition spec is null`]: (r) => r.message.destinationConnectorDefinitions[0].connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response connectorDefinitions connectorDefinition spec is null`]: (r) => r.message.connectorDefinitions[0].spec === null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
             pageSize: limitedRecords.message.totalSize,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions pageSize=${limitedRecords.message.totalSize} response nextPageToken is null`]: (r) => r.message.nextPageToken === "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=${limitedRecords.message.totalSize} response nextPageToken is null`]: (r) => r.message.nextPageToken === "",
         });
 
         client.close();
@@ -93,39 +105,41 @@ export function CheckGet() {
             plaintext: true
         });
 
-        var allRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListDestinationConnectorDefinitions', {}, {})
-        var def = allRes.message.destinationConnectorDefinitions[0]
+        var allRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
+            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
+        }, {})
+        var def = allRes.message.connectorDefinitions[0]
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
-            name: `destination-connector-definitions/${def.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition', {
+            name: `connector-definitions/${def.id}`
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response has the exact record`]: (r) => deepEqual(r.message.destinationConnectorDefinition, def),
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} has the non-empty resource name ${def.name}`]: (r) => r.message.destinationConnectorDefinition.name != "",
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} has the resource name ${def.name}`]: (r) => r.message.destinationConnectorDefinition.name === def.name,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} response has the exact record`]: (r) => deepEqual(r.message.connectorDefinition, def),
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} has the non-empty resource name ${def.name}`]: (r) => r.message.connectorDefinition.name != "",
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} has the resource name ${def.name}`]: (r) => r.message.connectorDefinition.name === def.name,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
-            name: `destination-connector-definitions/${def.id}`,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition', {
+            name: `connector-definitions/${def.id}`,
             view: "VIEW_BASIC"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_BASIC response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id}} view=VIEW_BASIC response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} view=VIEW_BASIC response connectorDefinition.spec is null`]: (r) => r.message.connectorDefinition.spec === null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
-            name: `destination-connector-definitions/${def.id}`,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition', {
+            name: `connector-definitions/${def.id}`,
             view: "VIEW_FULL"
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} view=VIEW_FULL response destinationConnectorDefinition.connectorDefinition.spec is not null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id}} view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} view=VIEW_FULL response connectorDefinition.spec is not null`]: (r) => r.message.connectorDefinition.spec !== null,
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition', {
-            name: `destination-connector-definitions/${def.id}`,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition', {
+            name: `connector-definitions/${def.id}`,
         }, {}), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetDestinationConnectorDefinition id=${def.id} response destinationConnectorDefinition.connectorDefinition.spec is null`]: (r) => r.message.destinationConnectorDefinition.connectorDefinition.spec === null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id}} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnectorDefinition id=${def.id} response connectorDefinition.spec is null`]: (r) => r.message.connectorDefinition.spec === null,
         });
 
         client.close();
