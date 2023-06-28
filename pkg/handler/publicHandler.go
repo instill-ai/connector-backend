@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"gorm.io/datatypes"
 
@@ -333,42 +332,41 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		return resp, err
 	}
 
-	fmt.Println(4)
 	// Validate Connector configuration JSON Schema
-	connSpec := connDefResp.GetConnectorDefinition().GetSpec().GetConnectionSpecification()
-	b, err := protojson.Marshal(connSpec)
-	if err != nil {
-		st, err := sterr.CreateErrorResourceInfo(
-			codes.Internal,
-			"[handler] create connector error",
-			"connector-definitions",
-			fmt.Sprintf("uid %s", connDefResp.ConnectorDefinition.GetUid()),
-			"",
-			err.Error(),
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		span.SetStatus(1, st.Err().Error())
-		return resp, st.Err()
-	}
+	// connSpec := connDefResp.GetConnectorDefinition().GetSpec().GetConnectionSpecification()
+	// b, err := protojson.Marshal(connSpec)
+	// if err != nil {
+	// 	st, err := sterr.CreateErrorResourceInfo(
+	// 		codes.Internal,
+	// 		"[handler] create connector error",
+	// 		"connector-definitions",
+	// 		fmt.Sprintf("uid %s", connDefResp.ConnectorDefinition.GetUid()),
+	// 		"",
+	// 		err.Error(),
+	// 	)
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 	}
+	// 	span.SetStatus(1, st.Err().Error())
+	// 	return resp, st.Err()
+	// }
 
-	if err := connectorConfigLoader.ValidateJSONSchemaString(string(b), req.GetConnector().GetConfiguration()); err != nil {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] create connector error",
-			[]*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "connector.configuration",
-					Description: err.Error(),
-				},
-			},
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		span.SetStatus(1, st.Err().Error())
-		return resp, st.Err()
-	}
+	// if err := connectorConfigLoader.ValidateJSONSchemaString(string(b), req.GetConnector().GetConfiguration()); err != nil {
+	// 	st, err := sterr.CreateErrorBadRequest(
+	// 		"[handler] create connector error",
+	// 		[]*errdetails.BadRequest_FieldViolation{
+	// 			{
+	// 				Field:       "connector.configuration",
+	// 				Description: err.Error(),
+	// 			},
+	// 		},
+	// 	)
+	// 	if err != nil {
+	// 		logger.Error(err.Error())
+	// 	}
+	// 	span.SetStatus(1, st.Err().Error())
+	// 	return resp, st.Err()
+	// }
 
 	connDefUID, err = uuid.FromString(connDefResp.ConnectorDefinition.GetUid())
 	if err != nil {
@@ -735,6 +733,22 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 	}
 
 	pbConnectorToUpdate := getResp.GetConnector()
+	if pbConnectorToUpdate.State == connectorPB.Connector_STATE_CONNECTED {
+		st, err := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "UPDATE",
+					Subject:     fmt.Sprintf("id %s", req.Connector.Id),
+					Description: fmt.Sprintf("Cannot update a connected %s connector", req.Connector.Id),
+				},
+			})
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		span.SetStatus(1, st.Err().Error())
+		return nil, st.Err()
+	}
 
 	connID = getResp.GetConnector().GetId()
 
