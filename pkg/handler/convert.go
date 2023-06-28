@@ -86,21 +86,21 @@ func DBToPBConnector(
 	ctx context.Context,
 	dbConnector *datamodel.Connector,
 	owner string,
-	connectorDefinition string) *connectorPB.Connector {
+	connectorDefinitionName string) *connectorPB.Connector {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	pbConnector := &connectorPB.Connector{
-		Uid:                 dbConnector.UID.String(),
-		Name:                fmt.Sprintf("connectors/%s", dbConnector.ID),
-		Id:                  dbConnector.ID,
-		ConnectorDefinition: connectorDefinition,
-		ConnectorType:       connectorPB.ConnectorType(dbConnector.ConnectorType),
-		Description:         &dbConnector.Description.String,
-		State:               connectorPB.Connector_State(dbConnector.State),
-		Tombstone:           dbConnector.Tombstone,
-		CreateTime:          timestamppb.New(dbConnector.CreateTime),
-		UpdateTime:          timestamppb.New(dbConnector.UpdateTime),
+		Uid:                     dbConnector.UID.String(),
+		Name:                    fmt.Sprintf("connectors/%s", dbConnector.ID),
+		Id:                      dbConnector.ID,
+		ConnectorDefinitionName: connectorDefinitionName,
+		ConnectorType:           connectorPB.ConnectorType(dbConnector.ConnectorType),
+		Description:             &dbConnector.Description.String,
+		State:                   connectorPB.Connector_State(dbConnector.State),
+		Tombstone:               dbConnector.Tombstone,
+		CreateTime:              timestamppb.New(dbConnector.CreateTime),
+		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
 
 		Configuration: func() *structpb.Struct {
 			if dbConnector.Configuration != nil {

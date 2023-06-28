@@ -25,7 +25,7 @@ export function CheckCreate() {
         // destination-http
         var httpDstConnector = {
             "id": "destination-http",
-            "connector_definition": constant.httpDstDefRscName,
+            "connector_definition_name": constant.httpDstDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
@@ -40,7 +40,7 @@ export function CheckCreate() {
         // destination-grpc
         var gRPCDstConnector = {
             "id": "destination-grpc",
-            "connector_definition": constant.gRPCDstDefRscName,
+            "connector_definition_name": constant.gRPCDstDefRscName,
             "configuration": {}
         }
 
@@ -54,7 +54,7 @@ export function CheckCreate() {
         // destination-csv
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -69,7 +69,7 @@ export function CheckCreate() {
         // destination-mysql (will end up with STATE_ERROR)
         var mySQLDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.mySQLDstDefRscName,
+            "connector_definition_name": constant.mySQLDstDefRscName,
             "configuration": {
                 "host": randomString(10),
                 "port": 3306,
@@ -119,7 +119,7 @@ export function CheckGet() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -161,7 +161,7 @@ export function CheckUpdate() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -173,7 +173,7 @@ export function CheckUpdate() {
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
             "name": `connectors/${csvDstConnector.id}`,
-            "connector_definition": csvDstConnector.connector_definition,
+            "connector_definition_name": csvDstConnector.connector_definition_name,
             "tombstone": true,
             "description": randomString(50),
             "configuration": {
@@ -209,7 +209,7 @@ export function CheckLookUp() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -245,7 +245,7 @@ export function CheckState() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -322,7 +322,7 @@ export function CheckRename() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -364,7 +364,7 @@ export function CheckExecute() {
         // Write classification output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-classification"
@@ -412,7 +412,7 @@ export function CheckTest() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }

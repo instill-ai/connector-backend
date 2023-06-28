@@ -40,7 +40,7 @@ export function CheckList() {
         for (var i = 0; i < numConnectors; i++) {
             reqBodies[i] = {
                 "id": randomString(10),
-                "connector_definition": constant.csvDstDefRscName,
+                "connector_definition_name": constant.csvDstDefRscName,
                 "description": randomString(50),
                 "configuration": constant.csvDstConfig
             }
@@ -104,7 +104,8 @@ export function CheckList() {
             view: "VIEW_FULL"
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response connectors[0].configuration is not null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response connectors[0].connectorDefinitionDetail is not null`]: (r) => r.message.connectors[0].connectorDefinitionDetail !== null,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
@@ -152,7 +153,7 @@ export function CheckLookUp() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -166,7 +167,7 @@ export function CheckLookUp() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin CSV ${resCSVDst.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin CSV ${resCSVDst.message.connector.uid} response connector id`]: (r) => r.message.connector.uid === resCSVDst.message.connector.uid,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin CSV ${resCSVDst.message.connector.uid} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin CSV ${resCSVDst.message.connector.uid} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinitionName === constant.csvDstDefRscName,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin CSV ${resCSVDst.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 

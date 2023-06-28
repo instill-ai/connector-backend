@@ -9,11 +9,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/connector v0.0.0-20230627145616-46d38fd71ac8
-	github.com/instill-ai/connector-blockchain v0.0.0-20230627150202-64bd8d56f99e
-	github.com/instill-ai/connector-destination v0.0.0-20230628084220-269088fc1dfa
-	github.com/instill-ai/connector-source v0.0.0-20230627150228-8692c15b6ed7
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230627140850-cfd958552c23
+	github.com/instill-ai/connector v0.0.0-20230628152420-4adf6bedec28
+	github.com/instill-ai/connector-blockchain v0.0.0-20230628152637-a313e5eb4d34
+	github.com/instill-ai/connector-destination v0.0.0-20230628152557-6a363a7bd381
+	github.com/instill-ai/connector-source v0.0.0-20230628152531-c1caf15ef12f
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2
 	github.com/instill-ai/usage-client v0.2.4-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
@@ -34,7 +34,7 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.56.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gorm.io/datatypes v1.0.7
 	gorm.io/driver/postgres v1.4.4
 	gorm.io/gorm v1.23.8
@@ -81,6 +81,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.16.0 // indirect

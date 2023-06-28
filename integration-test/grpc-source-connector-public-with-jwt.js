@@ -24,14 +24,14 @@ export function CheckCreate() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "description": "gRPC source",
             "configuration": {},
         }
@@ -81,7 +81,7 @@ export function CheckGet() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -116,7 +116,7 @@ export function CheckUpdate() {
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -182,7 +182,7 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -217,7 +217,7 @@ export function CheckState() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -259,7 +259,7 @@ export function CheckRename() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -294,7 +294,7 @@ export function CheckTest() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 

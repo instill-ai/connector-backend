@@ -26,14 +26,14 @@ export function CheckList() {
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
 
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
 
         }
@@ -80,6 +80,7 @@ export function CheckList() {
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0]configuration is not null": (r) => r.json().connectors[0].configuration !== null,
+            "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector_definition_detail is not null": (r) => r.json().connectors[0].connector_definition_detail !== null,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0]configuration is {}": (r) => Object.keys(r.json().connectors[0].configuration).length === 0,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
@@ -110,7 +111,7 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
 
         }
@@ -121,7 +122,7 @@ export function CheckLookUp() {
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors/${resHTTP.json().connector.uid}/lookUp`), {
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector uid`]: (r) => r.json().connector.uid === resHTTP.json().connector.uid,
-            [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector connector_definition`]: (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector.connector_definition_name === constant.httpSrcDefRscName,
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 

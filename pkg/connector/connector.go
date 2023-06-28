@@ -49,7 +49,7 @@ func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 		Destination:   connectorDestination,
 		Source:        connectorSource,
 		Blockchain:    connectorBlockchain,
-		// AI: 	  	   connectorAI,
+		// AI:            connectorAI,
 	}
 
 	for _, uid := range connectorDestination.ListConnectorDefinitionUids() {

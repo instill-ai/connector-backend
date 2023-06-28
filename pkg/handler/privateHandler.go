@@ -84,14 +84,20 @@ func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connector
 		if err != nil {
 			return resp, err
 		}
+		pbConnector := DBToPBConnector(
+			ctx,
+			dbConnectors[idx],
+			dbConnectors[idx].Owner,
+			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
+		)
+		if !isBasicView {
+			pbConnector.ConnectorDefinition = dbConnDef
+		}
+
 		pbConnectors = append(
 			pbConnectors,
-			DBToPBConnector(
-				ctx,
-				dbConnectors[idx],
-				dbConnectors[idx].Owner,
-				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
-			))
+			pbConnector,
+		)
 	}
 
 	resp.Connectors = pbConnectors
@@ -159,6 +165,10 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+
+	if !isBasicView {
+		resp.Connector.ConnectorDefinition = dbConnDef
+	}
 
 	return resp, nil
 }

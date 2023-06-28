@@ -33,13 +33,13 @@ export function CheckList() {
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -98,6 +98,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response has connectors[0].configuration is not null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response has connectors[0].connectorDefinitionDetail is not null`]: (r) => r.message.connectors[0].connectorDefinitionDetail !== null,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response has connectors[0].configuration is {}`]: (r) => Object.keys(r.message.connectors[0].configuration).length === 0,
             [`vdp.connector.v1alpha.ConnectorPrivateService/ListConnectorsAdmin pageSize=1 view=VIEW_FULL response has connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
@@ -144,7 +145,7 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -157,7 +158,7 @@ export function CheckLookUp() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin permalink=connectors/${resHTTP.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin permalink=connectors/${resHTTP.message.connector.uid} response connector uid`]: (r) => r.message.connector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin permalink=connectors/${resHTTP.message.connector.uid} response connector id`]: (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin permalink=connectors/${resHTTP.message.connector.uid} response connector id`]: (r) => r.message.connector.connectorDefinitionName === constant.httpSrcDefRscName,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin permalink=connectors/${resHTTP.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
