@@ -69,6 +69,9 @@ export function CheckGet() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+            {}, constant.params)
+
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
@@ -224,6 +227,9 @@ export function CheckExecute() {
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(csvDstConnector), constant.params)
 
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+            {}, constant.params)
+
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`[with random "jwt-sub" header] GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
@@ -258,6 +264,9 @@ export function CheckTest() {
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(csvDstConnector), constant.params)
+
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+            {}, constant.params)
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",

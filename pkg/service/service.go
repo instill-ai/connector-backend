@@ -157,9 +157,16 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 		return nil, err
 	}
 
-	// User desire state = CONNECTED
-	if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
-		return nil, err
+	if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+		// User desire state = CONNECTED
+		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+			return nil, err
+		}
+	} else {
+		// User desire state = DISCONNECTED
+		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED)); err != nil {
+			return nil, err
+		}
 	}
 
 	// Check connector state and update resource state in etcd
@@ -360,39 +367,38 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		return nil, err
 	}
 
-	switch *connState {
-	case connectorPB.Connector_STATE_ERROR:
-		st, err := sterr.CreateErrorPreconditionFailure(
-			"[service] update connector state",
-			[]*errdetails.PreconditionFailure_Violation{
-				{
-					Type:        "STATE",
-					Subject:     fmt.Sprintf("id %s", id),
-					Description: "The connector is in STATE_ERROR",
-				},
-			})
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		return nil, st.Err()
-	case connectorPB.Connector_STATE_UNSPECIFIED:
-		st, err := sterr.CreateErrorPreconditionFailure(
-			"[service] update connector state",
-			[]*errdetails.PreconditionFailure_Violation{
-				{
-					Type:        "STATE",
-					Subject:     fmt.Sprintf("id %s", id),
-					Description: "The connector is in STATE_UNSPECIFIED",
-				},
-			})
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		return nil, st.Err()
-	}
-
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
+		switch *connState {
+		case connectorPB.Connector_STATE_ERROR:
+			st, err := sterr.CreateErrorPreconditionFailure(
+				"[service] update connector state",
+				[]*errdetails.PreconditionFailure_Violation{
+					{
+						Type:        "STATE",
+						Subject:     fmt.Sprintf("id %s", id),
+						Description: "The connector is in STATE_ERROR",
+					},
+				})
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
+		case connectorPB.Connector_STATE_UNSPECIFIED:
+			st, err := sterr.CreateErrorPreconditionFailure(
+				"[service] update connector state",
+				[]*errdetails.PreconditionFailure_Violation{
+					{
+						Type:        "STATE",
+						Subject:     fmt.Sprintf("id %s", id),
+						Description: "The connector is in STATE_UNSPECIFIED",
+					},
+				})
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, st.Err()
+		}
 
 		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
 			break
@@ -539,6 +545,9 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
 		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
+	}
+	if dbConnector.State != datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
+		return connectorPB.Connector_STATE_DISCONNECTED.Enum(), nil
 	}
 
 	configuration := func() *structpb.Struct {

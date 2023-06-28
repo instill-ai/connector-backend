@@ -206,6 +206,9 @@ export function CheckUpdate() {
             "POST /v1alpha/connectors response status for creating gRPC source connector 201": (r) => r.status === 201,
         });
 
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${gRPCSrcConnector.id}/connect`,
+            {}, constant.params)
+
         gRPCSrcConnector.description = randomString(20)
 
         check(http.request(

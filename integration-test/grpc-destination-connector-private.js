@@ -51,6 +51,9 @@ export function CheckList() {
             var resDstHTTP = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
                 connector: reqBody
             })
+            clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+                name: `connectors/${resDstHTTP.message.connector.id}`
+            })
 
             check(resDstHTTP, {
                 [`vdp.connector.v1alpha.ConnectorPublicService/CreateConnector x${reqBodies.length} HTTP response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -160,6 +163,10 @@ export function CheckLookUp() {
 
         var resCSVDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorAdmin', {

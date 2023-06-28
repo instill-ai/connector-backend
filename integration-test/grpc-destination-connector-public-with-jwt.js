@@ -128,6 +128,10 @@ export function CheckGet() {
             connector: csvDstConnector
         })
 
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
         }), {
@@ -168,6 +172,10 @@ export function CheckUpdate() {
 
         client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         var csvDstConnectorUpdate = {
@@ -218,6 +226,10 @@ export function CheckLookUp() {
             connector: csvDstConnector
         })
 
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
+
         // Cannot look up destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector', {
             permalink: `connector/${resCSVDst.message.connector.uid}`
@@ -252,6 +264,10 @@ export function CheckState() {
 
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         // Cannot connect destination connector of a non-exist user
@@ -331,6 +347,10 @@ export function CheckRename() {
             connector: csvDstConnector
         })
 
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
+
         let new_id = `some-id-not-${resCSVDst.message.connector.id}`
 
         // Cannot rename destination connector of a non-exist user
@@ -373,6 +393,10 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -419,6 +443,10 @@ export function CheckTest() {
 
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         // Cannot test destination connector of a non-exist user

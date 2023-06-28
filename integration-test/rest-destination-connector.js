@@ -83,6 +83,9 @@ export function CheckCreate() {
             headers: { "Content-Type": "application/json" },
         })
 
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+            {}, constant.params)
+
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
@@ -122,41 +125,43 @@ export function CheckCreate() {
             "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.mySQLDstDefRscName
         });
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resDstMySQL.json().connector.id}/watch`), {
-            "POST /v1alpha/connectors MySQL destination connector ended up STATE_ERROR": (r) => r.json().state === "STATE_ERROR"
-        })
+        // todo check json schema when connect
 
-        // check JSON Schema failure cases
-        var jsonSchemaFailedBodyCSV = {
-            "id": randomString(10),
-            "connector_definition_name": constant.csvDstDefRscName,
-            "description": randomString(50),
-            "configuration": {} // required destination_path
-        }
+        // check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resDstMySQL.json().connector.id}/watch`), {
+        //     "POST /v1alpha/connectors MySQL destination connector ended up STATE_ERROR": (r) => r.json().state === "STATE_ERROR"
+        // })
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), {
-            headers: { "Content-Type": "application/json" },
-        }), {
-            "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === 400,
-        });
+        // // check JSON Schema failure cases
+        // var jsonSchemaFailedBodyCSV = {
+        //     "id": randomString(10),
+        //     "connector_definition_name": constant.csvDstDefRscName,
+        //     "description": randomString(50),
+        //     "configuration": {} // required destination_path
+        // }
 
-        var jsonSchemaFailedBodyMySQL = {
-            "id": randomString(10),
-            "connector_definition_name": constant.mySQLDstDefRscName,
-            "description": randomString(50),
-            "configuration": {
-                "host": randomString(10),
-                "port": "3306",
-                "username": randomString(10),
-                "database": randomString(10),
-            } // required port integer type
-        }
+        // check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), {
+        //     headers: { "Content-Type": "application/json" },
+        // }), {
+        //     "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === 400,
+        // });
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), {
-            headers: { "Content-Type": "application/json" },
-        }), {
-            "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === 400,
-        });
+        // var jsonSchemaFailedBodyMySQL = {
+        //     "id": randomString(10),
+        //     "connector_definition_name": constant.mySQLDstDefRscName,
+        //     "description": randomString(50),
+        //     "configuration": {
+        //         "host": randomString(10),
+        //         "port": "3306",
+        //         "username": randomString(10),
+        //         "database": randomString(10),
+        //     } // required port integer type
+        // }
+
+        // check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), {
+        //     headers: { "Content-Type": "application/json" },
+        // }), {
+        //     "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === 400,
+        // });
 
         // Delete test records
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstHTTP.json().connector.id}`), {
@@ -513,6 +518,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -549,6 +555,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -585,6 +592,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -621,6 +629,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",

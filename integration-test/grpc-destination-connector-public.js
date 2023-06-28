@@ -34,6 +34,10 @@ export function CheckCreate() {
             connector: httpDstConnector
         })
 
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${httpDstConnector.id}`
+        })
+
         check(resDstHTTP, {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector name": (r) => r.message.connector.name == `connectors/${httpDstConnector.id}`,
@@ -83,6 +87,9 @@ export function CheckCreate() {
         check(resCSVDst, {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector CSV response StatusOK": (r) => r.status === grpc.StatusOK,
         });
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -116,6 +123,9 @@ export function CheckCreate() {
                 timeout: "600s",
             }
         )
+        var resp = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${mySQLDstConnector.id}`
+        })
 
         check(resDstMySQL, {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response StatusOK": (r) => r.status === grpc.StatusOK,
@@ -125,43 +135,47 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
-            name: `connectors/${resDstMySQL.message.connector.id}`
-        }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL destination connector ended up STATE_ERROR": (r) => r.message.state === "STATE_ERROR",
-        })
+        // TODO: check jsonschema when connect
+
+        // check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
+        //     name: `connectors/${resDstMySQL.message.connector.id}`
+        // }), {
+        //     "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL destination connector ended up STATE_ERROR": (r) => r.message.state === "STATE_ERROR",
+        // })
+
+
 
         // check JSON Schema failure cases
-        var jsonSchemaFailedBodyCSV = {
-            "id": randomString(10),
-            "connector_definition_name": constant.csvDstDefRscName,
-            "description": randomString(50),
-            "configuration": {} // required destination_path
-        }
+        // var jsonSchemaFailedBodyCSV = {
+        //     "id": randomString(10),
+        //     "connector_definition_name": constant.csvDstDefRscName,
+        //     "description": randomString(50),
+        //     "configuration": {} // required destination_path
+        // }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: jsonSchemaFailedBodyCSV
-        }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === grpc.StatusInvalidArgument,
-        });
+        // check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+        //     connector: jsonSchemaFailedBodyCSV
+        // }), {
+        //     "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === grpc.StatusInvalidArgument,
+        // });
 
-        var jsonSchemaFailedBodyMySQL = {
-            "id": randomString(10),
-            "connector_definition_name": constant.mySQLDstDefRscName,
-            "description": randomString(50),
-            "configuration": {
-                "host": randomString(10),
-                "port": "3306",
-                "username": randomString(10),
-                "database": randomString(10),
-            } // required port integer type
-        }
+        // var jsonSchemaFailedBodyMySQL = {
+        //     "id": randomString(10),
+        //     "connector_definition_name": constant.mySQLDstDefRscName,
+        //     "description": randomString(50),
+        //     "configuration": {
+        //         "host": randomString(10),
+        //         "port": "3306",
+        //         "username": randomString(10),
+        //         "database": randomString(10),
+        //     } // required port integer type
+        // }
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: jsonSchemaFailedBodyMySQL
-        }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === grpc.StatusInvalidArgument,
-        });
+        // check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
+        //     connector: jsonSchemaFailedBodyMySQL
+        // }), {
+        //     "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === grpc.StatusInvalidArgument,
+        // });
 
         // Delete test records
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
@@ -225,6 +239,9 @@ export function CheckList() {
         for (const reqBody of reqBodies) {
             var resDstHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
                 connector: reqBody
+            })
+            client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+                name: `connectors/${reqBody.id}`
             })
 
             check(resDstHTTP, {
@@ -342,6 +359,10 @@ export function CheckGet() {
 
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -510,6 +531,9 @@ export function CheckState() {
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
         })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -650,6 +674,10 @@ export function CheckExecute() {
             connector: csvDstConnector
         })
 
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
+
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
         }), {
@@ -684,6 +712,9 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -720,6 +751,9 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -758,6 +792,9 @@ export function CheckExecute() {
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
         })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -795,6 +832,9 @@ export function CheckExecute() {
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
         })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -829,6 +869,9 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -866,6 +909,9 @@ export function CheckExecute() {
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
         })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -901,6 +947,9 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -938,6 +987,9 @@ export function CheckExecute() {
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
         })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
+        })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
             name: `connectors/${resCSVDst.message.connector.id}`
@@ -973,6 +1025,9 @@ export function CheckExecute() {
 
         resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${resCSVDst.message.connector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnector', {
@@ -1018,6 +1073,10 @@ export function CheckTest() {
 
         var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: csvDstConnector
+        })
+
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
+            name: `connectors/${csvDstConnector.id}`
         })
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestConnector', {
