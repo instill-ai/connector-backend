@@ -11,7 +11,7 @@ require (
 	github.com/iancoleman/strcase v0.2.0
 	github.com/instill-ai/connector v0.0.0-20230627145616-46d38fd71ac8
 	github.com/instill-ai/connector-blockchain v0.0.0-20230627150202-64bd8d56f99e
-	github.com/instill-ai/connector-destination v0.0.0-20230627150212-fdfa6818dc43
+	github.com/instill-ai/connector-destination v0.0.0-20230628084220-269088fc1dfa
 	github.com/instill-ai/connector-source v0.0.0-20230627150228-8692c15b6ed7
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230627140850-cfd958552c23
 	github.com/instill-ai/usage-client v0.2.4-alpha
