@@ -25,7 +25,7 @@ export function CheckCreate() {
         // destination-http
         var httpDstConnector = {
             "id": "destination-http",
-            "connector_definition": constant.httpDstDefRscName,
+            "connector_definition_name": constant.httpDstDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
@@ -38,7 +38,7 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector name": (r) => r.message.connector.name == `connectors/${httpDstConnector.id}`,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector uid": (r) => helper.isUUID(r.message.connector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.httpDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinitionName === constant.httpDstDefRscName,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -51,7 +51,7 @@ export function CheckCreate() {
         // destination-grpc
         var gRPCDstConnector = {
             "id": "destination-grpc",
-            "connector_definition": constant.gRPCDstDefRscName,
+            "connector_definition_name": constant.gRPCDstDefRscName,
             "configuration": {}
         }
 
@@ -71,7 +71,7 @@ export function CheckCreate() {
         // destination-csv
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -99,7 +99,7 @@ export function CheckCreate() {
         // destination-mysql (will end up with STATE_ERROR)
         var mySQLDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.mySQLDstDefRscName,
+            "connector_definition_name": constant.mySQLDstDefRscName,
             "configuration": {
                 "host": randomString(10),
                 "port": 3306,
@@ -121,7 +121,7 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector name": (r) => r.message.connector.name == `connectors/${mySQLDstConnector.id}`,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector uid": (r) => helper.isUUID(r.message.connector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.mySQLDstDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinitionName === constant.mySQLDstDefRscName,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector MySQL response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -134,7 +134,7 @@ export function CheckCreate() {
         // check JSON Schema failure cases
         var jsonSchemaFailedBodyCSV = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {} // required destination_path
         }
@@ -147,7 +147,7 @@ export function CheckCreate() {
 
         var jsonSchemaFailedBodyMySQL = {
             "id": randomString(10),
-            "connector_definition": constant.mySQLDstDefRscName,
+            "connector_definition_name": constant.mySQLDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "host": randomString(10),
@@ -215,7 +215,7 @@ export function CheckList() {
         for (var i = 0; i < numConnectors; i++) {
             reqBodies[i] = {
                 "id": randomString(10),
-                "connector_definition": constant.csvDstDefRscName,
+                "connector_definition_name": constant.csvDstDefRscName,
                 "description": randomString(50),
                 "configuration": constant.csvDstConfig
             }
@@ -289,7 +289,8 @@ export function CheckList() {
             view: "VIEW_FULL"
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].configuration is null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].configuration is not null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].connectorDefinitionDetail is not null`]: (r) => r.message.connectors[0].connectorDefinitionDetail !== null,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
 
@@ -334,7 +335,7 @@ export function CheckGet() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -354,7 +355,7 @@ export function CheckGet() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector id`]: (r) => r.message.connector.id === csvDstConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinitionName === constant.csvDstDefRscName,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector CSV ${resCSVDst.message.connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -378,7 +379,7 @@ export function CheckUpdate() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -390,7 +391,7 @@ export function CheckUpdate() {
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
             "name": `connectors/${csvDstConnector.id}`,
-            "connector_definition": csvDstConnector.connector_definition,
+            "connector_definition_name": csvDstConnector.connector_definition_name,
             "tombstone": true,
             "description": randomString(50),
             "configuration": {
@@ -405,7 +406,7 @@ export function CheckUpdate() {
 
         check(resCSVDstUpdate, {
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector connectorDefinition`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector connectorDefinition`]: (r) => r.message.connector.connectorDefinitionName === constant.csvDstDefRscName,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector description`]: (r) => r.message.connector.description === csvDstConnectorUpdate.description,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector tombstone`]: (r) => r.message.connector.tombstone === false,
             [`vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${resCSVDstUpdate.message.connector.id} response connector configuration`]: (r) => r.message.connector.configuration.destination_path === csvDstConnectorUpdate.configuration.destination_path,
@@ -463,7 +464,7 @@ export function CheckLookUp() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -477,7 +478,7 @@ export function CheckLookUp() {
         }), {
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector id`]: (r) => r.message.connector.uid === resCSVDst.message.connector.uid,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinition === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector connectorDefinition permalink`]: (r) => r.message.connector.connectorDefinitionName === constant.csvDstDefRscName,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector CSV ${resCSVDst.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -501,7 +502,7 @@ export function CheckState() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -596,7 +597,7 @@ export function CheckRename() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }
@@ -638,7 +639,7 @@ export function CheckExecute() {
         // Write classification output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-classification"
@@ -674,7 +675,7 @@ export function CheckExecute() {
         // Write detection output (empty bounding_boxes)
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-detection-empty-bounding-boxes"
@@ -710,7 +711,7 @@ export function CheckExecute() {
         // Write detection output (multiple models)
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-detection-multi-models"
@@ -746,7 +747,7 @@ export function CheckExecute() {
         // Write keypoint output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-keypoint"
@@ -783,7 +784,7 @@ export function CheckExecute() {
         // Write ocr output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-ocr"
@@ -819,7 +820,7 @@ export function CheckExecute() {
         // Write semantic segmentation output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-semantic-segmentation"
@@ -855,7 +856,7 @@ export function CheckExecute() {
         // Write instance segmentation output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-instance-segmentation"
@@ -891,7 +892,7 @@ export function CheckExecute() {
         // Write text-to-image output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-text-to-image"
@@ -927,7 +928,7 @@ export function CheckExecute() {
         // Write text-generation output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-text-generation"
@@ -963,7 +964,7 @@ export function CheckExecute() {
         // Write unspecified output
         csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": {
                 "destination_path": "/local/test-unspecified"
@@ -1010,7 +1011,7 @@ export function CheckTest() {
 
         var csvDstConnector = {
             "id": randomString(10),
-            "connector_definition": constant.csvDstDefRscName,
+            "connector_definition_name": constant.csvDstDefRscName,
             "description": randomString(50),
             "configuration": constant.csvDstConfig
         }

@@ -13,14 +13,14 @@ export function CheckCreate() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "description": "gRPC source",
             "configuration": {},
         }
@@ -34,7 +34,7 @@ export function CheckCreate() {
             "POST /v1alpha/connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
             "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${httpSrcConnector.id}`,
             "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
-            "POST /v1alpha/connectors response connector connector_definition": (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.httpSrcDefRscName,
             "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
         });
 
@@ -85,13 +85,13 @@ export function CheckList() {
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -137,6 +137,7 @@ export function CheckList() {
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_SOURCE&page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.configuration is not null": (r) => r.json().connectors[0].configuration !== null,
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.connector_definition_detail is not null": (r) => r.json().connectors[0].connector_definition_detail !== null,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.configuration is {}": (r) => Object.keys(r.json().connectors[0].configuration).length === 0,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0]connector.owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
@@ -167,7 +168,7 @@ export function CheckGet() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -177,7 +178,7 @@ export function CheckGet() {
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.id}`), {
             [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector id`]: (r) => r.json().connector.id === httpSrcConnector.id,
-            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector connector_definition`]: (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector connector_definition_name`]: (r) => r.json().connector.connector_definition_name === constant.httpSrcDefRscName,
             [`GET /v1alpha/connectors/${resHTTP.json().connector.id} response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 
@@ -194,7 +195,7 @@ export function CheckUpdate() {
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -229,7 +230,7 @@ export function CheckDelete() {
         check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify({
                 "id": "source-http",
-                "connector_definition": "connector-definitions/source-http",
+                "connector_definition_name": "connector-definitions/source-http",
                 "configuration": {}
             }), constant.params), {
             "POST /v1alpha/connectors response status for creating HTTP source connector 201": (r) => r.status === 201,
@@ -238,7 +239,7 @@ export function CheckDelete() {
         check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify({
                 "id": "destination-http",
-                "connector_definition": "connector-definitions/destination-http",
+                "connector_definition_name": "connector-definitions/destination-http",
                 "configuration": {}
             }), constant.params), {
             "POST /v1alpha/connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
@@ -346,7 +347,7 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -356,7 +357,7 @@ export function CheckLookUp() {
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp`), {
             [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector uid`]: (r) => r.json().connector.uid === resHTTP.json().connector.uid,
-            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector connector_definition`]: (r) => r.json().connector.connector_definition === constant.httpSrcDefRscName,
+            [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector.connector_definition_name === constant.httpSrcDefRscName,
             [`GET /v1alpha/connectors/${resHTTP.json().connector.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 
@@ -372,7 +373,7 @@ export function CheckState() {
     group("Connector API: Change state source connectors", () => {
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -400,7 +401,7 @@ export function CheckRename() {
     group("Connector API: Rename source connectors", () => {
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -427,7 +428,7 @@ export function CheckTest() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 

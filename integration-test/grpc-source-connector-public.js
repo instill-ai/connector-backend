@@ -24,14 +24,14 @@ export function CheckCreate() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "description": "gRPC source",
             "configuration": {},
         }
@@ -43,7 +43,7 @@ export function CheckCreate() {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusOK": (r) => r.status === grpc.StatusOK,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector name": (r) => r.message.connector.name == `connectors/${httpSrcConnector.id}`,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector uid": (r) => helper.isUUID(r.message.connector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector connectorDefinition": (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector connectorDefinition": (r) => r.message.connector.connectorDefinitionName === constant.httpSrcDefRscName,
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response sourceConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -100,13 +100,13 @@ export function CheckList() {
         var reqBodies = [];
         reqBodies[0] = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
         reqBodies[1] = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -175,6 +175,7 @@ export function CheckList() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].configuration is not null`]: (r) => r.message.connectors[0].configuration !== null,
+            [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].connectorDefinitionDetail is not null`]: (r) => r.message.connectors[0].connectorDefinitionDetail !== null,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].configuration is {}`]: (r) => Object.keys(r.message.connectors[0].configuration).length === 0,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectors pageSize=1 view=VIEW_FULL response has connectors[0].owner is UUID`]: (r) => helper.isValidOwner(r.message.connectors[0].user ),
         });
@@ -218,7 +219,7 @@ export function CheckGet() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -231,8 +232,8 @@ export function CheckGet() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.id} response connector id`]: (r) => r.message.connector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinition} response connector id`]: (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinition} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinitionName} response connector id`]: (r) => r.message.connector.connectorDefinitionName === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/GetConnector name=connectors/${resHTTP.message.connector.connectorDefinitionName} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
@@ -255,7 +256,7 @@ export function CheckUpdate() {
 
         var gRPCSrcConnector = {
             "id": "source-grpc",
-            "connector_definition": constant.gRPCSrcDefRscName,
+            "connector_definition_name": constant.gRPCSrcDefRscName,
             "configuration": {}
         }
 
@@ -295,7 +296,7 @@ export function CheckDelete() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: {
                 "id": "source-http",
-                "connector_definition": "connector-definitions/source-http",
+                "connector_definition_name": "connector-definitions/source-http",
                 "configuration": {}
             }
         }), {
@@ -305,7 +306,7 @@ export function CheckDelete() {
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
             connector: {
                 "id": "destination-http",
-                "connector_definition": "connector-definitions/destination-http",
+                "connector_definition_name": "connector-definitions/destination-http",
                 "configuration": {}
             }
         }), {
@@ -428,7 +429,7 @@ export function CheckLookUp() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -441,7 +442,7 @@ export function CheckLookUp() {
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector uid`]: (r) => r.message.connector.id === httpSrcConnector.id,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector id`]: (r) => r.message.connector.connectorDefinition === constant.httpSrcDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector id`]: (r) => r.message.connector.connectorDefinitionName === constant.httpSrcDefRscName,
             [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnector permalink=connectors/${resHTTP.message.connector.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connector.user),
         });
 
@@ -465,7 +466,7 @@ export function CheckState() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -505,7 +506,7 @@ export function CheckRename() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 
@@ -539,7 +540,7 @@ export function CheckTest() {
 
         var httpSrcConnector = {
             "id": "source-http",
-            "connector_definition": constant.httpSrcDefRscName,
+            "connector_definition_name": constant.httpSrcDefRscName,
             "configuration": {}
         }
 

@@ -8,7 +8,7 @@ var disconnectRequiredFields = []string{"name"}
 var renameRequiredFields = []string{"name", "new_connector_id"}
 
 // *ImmutableFields* are Protobuf message fields with IMMUTABLE field_behavior annotation
-var immutableFields = []string{"id", "connector_definition"}
+var immutableFields = []string{"id", "connector_definition_name"}
 
 // *OutputOnlyFields are Protobuf message fields with OUTPUT_ONLY field_behavior annotation
 var outputOnlyFields = []string{"name", "uid", "state", "tombstone", "owner", "create_time", "update_time"}

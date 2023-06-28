@@ -123,11 +123,9 @@ const multipleModelOutputsMetadata = {
 export const clsModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPA",
   "structured_data": {
-    "models/dummy-model": {
-      "classification": {
-        "category": "person",
-        "score": 0.99
-      }
+    "classification": {
+      "category": "person",
+      "score": 0.99
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -139,37 +137,23 @@ export const detectionModelOutputs = [
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
     "structured_data": {
-      "models/dummy-model-1": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "detection": {
+        "objects": [
+          {
+            "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
+            "category": "dog",
+            "score": 0.980409
+          },
+          {
+            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+            "category": "dog",
+            "score": 0.9009272
+          }
+        ]
       },
-      "models/dummy-model-2": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "classification": {
+        "category": "person",
+        "score": 0.99
       }
     },
     "metadata": multipleModelOutputsMetadata
@@ -177,37 +161,23 @@ export const detectionModelOutputs = [
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
     "structured_data": {
-      "models/dummy-model-1": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "detection": {
+        "objects": [
+          {
+            "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+            "category": "dog",
+            "score": 0.980409
+          },
+          {
+            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+            "category": "dog",
+            "score": 0.9009272
+          }
+        ]
       },
-      "models/dummy-model-2": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "classification": {
+        "category": "person",
+        "score": 0.99
       }
     },
     "metadata": multipleModelOutputsMetadata
@@ -215,37 +185,23 @@ export const detectionModelOutputs = [
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
     "structured_data": {
-      "models/dummy-model-1": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "detection": {
+        "objects": [
+          {
+            "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
+            "category": "dog",
+            "score": 0.980409
+          },
+          {
+            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+            "category": "dog",
+            "score": 0.9009272
+          }
+        ]
       },
-      "models/dummy-model-2": {
-        "detection": {
-          "objects": [
-            {
-              "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
-              "category": "dog",
-              "score": 0.980409
-            },
-            {
-              "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-              "category": "dog",
-              "score": 0.9009272
-            }
-          ]
-        }
+      "classification": {
+        "category": "person",
+        "score": 0.99
       }
     },
     "metadata": multipleModelOutputsMetadata
@@ -255,10 +211,8 @@ export const detectionModelOutputs = [
 export const detectionEmptyModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
   "structured_data": {
-    "models/dummy-model": {
-      "detection": {
-        "objects": []
-      }
+    "detection": {
+      "objects": []
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -268,19 +222,17 @@ export const detectionEmptyModelOutputs = [{
 export const keypointModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
   "structured_data": {
-    "models/dummy-model": {
-      "keypoint": {
-        "objects": [
-          {
-            "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
-            "score": 0.99
-          },
-          {
-            "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
-            "score": 0.99
-          },
-        ]
-      }
+    "keypoint": {
+      "objects": [
+        {
+          "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
+          "score": 0.99
+        },
+        {
+          "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
+          "score": 0.99
+        },
+      ]
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -289,21 +241,19 @@ export const keypointModelOutputs = [{
 export const ocrModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "ocr": {
-        "objects": [
-          {
-            "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-            "text": "some text",
-            "score": 0.99
-          },
-          {
-            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-            "text": "some text",
-            "score": 0.99
-          },
-        ],
-      }
+    "ocr": {
+      "objects": [
+        {
+          "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+          "text": "some text",
+          "score": 0.99
+        },
+        {
+          "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+          "text": "some text",
+          "score": 0.99
+        },
+      ],
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -312,23 +262,21 @@ export const ocrModelOutputs = [{
 export const semanticSegModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "semantic_segmentation": {
-        "stuffs": [
-          {
-            "rle": "2918,12,382,33,...",
-            "category": "person"
-          },
-          {
-            "rle": "34,18,230,18,...",
-            "category": "sky"
-          },
-          {
-            "rle": "34,18,230,18,...",
-            "category": "dog"
-          }
-        ]
-      }
+    "semantic_segmentation": {
+      "stuffs": [
+        {
+          "rle": "2918,12,382,33,...",
+          "category": "person"
+        },
+        {
+          "rle": "34,18,230,18,...",
+          "category": "sky"
+        },
+        {
+          "rle": "34,18,230,18,...",
+          "category": "dog"
+        }
+      ]
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -337,33 +285,31 @@ export const semanticSegModelOutputs = [{
 export const instSegModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "instance_segmentation": {
-        "objects": [
-          {
-            "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
-            "score": 0.9996394,
-            "bounding_box": {
-              "top": 375,
-              "left": 166,
-              "width": 25,
-              "height": 70
-            },
-            "category": "dog"
+    "instance_segmentation": {
+      "objects": [
+        {
+          "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
+          "score": 0.9996394,
+          "bounding_box": {
+            "top": 375,
+            "left": 166,
+            "width": 25,
+            "height": 70
           },
-          {
-            "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
-            "score": 0.9990727,
-            "bounding_box": {
-              "top": 107,
-              "left": 240,
-              "width": 27,
-              "height": 27
-            },
-            "category": "car"
-          }
-        ]
-      }
+          "category": "dog"
+        },
+        {
+          "rle": "11,6,35,8,59,10,83,12,107,14,131,16,156,16,180,18,205,18,229,...",
+          "score": 0.9990727,
+          "bounding_box": {
+            "top": 107,
+            "left": 240,
+            "width": 27,
+            "height": 27
+          },
+          "category": "car"
+        }
+      ]
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -372,15 +318,13 @@ export const instSegModelOutputs = [{
 export const textToImageModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "text_to_image": {
-        "images": [
-          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
-          "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE"
-        ]
-      }
+    "text_to_image": {
+      "images": [
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE",
+        "/9j/4AAQSkZJRgABAQAAAQABAAD/...oADAMBAAIRAxEAPwD2p76rBDHU2KHMpuE"
+      ]
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -389,10 +333,8 @@ export const textToImageModelOutputs = [{
 export const textGenerationModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "text_generation": {
-        "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
-      }
+    "text_generation": {
+      "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
     }
   },
   "metadata": singleModelPipelineMetadata
@@ -401,17 +343,15 @@ export const textGenerationModelOutputs = [{
 export const unspecifiedModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
   "structured_data": {
-    "models/dummy-model": {
-      "unspecified": {
-        "raw_outputs": [
-          {
-            "name": "some unspecified model output",
-            "data_type": "INT8",
-            "shape": [3, 3, 3],
-            "data": [1, 2, 3, 4, 5, 6, 7]
-          },
-        ],
-      }
+    "unspecified": {
+      "raw_outputs": [
+        {
+          "name": "some unspecified model output",
+          "data_type": "INT8",
+          "shape": [3, 3, 3],
+          "data": [1, 2, 3, 4, 5, 6, 7]
+        },
+      ],
     }
   },
   "metadata": singleModelPipelineMetadata

@@ -325,7 +325,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 	connDefResp, err := h.GetConnectorDefinition(
 		ctx,
 		&connectorPB.GetConnectorDefinitionRequest{
-			Name: req.GetConnector().GetConnectorDefinition(),
+			Name: req.GetConnector().GetConnectorDefinitionName(),
 			View: connectorPB.View_VIEW_FULL.Enum(),
 		})
 	if err != nil {
@@ -333,6 +333,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		return resp, err
 	}
 
+	fmt.Println(4)
 	// Validate Connector configuration JSON Schema
 	connSpec := connDefResp.GetConnectorDefinition().GetSpec().GetConnectionSpecification()
 	b, err := protojson.Marshal(connSpec)
@@ -512,14 +513,19 @@ func (h *PublicHandler) ListConnectors(ctx context.Context, req *connectorPB.Lis
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
+		pbConnector := DBToPBConnector(
+			ctx,
+			dbConnectors[idx],
+			dbConnectors[idx].Owner,
+			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
+		)
+		if !isBasicView {
+			pbConnector.ConnectorDefinition = dbConnDef
+		}
 		pbConnectors = append(
 			pbConnectors,
-			DBToPBConnector(
-				ctx,
-				dbConnectors[idx],
-				dbConnectors[idx].Owner,
-				fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
-			))
+			pbConnector,
+		)
 	}
 
 	logger.Info(string(custom_otel.NewLogMessage(
@@ -588,6 +594,10 @@ func (h *PublicHandler) GetConnector(ctx context.Context, req *connectorPB.GetCo
 		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+
+	if !isBasicView {
+		resp.Connector.ConnectorDefinition = dbConnDef
+	}
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
@@ -728,7 +738,7 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 
 	connID = getResp.GetConnector().GetId()
 
-	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinition())
+	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinitionName())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -911,6 +921,9 @@ func (h *PublicHandler) LookUpConnector(ctx context.Context, req *connectorPB.Lo
 		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+	if !isBasicView {
+		pbConnector.ConnectorDefinition = dbConnDef
+	}
 
 	resp.Connector = pbConnector
 
@@ -966,7 +979,7 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 		return resp, err
 	}
 
-	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinition())
+	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinitionName())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1064,7 +1077,7 @@ func (h *PublicHandler) DisconnectConnector(ctx context.Context, req *connectorP
 		return resp, err
 	}
 
-	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinition())
+	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinitionName())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1163,7 +1176,7 @@ func (h *PublicHandler) RenameConnector(ctx context.Context, req *connectorPB.Re
 		return resp, err
 	}
 
-	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinition())
+	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnector().GetConnectorDefinitionName())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
