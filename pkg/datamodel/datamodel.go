@@ -46,10 +46,14 @@ type Connector struct {
 	ConnectorDefinitionUID uuid.UUID
 	Description            sql.NullString
 	Tombstone              bool
-	Configuration          datatypes.JSON `gorm:"type:jsonb"`
-	ConnectorType          ConnectorType  `sql:"type:valid_connector_type"`
-	State                  ConnectorState `sql:"type:valid_state_type"`
+	Configuration          datatypes.JSON      `gorm:"type:jsonb"`
+	ConnectorType          ConnectorType       `sql:"type:valid_connector_type"`
+	State                  ConnectorState      `sql:"type:valid_state_type"`
+	Visibility             ConnectorVisibility `sql:"type:valid_visibility"`
 }
+
+// ConnectorType is an alias type for Protobuf enum ConnectorType
+type ConnectorVisibility connectorPB.Connector_Visibility
 
 // ConnectorType is an alias type for Protobuf enum ConnectorType
 type ConnectorType connectorPB.ConnectorType
@@ -77,4 +81,15 @@ func (r *ConnectorState) Scan(value interface{}) error {
 // Value function for custom GORM type ConnectorState
 func (r ConnectorState) Value() (driver.Value, error) {
 	return connectorPB.Connector_State(r).String(), nil
+}
+
+// Scan function for custom GORM type ReleaseStage
+func (r *ConnectorVisibility) Scan(value interface{}) error {
+	*r = ConnectorVisibility(connectorPB.Connector_Visibility_value[value.(string)])
+	return nil
+}
+
+// Value function for custom GORM type ReleaseStage
+func (r ConnectorVisibility) Value() (driver.Value, error) {
+	return connectorPB.Connector_Visibility(r).String(), nil
 }
