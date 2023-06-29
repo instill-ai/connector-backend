@@ -731,6 +731,8 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/instill-ai/connector v0.0.0-20230628152420-4adf6bedec28 h1:jgpEZiIZC+jJ7VZgibTg6eb+58a40mNPYp3RSiPR2VQ=
 github.com/instill-ai/connector v0.0.0-20230628152420-4adf6bedec28/go.mod h1:ctro5UDPVoLV7Toi6/cOar0JpYKtabvpXWmjtrXbce4=
+github.com/instill-ai/connector-ai v0.0.0-20230629063657-c7d21692e732 h1:ZUjdvzjQG6r2KxNg+5Q0W2PX3HnWVTjD3oENVwJEq7A=
+github.com/instill-ai/connector-ai v0.0.0-20230629063657-c7d21692e732/go.mod h1:oV91P4PH2XqrR1uOXYbbVFc7vJ/s6BPNuKfLHP4OIP0=
 github.com/instill-ai/connector-blockchain v0.0.0-20230628152637-a313e5eb4d34 h1:CMWXoHzdOBgKVuubdyMGZBxm819b6d5PAgSpnV40EFA=
 github.com/instill-ai/connector-blockchain v0.0.0-20230628152637-a313e5eb4d34/go.mod h1:gzmZNeb8juDLg3q+U3I9LEeCWo3MszjKmnxYJ6CQ9vQ=
 github.com/instill-ai/connector-destination v0.0.0-20230628152557-6a363a7bd381 h1:Lzcgljy+ZtEZoTh5ZG3mZCu2n+07ho3Q1LvFwsrqG0s=
@@ -1197,7 +1199,6 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
-github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/subosito/gotenv v1.2.0/go.mod h1:N0PQaV/YGNqwC0u51sEeR/aUtSLEXKX9iv69rRypqCw=
 github.com/syndtr/gocapability v0.0.0-20170704070218-db04d3cc01c8/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=
 github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2/go.mod h1:hkRG7XYTFWNJGYcbNJQlaLq0fg1yr4J4t/NcTQtrfww=

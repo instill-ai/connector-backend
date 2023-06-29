@@ -9,7 +9,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/config"
 
-	// connectorAI "github.com/instill-ai/connector-ai/pkg"
+	connectorAI "github.com/instill-ai/connector-ai/pkg"
 	connectorBlockchain "github.com/instill-ai/connector-blockchain/pkg"
 	connectorDestination "github.com/instill-ai/connector-destination/pkg"
 	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
@@ -42,14 +42,14 @@ func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 	connectorSource := connectorSource.Init(logger)
 	connectorDestination := connectorDestination.Init(logger, GetConnectorDestinationOptions())
 	connectorBlockchain := connectorBlockchain.Init(logger, connectorBlockchain.ConnectorOptions{})
-	// connectorAI := connectorAI.Init(logger, connectorAI.ConnectorOptions{})
+	connectorAI := connectorAI.Init(logger, connectorAI.ConnectorOptions{})
 
 	connector := &Connector{
 		BaseConnector: connectorBase.BaseConnector{},
 		Destination:   connectorDestination,
 		Source:        connectorSource,
 		Blockchain:    connectorBlockchain,
-		// AI:            connectorAI,
+		AI:            connectorAI,
 	}
 
 	for _, uid := range connectorDestination.ListConnectorDefinitionUids() {
@@ -82,16 +82,16 @@ func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 			logger.Error(err.Error())
 		}
 	}
-	// for _, uid := range connectorAI.ListConnectorDefinitionUids() {
-	// 	def, err := connectorAI.GetConnectorDefinitionByUid(uid)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 	}
-	// 	err = connector.AddConnectorDefinition(uid, def.GetId(), def)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 	}
-	// }
+	for _, uid := range connectorAI.ListConnectorDefinitionUids() {
+		def, err := connectorAI.GetConnectorDefinitionByUid(uid)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		err = connector.AddConnectorDefinition(uid, def.GetId(), def)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	}
 	return connector
 }
 
