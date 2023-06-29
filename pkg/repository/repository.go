@@ -19,6 +19,8 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
+
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 // DefaultPageSize is the default pagination page size when page size is not assigned
@@ -86,9 +88,9 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	r.db.Model(&datamodel.Connector{}).Where("owner = ?", ownerPermalink).Count(&totalSize)
+	r.db.Model(&datamodel.Connector{}).Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).Count(&totalSize)
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ?", ownerPermalink)
+	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
 
 	if pageSize == 0 {
 		pageSize = DefaultPageSize
@@ -314,7 +316,7 @@ func (r *repository) GetConnectorByID(ctx context.Context, id string, ownerPerma
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND owner = ?", id, ownerPermalink)
+		Where("id = ? AND (owner = ? or visibility = ?)", id, ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -344,7 +346,7 @@ func (r *repository) GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner
 	var connector datamodel.Connector
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("uid = ? AND owner = ?", uid, ownerPermalink)
+		Where("uid = ? AND (owner = ? or visibility = ?)", uid, ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")

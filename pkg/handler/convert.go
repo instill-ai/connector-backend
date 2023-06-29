@@ -61,6 +61,7 @@ func PBToDBConnector(
 		State:                  state,
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
+		Visibility:             datamodel.ConnectorVisibility(pbConnector.Visibility),
 
 		Configuration: func() []byte {
 			if configuration != nil {
@@ -101,6 +102,7 @@ func DBToPBConnector(
 		Tombstone:               dbConnector.Tombstone,
 		CreateTime:              timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
+		Visibility:              connectorPB.Connector_Visibility(dbConnector.Visibility),
 
 		Configuration: func() *structpb.Struct {
 			if dbConnector.Configuration != nil {

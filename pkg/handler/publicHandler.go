@@ -419,6 +419,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		Configuration:          connConfig,
 		ConnectorType:          datamodel.ConnectorType(connDefResp.ConnectorDefinition.GetConnectorType()),
 		Description:            connDesc,
+		Visibility:             datamodel.ConnectorVisibility(req.Connector.Visibility),
 	}
 
 	dbConnector, err = h.service.CreateConnector(ctx, owner, dbConnector)
