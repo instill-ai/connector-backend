@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/connector v0.0.0-20230628152420-4adf6bedec28
+	github.com/instill-ai/connector v0.0.0-20230629151544-f181ade74915
 	github.com/instill-ai/connector-ai v0.0.0-20230629063657-c7d21692e732
 	github.com/instill-ai/connector-blockchain v0.0.0-20230628152637-a313e5eb4d34
 	github.com/instill-ai/connector-destination v0.0.0-20230628152557-6a363a7bd381

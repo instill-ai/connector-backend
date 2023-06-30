@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 	"gorm.io/datatypes"
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
@@ -444,6 +445,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		service.GenOwnerPermalink(owner),
 		connDefRscName)
 
+	connector.MaskCredentialFields(h.connectors, connDefResp.ConnectorDefinition.Id, pbConnector.Configuration)
 	resp.Connector = pbConnector
 
 	if err != nil {
@@ -520,6 +522,7 @@ func (h *PublicHandler) ListConnectors(ctx context.Context, req *connectorPB.Lis
 		if !isBasicView {
 			pbConnector.ConnectorDefinition = dbConnDef
 		}
+		connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), pbConnector.Configuration)
 		pbConnectors = append(
 			pbConnectors,
 			pbConnector,
@@ -545,7 +548,10 @@ func (h *PublicHandler) ListConnectors(ctx context.Context, req *connectorPB.Lis
 }
 
 func (h *PublicHandler) GetConnector(ctx context.Context, req *connectorPB.GetConnectorRequest) (resp *connectorPB.GetConnectorResponse, err error) {
+	return h.getConnector(ctx, req, true)
+}
 
+func (h *PublicHandler) getConnector(ctx context.Context, req *connectorPB.GetConnectorRequest, credentialMask bool) (resp *connectorPB.GetConnectorResponse, err error) {
 	ctx, span := tracer.Start(ctx, "GetConnector",
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
@@ -592,6 +598,10 @@ func (h *PublicHandler) GetConnector(ctx context.Context, req *connectorPB.GetCo
 		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+
+	if credentialMask {
+		connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), resp.Connector.Configuration)
+	}
 
 	if !isBasicView {
 		resp.Connector.ConnectorDefinition = dbConnDef
@@ -679,12 +689,12 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 		return resp, st.Err()
 	}
 
-	getResp, err := h.GetConnector(
+	getResp, err := h.getConnector(
 		ctx,
 		&connectorPB.GetConnectorRequest{
 			Name: req.GetConnector().GetName(),
 			View: connectorPB.View_VIEW_FULL.Enum(),
-		})
+		}, false)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -771,12 +781,19 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 		return resp, ownerErr
 	}
 
+	configuration := &structpb.Struct{}
+	proto.Merge(configuration, pbConnectorToUpdate.Configuration)
+
 	// Only the fields mentioned in the field mask will be copied to `pbPipelineToUpdate`, other fields are left intact
 	err = fieldmask_utils.StructToStruct(mask, pbConnectorReq, pbConnectorToUpdate)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
+	connector.RemoveCredentialFieldsWithMaskString(h.connectors, dbConnDef.Id, req.Connector.Configuration)
+	proto.Merge(configuration, req.Connector.Configuration)
+	pbConnectorToUpdate.Configuration = configuration
 
 	dbConnector, err := h.service.UpdateConnector(ctx, connID, owner, PBToDBConnector(ctx, pbConnectorToUpdate, owner.GetName(), dbConnDef))
 	if err != nil {
@@ -790,6 +807,7 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 		service.GenOwnerPermalink(owner),
 		connDefRscName)
 
+	connector.MaskCredentialFields(h.connectors, dbConnDef.Id, resp.Connector.Configuration)
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		owner,
