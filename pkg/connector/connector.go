@@ -103,6 +103,10 @@ func (c *Connector) CreateConnection(defUid uuid.UUID, config *structpb.Struct, 
 		return c.Destination.CreateConnection(defUid, config, logger)
 	case c.Source.HasUid(defUid):
 		return c.Source.CreateConnection(defUid, config, logger)
+	case c.Blockchain.HasUid(defUid):
+		return c.Blockchain.CreateConnection(defUid, config, logger)
+	case c.AI.HasUid(defUid):
+		return c.AI.CreateConnection(defUid, config, logger)
 
 	default:
 		return nil, fmt.Errorf("no connector uid: %s", defUid)

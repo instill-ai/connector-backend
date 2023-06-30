@@ -421,6 +421,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		ConnectorType:          datamodel.ConnectorType(connDefResp.ConnectorDefinition.GetConnectorType()),
 		Description:            connDesc,
 		Visibility:             datamodel.ConnectorVisibility(req.Connector.Visibility),
+		Task:                   "TASK_UNSPECIFIED", // TODO: refactor this
 	}
 
 	dbConnector, err = h.service.CreateConnector(ctx, owner, dbConnector)
@@ -1398,6 +1399,7 @@ func (h *PublicHandler) TestConnector(ctx context.Context, req *connectorPB.Test
 
 func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.ExecuteConnectorRequest) (resp *connectorPB.ExecuteConnectorResponse, err error) {
 
+	fmt.Println("ExecuteConnector", req)
 	ctx, span := tracer.Start(ctx, "ExecuteConnector",
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()

@@ -50,6 +50,7 @@ type Connector struct {
 	ConnectorType          ConnectorType       `sql:"type:valid_connector_type"`
 	State                  ConnectorState      `sql:"type:valid_state_type"`
 	Visibility             ConnectorVisibility `sql:"type:valid_visibility"`
+	Task                   string              `sql:"type:valid_task"`
 }
 
 // ConnectorType is an alias type for Protobuf enum ConnectorType

@@ -9,7 +9,20 @@ CREATE TYPE valid_visibility AS ENUM (
   'VISIBILITY_PUBLIC'
 );
 
+CREATE TYPE valid_task AS ENUM (
+  'TASK_UNSPECIFIED',
+  'TASK_CLASSIFICATION',
+  'TASK_DETECTION',
+  'TASK_KEYPOINT',
+  'TASK_OCR',
+  'TASK_INSTANCE_SEGMENTATION',
+  'TASK_SEMANTIC_SEGMENTATION',
+  'TASK_TEXT_TO_IMAGE',
+  'TASK_TEXT_GENERATION'
+);
+
 ALTER TABLE public.connector ADD COLUMN "visibility" VALID_VISIBILITY DEFAULT 'VISIBILITY_PRIVATE' NOT NULL;
+ALTER TABLE public.connector ADD COLUMN "task" valid_task DEFAULT 'TASK_UNSPECIFIED' NOT NULL;
 
 DROP INDEX IF EXISTS unique_owner_id_connector_type_deleted_at;
 CREATE UNIQUE INDEX unique_owner_id_deleted_at ON public.connector (owner, id) WHERE delete_time IS NULL;
