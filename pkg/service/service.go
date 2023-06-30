@@ -17,8 +17,6 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/sterr"
 
-	connectorDestination "github.com/instill-ai/connector-destination/pkg"
-	connectorSource "github.com/instill-ai/connector-source/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
@@ -61,8 +59,6 @@ type service struct {
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
 	controllerClient            controllerPB.ControllerPrivateServiceClient
 	connectorAll                connectorBase.IConnector
-	connectorSource             connectorBase.IConnector
-	connectorDestination        connectorBase.IConnector
 }
 
 // NewService initiates a service instance
@@ -80,8 +76,6 @@ func NewService(
 		pipelinePublicServiceClient: p,
 		controllerClient:            c,
 		connectorAll:                connector.InitConnectorAll(logger),
-		connectorSource:             connectorSource.Init(logger),
-		connectorDestination:        connectorDestination.Init(logger, connector.GetConnectorDestinationOptions()),
 	}
 }
 
@@ -409,6 +403,33 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			return nil, err
 		}
 
+		configuration := func() *structpb.Struct {
+			if conn.Configuration != nil {
+				str := structpb.Struct{}
+				err := str.UnmarshalJSON(conn.Configuration)
+				if err != nil {
+					logger.Fatal(err.Error())
+				}
+				return &str
+			}
+			return nil
+		}()
+
+		con, err := s.connectorAll.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
+
+		if err != nil {
+			return nil, err
+		}
+
+		taskName, err := con.GetTaskName()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, taskName); err != nil {
+			return nil, err
+		}
+
 		// Check resource state
 		if datamodel.ConnectorState(*connState) != state {
 			if state, err := s.CheckConnectorByUID(ctx, conn.UID); err == nil {
@@ -530,7 +551,7 @@ func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, in
 		return nil
 	}()
 
-	con, err := s.connectorDestination.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
+	con, err := s.connectorAll.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return nil, err
 	}
