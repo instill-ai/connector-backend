@@ -89,7 +89,16 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	r.db.Model(&datamodel.Connector{}).Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).Count(&totalSize)
+	var expr *clause.Expr
+	if expr, err = r.transpileFilter(filter); err != nil {
+		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+	}
+
+	if expr == nil {
+		r.db.Model(&datamodel.Connector{}).Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).Count(&totalSize)
+	} else {
+		r.db.Model(&datamodel.Connector{}).Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC), expr).Count(&totalSize)
+	}
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
 
@@ -126,9 +135,7 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 		queryBuilder.Omit("configuration")
 	}
 
-	if expr, err := r.transpileFilter(filter); err != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
-	} else if expr != nil {
+	if expr != nil {
 		queryBuilder.Where("(?)", expr)
 	}
 
@@ -172,22 +179,42 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 	if len(connectors) > 0 {
 		lastUID := (connectors)[len(connectors)-1].UID
 		lastItem := &datamodel.Connector{}
-		if result := r.db.Model(&datamodel.Connector{}).
-			Where("owner = ?", ownerPermalink).
-			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-			st, err := sterr.CreateErrorResourceInfo(
-				codes.Internal,
-				fmt.Sprintf("[db] list connector error: %s", err.Error()),
-				"connector",
-				"",
-				ownerPermalink,
-				result.Error.Error(),
-			)
-			if err != nil {
-				logger.Error(err.Error())
+		if expr == nil {
+			if result := r.db.Model(&datamodel.Connector{}).
+				Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).
+				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+				st, err := sterr.CreateErrorResourceInfo(
+					codes.Internal,
+					fmt.Sprintf("[db] list connector error: %s", err.Error()),
+					"connector",
+					"",
+					ownerPermalink,
+					result.Error.Error(),
+				)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return nil, 0, "", st.Err()
 			}
-			return nil, 0, "", st.Err()
+		} else {
+			if result := r.db.Model(&datamodel.Connector{}).
+				Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC), expr).
+				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+				st, err := sterr.CreateErrorResourceInfo(
+					codes.Internal,
+					fmt.Sprintf("[db] list connector error: %s", err.Error()),
+					"connector",
+					"",
+					ownerPermalink,
+					result.Error.Error(),
+				)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return nil, 0, "", st.Err()
+			}
 		}
+
 		if lastItem.UID.String() == lastUID.String() {
 			nextPageToken = ""
 		} else {
@@ -201,8 +228,16 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
+	var expr *clause.Expr
+	if expr, err = r.transpileFilter(filter); err != nil {
+		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
+	}
 
-	r.db.Model(&datamodel.Connector{}).Count(&totalSize)
+	if expr == nil {
+		r.db.Model(&datamodel.Connector{}).Count(&totalSize)
+	} else {
+		r.db.Model(&datamodel.Connector{}).Where("?", expr).Count(&totalSize)
+	}
 
 	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC")
 
@@ -212,9 +247,7 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 		pageSize = MaxPageSize
 	}
 
-	if expr, err := r.transpileFilter(filter); err != nil {
-		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
-	} else if expr != nil {
+	if expr != nil {
 		queryBuilder.Clauses(expr)
 	}
 
@@ -285,21 +318,41 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 	if len(connectors) > 0 {
 		lastUID := (connectors)[len(connectors)-1].UID
 		lastItem := &datamodel.Connector{}
-		if result := r.db.Model(&datamodel.Connector{}).
-			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
-			st, err := sterr.CreateErrorResourceInfo(
-				codes.Internal,
-				fmt.Sprintf("[db] list connector error: %s", err.Error()),
-				"connector",
-				"",
-				"admin",
-				result.Error.Error(),
-			)
-			if err != nil {
-				logger.Error(err.Error())
+		if expr == nil {
+			if result := r.db.Model(&datamodel.Connector{}).
+				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+				st, err := sterr.CreateErrorResourceInfo(
+					codes.Internal,
+					fmt.Sprintf("[db] list connector error: %s", err.Error()),
+					"connector",
+					"",
+					"admin",
+					result.Error.Error(),
+				)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return nil, 0, "", st.Err()
 			}
-			return nil, 0, "", st.Err()
+		} else {
+			if result := r.db.Model(&datamodel.Connector{}).
+				Where("?", expr).
+				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
+				st, err := sterr.CreateErrorResourceInfo(
+					codes.Internal,
+					fmt.Sprintf("[db] list connector error: %s", err.Error()),
+					"connector",
+					"",
+					"admin",
+					result.Error.Error(),
+				)
+				if err != nil {
+					logger.Error(err.Error())
+				}
+				return nil, 0, "", st.Err()
+			}
 		}
+
 		if lastItem.UID.String() == lastUID.String() {
 			nextPageToken = ""
 		} else {
