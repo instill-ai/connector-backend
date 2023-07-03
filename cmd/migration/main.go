@@ -119,6 +119,12 @@ func main() {
 			fmt.Printf("Migration to version %d complete\n", ExpectedVersion)
 			break
 		} else {
+			if step == 3 {
+				err := Migrate000003()
+				if err != nil {
+					panic(err)
+				}
+			}
 			fmt.Printf("Step up to version %d\n", step+1)
 			if err := m.Steps(1); err != nil {
 				panic(err)
