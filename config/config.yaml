@@ -11,7 +11,8 @@ server:
     host: usage.instill.tech
     port: 443
   debug: true
-  loadprebuiltconnector: false
+  prebuiltconnector:
+    enabled: false
 container:
   mountsource:
     vdp: vdp # vdp docker volume name by default

@@ -42,8 +42,10 @@ type ServerConfig struct {
 		Host       string `koanf:"host"`
 		Port       int    `koanf:"port"`
 	}
-	Debug                 bool `koanf:"debug"`
-	LoadPreBuiltConnector bool `koanf:"loadprebuiltconnector"`
+	Debug             bool `koanf:"debug"`
+	PrebuiltConnector struct {
+		Enabled bool `koanf:"enabled"`
+	}
 }
 
 // ContainerConfig defines the container configurations

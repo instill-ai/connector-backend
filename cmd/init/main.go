@@ -109,7 +109,7 @@ func main() {
 		panic(err)
 	}
 
-	if config.Config.Server.LoadPreBuiltConnector {
+	if config.Config.Server.PrebuiltConnector.Enabled {
 		fmt.Println("Load PreBuiltConnector")
 		var prebuiltConnectors []PrebuiltConnector
 		err := json.Unmarshal(prebuiltJson, &prebuiltConnectors)
