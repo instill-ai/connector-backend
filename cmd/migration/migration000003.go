@@ -143,9 +143,10 @@ func Migrate000003() error {
 				var letters = []byte("abcdefghijklmnopqrstuvwxyz")
 
 				b := make([]byte, 3)
-				rand.Seed(time.Now().UnixNano())
+				r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 				for i := range b {
-					b[i] = letters[rand.Intn(len(letters))]
+					b[i] = letters[r.Intn(len(letters))]
 				}
 
 				connID = fmt.Sprintf("%s-%s", oriConnID, string(b))

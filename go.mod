@@ -10,8 +10,8 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/instill-ai/connector v0.0.0-20230630174544-1dc5a502a437
-	github.com/instill-ai/connector-ai v0.0.0-20230630180428-8e7850402268
-	github.com/instill-ai/connector-blockchain v0.0.0-20230630174842-ee0ca27c7fd9
+	github.com/instill-ai/connector-ai v0.0.0-20230705064403-41d20493a0dd
+	github.com/instill-ai/connector-blockchain v0.0.0-20230705054118-92cf632c1705
 	github.com/instill-ai/connector-destination v0.0.0-20230630174940-5ea7806af0b4
 	github.com/instill-ai/connector-source v0.0.0-20230630174913-311cbed67bb5
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2
