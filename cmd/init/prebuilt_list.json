@@ -1,0 +1,112 @@
+[
+  {
+    "id": "instill-stable-diffusion-xl-beta-v2-2-2",
+    "uid": "9cb733e3-d1ca-4240-ae78-2b5d897530db",
+    "connector_definition_uid": "c86a95cc-7d32-4e22-a290-8c699f6705a4",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_TEXT_TO_IMAGE",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AISTABILITYAI>",
+      "task": "Text to Image",
+      "engine": "stable-diffusion-xl-beta-v2-2-2"
+    }
+  },
+  {
+    "id": "instill-gpt-2",
+    "uid": "6332a144-8e14-4c4d-8d1c-7653bc17d2ff",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_TEXT_GENERATION",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "gpt-2"
+    }
+  },
+  {
+    "id": "instill-yolov7",
+    "uid": "82a1a29c-0c3b-4b4e-83a8-7ea6a80bf7b7",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_DETECTION",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "yolov7"
+    }
+  },
+  {
+    "id": "instill-yolov7-pose",
+    "uid": "7ee5e127-3dc1-4c8f-947c-966b6281e772",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_KEYPOINT",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "yolov7-pose"
+    }
+  },
+  {
+    "id": "instill-mobilenetv2",
+    "uid": "0b9c26f2-9d51-43ed-ae0f-30b3f280e7be",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_CLASSIFICATION",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "mobilenetv2"
+    }
+  },
+  {
+    "id": "instill-stable-diffusion-1-5-fp16-txt2img",
+    "uid": "40bf6822-8a8c-4f9f-a0b9-c233b5404973",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_TEXT_TO_IMAGE",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "stable-diffusion-1-5-fp16-txt2img"
+    }
+  },
+  {
+    "id": "instill-mask-rcnn",
+    "uid": "37e01efd-acb2-4a69-a67f-bc06599f2473",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_INSTANCE_SEGMENTATION",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "mask-rcnn"
+    }
+  },
+  {
+    "id": "instill-stomata-mask-rcnn",
+    "uid": "2aaf321d-a533-47ea-8616-39a5205797ca",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_INSTANCE_SEGMENTATION",
+    "configuration": {
+      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "server_url": "https://api-model.instill.tech",
+      "model_id": "stomata-mask-rcnn"
+    }
+  },
+  {
+    "id": "instill-number",
+    "uid": "5d0e9582-566e-4b01-972c-4429f4d60594",
+    "connector_definition_uid": "70d8664a-d512-4517-a5e8-5d4da81756a7",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_UNSPECIFIED",
+    "configuration": {
+      "capture_token": "<CFG_APIKEY_BLOCKCHAINNUMBERS>",
+      "asset_type": "images",
+      "metadata_texts": true,
+      "metadata_structured_data": false,
+      "metadata_metadata": true
+    }
+  }
+]

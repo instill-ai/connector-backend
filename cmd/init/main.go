@@ -2,12 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
+	"os"
+	"time"
 
-	"go.einride.tech/aip/filtering"
-	"go.opentelemetry.io/otel"
+	_ "embed"
 
 	"github.com/gofrs/uuid"
+	"go.einride.tech/aip/filtering"
+	"go.opentelemetry.io/otel"
+	"gorm.io/datatypes"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -15,6 +24,41 @@ import (
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
 )
+
+type PrebuiltConnector struct {
+	Id                     string      `json:"id"`
+	Uid                    string      `json:"uid"`
+	Owner                  string      `json:"owner"`
+	ConnectorDefinitionUid string      `json:"connector_definition_uid"`
+	Configuration          interface{} `json:"configuration"`
+	Task                   string      `json:"task"`
+}
+
+// BaseDynamic contains common columns for all tables with dynamic UUID as primary key generated when creating
+type BaseDynamic struct {
+	UID        uuid.UUID      `gorm:"type:uuid;primary_key;<-:create"` // allow read and create
+	CreateTime time.Time      `gorm:"autoCreateTime:nano"`
+	UpdateTime time.Time      `gorm:"autoUpdateTime:nano"`
+	DeleteTime gorm.DeletedAt `sql:"index"`
+}
+
+// Connector is the data model of the connector table
+type Connector struct {
+	BaseDynamic
+	ID                     string
+	Owner                  string
+	ConnectorDefinitionUID uuid.UUID
+	Description            string
+	Tombstone              bool
+	Configuration          datatypes.JSON `gorm:"type:jsonb"`
+	ConnectorType          string         `sql:"type:string"`
+	State                  string         `sql:"type:string"`
+	Visibility             string         `sql:"type:string"`
+	Task                   string         `sql:"type:string"`
+}
+
+//go:embed prebuilt_list.json
+var prebuiltJson []byte
 
 func main() {
 
@@ -55,6 +99,7 @@ func main() {
 		uid := conns[idx].ConnectorDefinitionUID
 		if airbyteConnector.HasUid(uid) {
 			uids = append(uids, uid)
+
 		}
 	}
 
@@ -62,5 +107,64 @@ func main() {
 
 	if err != nil {
 		panic(err)
+	}
+
+	if config.Config.Server.LoadPreBuiltConnector {
+		fmt.Println("Load PreBuiltConnector")
+		var prebuiltConnectors []PrebuiltConnector
+		err := json.Unmarshal(prebuiltJson, &prebuiltConnectors)
+		if err != nil {
+			panic(err)
+		}
+		for idx := range prebuiltConnectors {
+			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"]; ok {
+				val := val.(string)
+				if val[:4] == "<CFG" {
+					envVal := os.Getenv(val[1 : len(val)-1])
+					if envVal == "" {
+						panic(fmt.Sprintf("%s is missing", val))
+					}
+					prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"] = envVal
+				}
+
+			}
+			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["capture_token"]; ok {
+				val := val.(string)
+				if val[:4] == "<CFG" {
+					envVal := os.Getenv(val[1 : len(val)-1])
+					if envVal == "" {
+						panic(fmt.Sprintf("%s is missing", val))
+					}
+					prebuiltConnectors[idx].Configuration.(map[string]interface{})["capture_token"] = envVal
+				}
+			}
+
+			config, err := json.Marshal(prebuiltConnectors[idx].Configuration)
+			if err != nil {
+				panic(err)
+			}
+			connector := &Connector{
+				BaseDynamic: BaseDynamic{
+					UID: uuid.FromStringOrNil(prebuiltConnectors[idx].Uid),
+				},
+				ID:                     prebuiltConnectors[idx].Id,
+				Owner:                  prebuiltConnectors[idx].Owner,
+				ConnectorDefinitionUID: uuid.FromStringOrNil(prebuiltConnectors[idx].ConnectorDefinitionUid),
+				Tombstone:              false,
+				Configuration:          config,
+				ConnectorType:          "CONNECTOR_TYPE_AI",
+				Visibility:             "VISIBILITY_PUBLIC",
+				State:                  "STATE_CONNECTED",
+				Task:                   prebuiltConnectors[idx].Task,
+			}
+
+			if result := db.Model(&Connector{}).Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create(connector); result.Error != nil {
+				panic(result.Error)
+			}
+
+		}
+
 	}
 }
