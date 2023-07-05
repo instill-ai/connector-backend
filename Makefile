@@ -18,6 +18,10 @@ dev:							## Run dev container
 		-e DOCKER_HOST=tcp://${SOCAT_HOST}:${SOCAT_PORT} \
 		-v $(PWD):/${SERVICE_NAME} \
 		-v vdp:/vdp \
+		-v $(PWD)/../connector-ai:/connector-ai \
+		-v $(PWD)/../connector-blockchain:/connector-blockchain \
+		-v $(PWD)/../go.work:/go.work \
+		-v $(PWD)/../go.work.sum:/go.work.sum \
 		-v airbyte:/airbyte \
 		-p ${SERVICE_PORT}:${SERVICE_PORT} \
 		--network instill-network \
@@ -58,10 +62,10 @@ unit-test:       				## Run unit test
 .PHONY: integration-test
 integration-test:				## Run integration test
 	@TEST_FOLDER_ABS_PATH=${PWD} k6 run \
-		-e API_GATEWAY_PROTOCOL=${API_GATEWAY_PROTOCOL} -e API_GATEWAY_HOST=${API_GATEWAY_HOST} -e API_GATEWAY_PORT=${API_GATEWAY_PORT} \
+		-e API_GATEWAY_PROTOCOL=${API_GATEWAY_PROTOCOL} -e API_GATEWAY_VDP_HOST=${API_GATEWAY_VDP_HOST} -e API_GATEWAY_VDP_PORT=${API_GATEWAY_VDP_PORT} \
 		integration-test/grpc.js --no-usage-report --quiet
 	@TEST_FOLDER_ABS_PATH=${PWD} k6 run \
-		-e API_GATEWAY_PROTOCOL=${API_GATEWAY_PROTOCOL} -e API_GATEWAY_HOST=${API_GATEWAY_HOST} -e API_GATEWAY_PORT=${API_GATEWAY_PORT} \
+		-e API_GATEWAY_PROTOCOL=${API_GATEWAY_PROTOCOL} -e API_GATEWAY_VDP_HOST=${API_GATEWAY_VDP_HOST} -e API_GATEWAY_VDP_PORT=${API_GATEWAY_VDP_PORT} \
 		integration-test/rest.js --no-usage-report --quiet
 
 .PHONY: integration-test-protocol

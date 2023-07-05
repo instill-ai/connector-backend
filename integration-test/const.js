@@ -4,11 +4,11 @@ let proto
 let pHost, cHost, mHost
 let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
 
-if (__ENV.API_GATEWAY_HOST && !__ENV.API_GATEWAY_PORT || !__ENV.API_GATEWAY_HOST && __ENV.API_GATEWAY_PORT) {
-  fail("both API_GATEWAY_HOST and API_GATEWAY_PORT should be properly configured.")
+if (__ENV.API_GATEWAY_VDP_HOST && !__ENV.API_GATEWAY_VDP_PORT || !__ENV.API_GATEWAY_VDP_HOST && __ENV.API_GATEWAY_VDP_PORT) {
+  fail("both API_GATEWAY_VDP_HOST and API_GATEWAY_VDP_PORT should be properly configured.")
 }
 
-export const apiGatewayMode = (__ENV.API_GATEWAY_HOST && __ENV.API_GATEWAY_PORT);
+export const apiGatewayMode = (__ENV.API_GATEWAY_VDP_HOST && __ENV.API_GATEWAY_VDP_PORT);
 
 if (__ENV.API_GATEWAY_PROTOCOL) {
   if (__ENV.API_GATEWAY_PROTOCOL !== "http" && __ENV.API_GATEWAY_PROTOCOL != "https") {
@@ -21,9 +21,9 @@ if (__ENV.API_GATEWAY_PROTOCOL) {
 
 if (apiGatewayMode) {
   // api gateway mode
-  pHost = cHost = __ENV.API_GATEWAY_HOST
+  pHost = cHost = __ENV.API_GATEWAY_VDP_HOST
   cPrivatePort = 3082
-  pPublicPort = cPublicPort = __ENV.API_GATEWAY_PORT
+  pPublicPort = cPublicPort = __ENV.API_GATEWAY_VDP_PORT
 
   // TODO: remove model-backend dependency
   mHost = "api-gateway-model"
