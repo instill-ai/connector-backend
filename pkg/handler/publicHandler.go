@@ -310,6 +310,22 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 	}
 
 	connID = req.GetConnector().GetId()
+	if len(connID) > 8 && connID[:8] == "instill-" {
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] create connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "connector",
+					Description: "the id can not start with instill-",
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		span.SetStatus(1, st.Err().Error())
+		return resp, st.Err()
+	}
 
 	connConfig, err = req.GetConnector().GetConfiguration().MarshalJSON()
 	if err != nil {
@@ -1198,6 +1214,22 @@ func (h *PublicHandler) RenameConnector(ctx context.Context, req *connectorPB.Re
 		return resp, err
 	}
 	connNewID = req.GetNewConnectorId()
+	if len(connNewID) > 8 && connNewID[:8] == "instill-" {
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] create connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "connector",
+					Description: "the id can not start with instill-",
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		span.SetStatus(1, st.Err().Error())
+		return resp, st.Err()
+	}
 
 	getResp, err := h.GetConnector(
 		ctx,
