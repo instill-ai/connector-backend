@@ -10,10 +10,10 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/instill-ai/connector v0.0.0-20230706052130-d76abb1db087
-	github.com/instill-ai/connector-ai v0.0.0-20230705064403-41d20493a0dd
-	github.com/instill-ai/connector-blockchain v0.0.0-20230705054118-92cf632c1705
-	github.com/instill-ai/connector-destination v0.0.0-20230630174940-5ea7806af0b4
-	github.com/instill-ai/connector-source v0.0.0-20230630174913-311cbed67bb5
+	github.com/instill-ai/connector-ai v0.0.0-20230706171249-b099d2926979
+	github.com/instill-ai/connector-blockchain v0.0.0-20230706163021-a59d105ca147
+	github.com/instill-ai/connector-destination v0.0.0-20230706162951-81836e4a8f33
+	github.com/instill-ai/connector-source v0.0.0-20230706163058-6a0b2ded644e
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2
 	github.com/instill-ai/usage-client v0.2.4-alpha
 	github.com/instill-ai/x v0.3.0-alpha
@@ -42,7 +42,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/longrunning v0.4.1 // indirect
+	cloud.google.com/go/longrunning v0.5.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -89,7 +89,7 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect

@@ -18,7 +18,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_TEXT_GENERATION",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "gpt-2"
     }
@@ -30,7 +30,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_DETECTION",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "yolov7"
     }
@@ -42,7 +42,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_KEYPOINT",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "yolov7-pose"
     }
@@ -54,7 +54,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_CLASSIFICATION",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "mobilenetv2"
     }
@@ -66,7 +66,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_TEXT_TO_IMAGE",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "stable-diffusion-1-5-fp16-txt2img"
     }
@@ -78,7 +78,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_INSTANCE_SEGMENTATION",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "mask-rcnn"
     }
@@ -90,7 +90,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_INSTANCE_SEGMENTATION",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AIINSTILLMODEL>",
+      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
       "server_url": "https://api-model.instill.tech",
       "model_id": "stomata-mask-rcnn"
     }
