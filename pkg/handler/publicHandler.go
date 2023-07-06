@@ -238,9 +238,14 @@ func (h *PublicHandler) GetConnectorDefinition(ctx context.Context, req *connect
 }
 
 func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.CreateConnectorRequest) (resp *connectorPB.CreateConnectorResponse, err error) {
-	ctx, span := tracer.Start(ctx, "CreateConnector",
+
+	eventName := "CreateConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -448,12 +453,9 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"CreateConnector",
-		"request",
-		"CreateConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -479,9 +481,13 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 
 func (h *PublicHandler) ListConnectors(ctx context.Context, req *connectorPB.ListConnectorsRequest) (resp *connectorPB.ListConnectorsResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "ListConnectors",
+	eventName := "ListConnectors"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -549,12 +555,9 @@ func (h *PublicHandler) ListConnectors(ctx context.Context, req *connectorPB.Lis
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		false,
-		"ListConnectors",
-		"request",
-		"ListConnectors done",
-		false,
+		eventName,
 	)))
 
 	resp.Connectors = pbConnectors
@@ -570,9 +573,14 @@ func (h *PublicHandler) GetConnector(ctx context.Context, req *connectorPB.GetCo
 }
 
 func (h *PublicHandler) getConnector(ctx context.Context, req *connectorPB.GetConnectorRequest, credentialMask bool) (resp *connectorPB.GetConnectorResponse, err error) {
-	ctx, span := tracer.Start(ctx, "GetConnector",
+
+	eventName := "GetConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -627,12 +635,9 @@ func (h *PublicHandler) getConnector(ctx context.Context, req *connectorPB.GetCo
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		false,
-		"GetConnector",
-		"request",
-		"GetConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -641,9 +646,13 @@ func (h *PublicHandler) getConnector(ctx context.Context, req *connectorPB.GetCo
 
 func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.UpdateConnectorRequest) (resp *connectorPB.UpdateConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "UpdateConnector",
+	eventName := "UpdateConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -828,21 +837,23 @@ func (h *PublicHandler) UpdateConnector(ctx context.Context, req *connectorPB.Up
 	connector.MaskCredentialFields(h.connectors, dbConnDef.Id, resp.Connector.Configuration)
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"UpdateConnector",
-		"request",
-		"UpdateConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 	return resp, nil
 }
 
 func (h *PublicHandler) DeleteConnector(ctx context.Context, req *connectorPB.DeleteConnectorRequest) (resp *connectorPB.DeleteConnectorResponse, err error) {
-	ctx, span := tracer.Start(ctx, "DeleteConnector",
+
+	eventName := "DeleteConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -874,12 +885,9 @@ func (h *PublicHandler) DeleteConnector(ctx context.Context, req *connectorPB.De
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"DeleteConnector",
-		"request",
-		"DeleteConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -891,9 +899,13 @@ func (h *PublicHandler) DeleteConnector(ctx context.Context, req *connectorPB.De
 
 func (h *PublicHandler) LookUpConnector(ctx context.Context, req *connectorPB.LookUpConnectorRequest) (resp *connectorPB.LookUpConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "LookUpConnector",
+	eventName := "LookUpConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -956,12 +968,9 @@ func (h *PublicHandler) LookUpConnector(ctx context.Context, req *connectorPB.Lo
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		false,
-		"LookUpConnector",
-		"request",
-		"LookUpConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -982,9 +991,13 @@ func (h *PublicHandler) LookUpConnector(ctx context.Context, req *connectorPB.Lo
 
 func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.ConnectConnectorRequest) (resp *connectorPB.ConnectConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "ConnectConnector",
+	eventName := "ConnectConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -1057,12 +1070,9 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"ConnectConnector",
-		"request",
-		"ConnectConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -1080,9 +1090,13 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 
 func (h *PublicHandler) DisconnectConnector(ctx context.Context, req *connectorPB.DisconnectConnectorRequest) (resp *connectorPB.DisconnectConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "DisconnectConnector",
+	eventName := "DisconnectConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -1155,12 +1169,9 @@ func (h *PublicHandler) DisconnectConnector(ctx context.Context, req *connectorP
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"DisconnectConnector",
-		"request",
-		"DisconnectConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -1178,9 +1189,13 @@ func (h *PublicHandler) DisconnectConnector(ctx context.Context, req *connectorP
 
 func (h *PublicHandler) RenameConnector(ctx context.Context, req *connectorPB.RenameConnectorRequest) (resp *connectorPB.RenameConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "RenameConnector",
+	eventName := "RenameConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -1288,12 +1303,9 @@ func (h *PublicHandler) RenameConnector(ctx context.Context, req *connectorPB.Re
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"RenameConnector",
-		"request",
-		"RenameConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -1309,9 +1321,13 @@ func (h *PublicHandler) RenameConnector(ctx context.Context, req *connectorPB.Re
 
 func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.WatchConnectorRequest) (resp *connectorPB.WatchConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "WatchConnector",
+	eventName := "WatchConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -1328,12 +1344,9 @@ func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.Wat
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
+			logUUID.String(),
 			owner,
-			true,
-			"WatchConnector",
-			"request",
-			"WatchConnector error",
-			false,
+			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 		)))
 		return resp, err
@@ -1344,12 +1357,9 @@ func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.Wat
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
+			logUUID.String(),
 			owner,
-			true,
-			"WatchConnector",
-			"request",
-			"WatchConnector error",
-			false,
+			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 		)))
 		return resp, err
@@ -1361,12 +1371,9 @@ func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.Wat
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
+			logUUID.String(),
 			owner,
-			true,
-			"WatchConnector",
-			"request",
-			"WatchConnector error",
-			false,
+			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 			custom_otel.SetEventResource(dbConnector),
 		)))
@@ -1380,9 +1387,13 @@ func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.Wat
 
 func (h *PublicHandler) TestConnector(ctx context.Context, req *connectorPB.TestConnectorRequest) (resp *connectorPB.TestConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "TestConnector",
+	eventName := "TestConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -1415,12 +1426,9 @@ func (h *PublicHandler) TestConnector(ctx context.Context, req *connectorPB.Test
 
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
+		logUUID.String(),
 		owner,
-		true,
-		"TestConnector",
-		"request",
-		"TestConnector done",
-		false,
+		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
@@ -1431,9 +1439,15 @@ func (h *PublicHandler) TestConnector(ctx context.Context, req *connectorPB.Test
 
 func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.ExecuteConnectorRequest) (resp *connectorPB.ExecuteConnectorResponse, err error) {
 
-	ctx, span := tracer.Start(ctx, "ExecuteConnector",
+	eventName := "ExecuteConnector"
+
+	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
 	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
+
+	logger, _ := logger.GetZapLogger(ctx)
 
 	resp = &connectorPB.ExecuteConnectorResponse{}
 	connID, err := resource.GetRscNameID(req.GetName())
@@ -1449,6 +1463,13 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		return nil, err
 	} else {
 		resp.Outputs = outputs
+		logger.Info(string(custom_otel.NewLogMessage(
+			span,
+			logUUID.String(),
+			owner,
+			eventName,
+			custom_otel.SetEventResource(outputs),
+		)))
 	}
 	return resp, nil
 
