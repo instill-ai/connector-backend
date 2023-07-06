@@ -363,37 +363,6 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
-		switch *connState {
-		case connectorPB.Connector_STATE_ERROR:
-			st, err := sterr.CreateErrorPreconditionFailure(
-				"[service] update connector state",
-				[]*errdetails.PreconditionFailure_Violation{
-					{
-						Type:        "STATE",
-						Subject:     fmt.Sprintf("id %s", id),
-						Description: "The connector is in STATE_ERROR",
-					},
-				})
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return nil, st.Err()
-		case connectorPB.Connector_STATE_UNSPECIFIED:
-			st, err := sterr.CreateErrorPreconditionFailure(
-				"[service] update connector state",
-				[]*errdetails.PreconditionFailure_Violation{
-					{
-						Type:        "STATE",
-						Subject:     fmt.Sprintf("id %s", id),
-						Description: "The connector is in STATE_UNSPECIFIED",
-					},
-				})
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return nil, st.Err()
-		}
-
 		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
 			break
 		}
