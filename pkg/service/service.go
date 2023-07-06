@@ -346,7 +346,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connector cannot be disconnected
-	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
+	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
 	if err != nil {
 		return nil, err
 	}
