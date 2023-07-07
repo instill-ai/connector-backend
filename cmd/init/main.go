@@ -117,6 +117,7 @@ func main() {
 			panic(err)
 		}
 		for idx := range prebuiltConnectors {
+			// TODO: refactor this
 			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"]; ok {
 				val := val.(string)
 				if val[:4] == "<CFG" {
@@ -125,6 +126,28 @@ func main() {
 						panic(fmt.Sprintf("%s is missing", val))
 					}
 					prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"] = envVal
+				}
+
+			}
+			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["server_url"]; ok {
+				val := val.(string)
+				if val[:4] == "<CFG" {
+					envVal := os.Getenv(val[1 : len(val)-1])
+					if envVal == "" {
+						panic(fmt.Sprintf("%s is missing", val))
+					}
+					prebuiltConnectors[idx].Configuration.(map[string]interface{})["server_url"] = envVal
+				}
+
+			}
+			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_token"]; ok {
+				val := val.(string)
+				if val[:4] == "<CFG" {
+					envVal := os.Getenv(val[1 : len(val)-1])
+					if envVal == "" {
+						panic(fmt.Sprintf("%s is missing", val))
+					}
+					prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_token"] = envVal
 				}
 
 			}
@@ -143,6 +166,11 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+			connectorType := "CONNECTOR_TYPE_AI"
+			if prebuiltConnectors[idx].Id == "instill-number" {
+				connectorType = "CONNECTOR_TYPE_BLOCKCHAIN"
+
+			}
 			connector := &Connector{
 				BaseDynamic: BaseDynamic{
 					UID: uuid.FromStringOrNil(prebuiltConnectors[idx].Uid),
@@ -152,7 +180,7 @@ func main() {
 				ConnectorDefinitionUID: uuid.FromStringOrNil(prebuiltConnectors[idx].ConnectorDefinitionUid),
 				Tombstone:              false,
 				Configuration:          config,
-				ConnectorType:          "CONNECTOR_TYPE_AI",
+				ConnectorType:          connectorType,
 				Visibility:             "VISIBILITY_PUBLIC",
 				State:                  "STATE_CONNECTED",
 				Task:                   prebuiltConnectors[idx].Task,

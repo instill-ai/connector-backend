@@ -6,7 +6,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_TEXT_TO_IMAGE",
     "configuration": {
-      "api_key": "<CFG_APIKEY_AISTABILITYAI>",
+      "api_key": "<CFG_CONNECTORAI_STABILITYAI_APIKEY>",
       "task": "Text to Image",
       "engine": "stable-diffusion-xl-beta-v2-2-2"
     }
@@ -18,8 +18,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_TEXT_GENERATION",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "gpt-2"
     }
   },
@@ -30,8 +30,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_DETECTION",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "yolov7"
     }
   },
@@ -42,8 +42,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_KEYPOINT",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "yolov7-pose"
     }
   },
@@ -54,8 +54,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_CLASSIFICATION",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "mobilenetv2"
     }
   },
@@ -66,8 +66,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_TEXT_TO_IMAGE",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "stable-diffusion-1-5-fp16-txt2img"
     }
   },
@@ -78,8 +78,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_INSTANCE_SEGMENTATION",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "mask-rcnn"
     }
   },
@@ -90,8 +90,8 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_INSTANCE_SEGMENTATION",
     "configuration": {
-      "api_token": "<CFG_APIKEY_AIINSTILLMODEL>",
-      "server_url": "https://api-model.instill.tech",
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
       "model_id": "stomata-mask-rcnn"
     }
   },
@@ -102,7 +102,7 @@
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
     "task": "TASK_UNSPECIFIED",
     "configuration": {
-      "capture_token": "<CFG_APIKEY_BLOCKCHAINNUMBERS>",
+      "capture_token": "<CFG_CONNECTORBLOCKCHAIN_NUMBERS_CAPTURETOKEN>",
       "asset_type": "images",
       "metadata_texts": true,
       "metadata_structured_data": false,
