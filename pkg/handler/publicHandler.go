@@ -1062,7 +1062,26 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(ctx, connID, owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED))
+	dbConnector, err := h.service.GetConnectorByID(ctx, connID, owner, true)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
+	if *state != connectorPB.Connector_STATE_CONNECTED {
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] connect connector error",
+			[]*errdetails.BadRequest_FieldViolation{},
+		)
+		if err != nil {
+			span.SetStatus(1, err.Error())
+			return resp, err
+		}
+		span.SetStatus(1, "connect connector error")
+		return resp, st.Err()
+	}
+
+	dbConnector, err = h.service.UpdateConnectorState(ctx, connID, owner, datamodel.ConnectorState(*state))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1377,7 +1396,7 @@ func (h *PublicHandler) WatchConnector(ctx context.Context, req *connectorPB.Wat
 			custom_otel.SetErrorMessage(err.Error()),
 			custom_otel.SetEventResource(dbConnector),
 		)))
-		return resp, err
+		state = connectorPB.Connector_STATE_ERROR.Enum()
 	}
 
 	resp.State = *state

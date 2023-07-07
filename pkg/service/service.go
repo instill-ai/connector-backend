@@ -390,10 +390,10 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			return nil, err
 		}
 
-		taskName, err := con.GetTaskName()
-		if err != nil {
-			return nil, err
-		}
+		taskName, _ := con.GetTaskName()
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, taskName); err != nil {
 			return nil, err
@@ -534,10 +534,7 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 
 	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), fmt.Errorf(fmt.Sprintf("cannot get the connector, RepositoryError: %v", err))
-	}
-	if dbConnector.State != datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
-		return connectorPB.Connector_STATE_DISCONNECTED.Enum(), nil
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 	}
 
 	configuration := func() *structpb.Struct {
@@ -555,30 +552,30 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 	con, err := s.connectorAll.CreateConnection(dbConnector.ConnectorDefinitionUID, configuration, logger)
 
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 	}
 
 	state, err := con.Test()
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
+		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 	}
 
 	switch state {
 	case connectorPB.Connector_STATE_CONNECTED:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 		}
 		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
 	case connectorPB.Connector_STATE_ERROR:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 		}
 		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	default:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), err
+			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 		}
-		return connectorPB.Connector_STATE_ERROR.Enum(), fmt.Errorf("UNKNOWN STATUS")
+		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}
 
 }
