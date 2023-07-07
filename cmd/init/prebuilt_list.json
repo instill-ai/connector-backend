@@ -96,6 +96,18 @@
     }
   },
   {
+    "id": "instill-lraspp",
+    "uid": "86a903d7-a67b-4318-89a0-b701ed58daed",
+    "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_INSTANCE_SEGMENTATION",
+    "configuration": {
+      "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
+      "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
+      "model_id": "lraspp"
+    }
+  },
+  {
     "id": "instill-number",
     "uid": "5d0e9582-566e-4b01-972c-4429f4d60594",
     "connector_definition_uid": "70d8664a-d512-4517-a5e8-5d4da81756a7",
