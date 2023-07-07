@@ -164,11 +164,7 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 	}
 
 	// Check connector state and update resource state in etcd
-	if state, err := s.CheckConnectorByUID(ctx, connector.UID); err == nil {
-		if err := s.UpdateResourceState(connector.UID, *state, nil); err != nil {
-			return nil, err
-		}
-	} else {
+	if err := s.UpdateResourceState(connector.UID, connectorPB.Connector_STATE_DISCONNECTED, nil); err != nil {
 		return nil, err
 	}
 
@@ -277,11 +273,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 	}
 
 	// Check connector state
-	if state, err := s.CheckConnectorByUID(ctx, existingConnector.UID); err == nil {
-		if err := s.UpdateResourceState(updatedConnector.UID, *state, nil); err != nil {
-			return nil, err
-		}
-	} else {
+	if err := s.UpdateResourceState(updatedConnector.UID, connectorPB.Connector_STATE_DISCONNECTED, nil); err != nil {
 		return nil, err
 	}
 
@@ -556,6 +548,7 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 	}
 
 	state, err := con.Test()
+	logger.Warn(fmt.Sprintf("con.Test(): %s %v", state, err))
 	if err != nil {
 		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
 	}

@@ -1068,16 +1068,20 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 		return resp, err
 	}
 	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
-	if *state != connectorPB.Connector_STATE_CONNECTED {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] connect connector error",
+	if err != nil {
+		st, _ := sterr.CreateErrorBadRequest(
+			fmt.Sprintf("[handler] connect connector error %v", err),
 			[]*errdetails.BadRequest_FieldViolation{},
 		)
-		if err != nil {
-			span.SetStatus(1, err.Error())
-			return resp, err
-		}
-		span.SetStatus(1, "connect connector error")
+		span.SetStatus(1, fmt.Sprintf("connect connector error %v", err))
+		return resp, st.Err()
+	}
+	if *state != connectorPB.Connector_STATE_CONNECTED {
+		st, _ := sterr.CreateErrorBadRequest(
+			"[handler] connect connector error not Connector_STATE_CONNECTED",
+			[]*errdetails.BadRequest_FieldViolation{},
+		)
+		span.SetStatus(1, "connect connector error not Connector_STATE_CONNECTED")
 		return resp, st.Err()
 	}
 
