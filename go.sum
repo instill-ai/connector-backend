@@ -731,8 +731,8 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/instill-ai/connector v0.0.0-20230706052130-d76abb1db087 h1:y2/ZTEStrLoiDaaLp6s2EueUpBZt6RNaASb9sgLUf68=
 github.com/instill-ai/connector v0.0.0-20230706052130-d76abb1db087/go.mod h1:ctro5UDPVoLV7Toi6/cOar0JpYKtabvpXWmjtrXbce4=
-github.com/instill-ai/connector-ai v0.0.0-20230707152108-a4b3f0a95fbf h1:CMwcOIlQZfRt+kG7bPnpLjCNS5YJiQ3q/DcEcE75nX4=
-github.com/instill-ai/connector-ai v0.0.0-20230707152108-a4b3f0a95fbf/go.mod h1:uPeZoIJS0997/xRmhplnnqzcBOReoeezUM7Ohu2LqC8=
+github.com/instill-ai/connector-ai v0.0.0-20230708142027-7382edb31e81 h1:d3yFIi3lV681HFsAS1LBo84HjZ2gVFZ7AMIJJgqNnaQ=
+github.com/instill-ai/connector-ai v0.0.0-20230708142027-7382edb31e81/go.mod h1://inAe3P9UYlvMtMcS+kbbncjzmSzlKGQ8WHdDw7d4k=
 github.com/instill-ai/connector-blockchain v0.0.0-20230706175122-4b79d0991fa4 h1:suvaTC71nsFun/t5TWO8whyriP7mbuge1knQ74kLlkE=
 github.com/instill-ai/connector-blockchain v0.0.0-20230706175122-4b79d0991fa4/go.mod h1:TCgU1+hlEhfi5pzdZSqT6iycpbmeKu4ghVDfwmSq8Kk=
 github.com/instill-ai/connector-destination v0.0.0-20230706162951-81836e4a8f33 h1:on1AUlBTwZWmPojaFqPKAeT6TKbvEm8fm22Z6pihu64=
@@ -1935,8 +1935,8 @@ google.golang.org/grpc v1.42.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ5
 google.golang.org/grpc v1.43.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
 google.golang.org/grpc v1.45.0/go.mod h1:lN7owxKUQEqMfSyQikvvk5tf/6zMPsrK+ONuO11+0rQ=
 google.golang.org/grpc v1.46.2/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
-google.golang.org/grpc v1.56.0 h1:+y7Bs8rtMd07LeXmL3NxcTLn7mUkbKZqEpPhMNkwJEE=
-google.golang.org/grpc v1.56.0/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
+google.golang.org/grpc v1.56.2 h1:fVRFRnXvU+x6C4IlHZewvJOVHoOv1TUuQyoRsYnB4bI=
+google.golang.org/grpc v1.56.2/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=

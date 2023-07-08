@@ -10,7 +10,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/instill-ai/connector v0.0.0-20230706052130-d76abb1db087
-	github.com/instill-ai/connector-ai v0.0.0-20230707152108-a4b3f0a95fbf
+	github.com/instill-ai/connector-ai v0.0.0-20230708142027-7382edb31e81
 	github.com/instill-ai/connector-blockchain v0.0.0-20230706175122-4b79d0991fa4
 	github.com/instill-ai/connector-destination v0.0.0-20230706162951-81836e4a8f33
 	github.com/instill-ai/connector-source v0.0.0-20230706163058-6a0b2ded644e
@@ -34,7 +34,7 @@ require (
 	golang.org/x/net v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc
-	google.golang.org/grpc v1.56.0
+	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	gorm.io/datatypes v1.0.7
 	gorm.io/driver/postgres v1.4.4
