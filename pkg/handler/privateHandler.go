@@ -160,7 +160,7 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 		return resp, err
 	}
 
-	resp.Connector = DBToPBConnector(
+	pbConnector := DBToPBConnector(
 		ctx,
 		dbConnector,
 		dbConnector.Owner,
@@ -168,8 +168,10 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 	)
 
 	if !isBasicView {
-		resp.Connector.ConnectorDefinition = dbConnDef
+		connector.MaskCredentialFields(h.connectors, dbConnDef.Id, pbConnector.Configuration)
+		pbConnector.ConnectorDefinition = dbConnDef
 	}
+	resp.Connector = pbConnector
 
 	return resp, nil
 }
