@@ -10,6 +10,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/connector"
+	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
@@ -193,13 +194,32 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 		return resp, err
 	}
 
-	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
+	if dbConnector.State == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
+		state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
 
-	if err != nil {
-		return resp, err
+		if err != nil {
+			return resp, err
+		}
+
+		_, err = h.service.UpdateConnectorState(ctx, dbConnector.ID, dbConnector.Owner, datamodel.ConnectorState(*state))
+		if err != nil {
+			return resp, err
+		}
+
+		resp.State = *state
+
+		return resp, nil
+
+	} else {
+
+		_, err = h.service.UpdateConnectorState(ctx, dbConnector.ID, dbConnector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+		if err != nil {
+			return resp, err
+		}
+
+		resp.State = connectorPB.Connector_STATE_DISCONNECTED
+		return resp, nil
+
 	}
 
-	resp.State = *state
-
-	return resp, nil
 }

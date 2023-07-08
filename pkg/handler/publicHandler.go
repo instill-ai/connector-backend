@@ -1067,7 +1067,9 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+
 	state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
+
 	if err != nil {
 		st, _ := sterr.CreateErrorBadRequest(
 			fmt.Sprintf("[handler] connect connector error %v", err),
@@ -1085,7 +1087,7 @@ func (h *PublicHandler) ConnectConnector(ctx context.Context, req *connectorPB.C
 		return resp, st.Err()
 	}
 
-	dbConnector, err = h.service.UpdateConnectorState(ctx, connID, owner, datamodel.ConnectorState(*state))
+	dbConnector, err = h.service.UpdateConnectorState(ctx, connID, service.GenOwnerPermalink(owner), datamodel.ConnectorState(*state))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1184,7 +1186,7 @@ func (h *PublicHandler) DisconnectConnector(ctx context.Context, req *connectorP
 		return resp, err
 	}
 
-	dbConnector, err := h.service.UpdateConnectorState(ctx, connID, owner, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateConnectorState(ctx, connID, service.GenOwnerPermalink(owner), datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err

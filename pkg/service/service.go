@@ -35,7 +35,7 @@ type Service interface {
 	GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner *mgmtPB.User, isBasicView bool) (*datamodel.Connector, error)
 	UpdateConnector(ctx context.Context, id string, owner *mgmtPB.User, updatedConnector *datamodel.Connector) (*datamodel.Connector, error)
 	UpdateConnectorID(ctx context.Context, id string, owner *mgmtPB.User, newID string) (*datamodel.Connector, error)
-	UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, state datamodel.ConnectorState) (*datamodel.Connector, error)
+	UpdateConnectorState(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorState) (*datamodel.Connector, error)
 	DeleteConnector(ctx context.Context, id string, owner *mgmtPB.User) error
 
 	ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
@@ -156,16 +156,17 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
+		if err := s.UpdateResourceState(connector.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+			return nil, err
+		}
 	} else {
 		// User desire state = DISCONNECTED
 		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED)); err != nil {
 			return nil, err
 		}
-	}
-
-	// Check connector state and update resource state in etcd
-	if err := s.UpdateResourceState(connector.UID, connectorPB.Connector_STATE_DISCONNECTED, nil); err != nil {
-		return nil, err
+		if err := s.UpdateResourceState(connector.UID, connectorPB.Connector_STATE_DISCONNECTED, nil); err != nil {
+			return nil, err
+		}
 	}
 
 	dbConnector, err := s.repository.GetConnectorByID(ctx, connector.ID, ownerPermalink, false)
@@ -331,11 +332,9 @@ func (s *service) DeleteConnector(ctx context.Context, id string, owner *mgmtPB.
 	return s.repository.DeleteConnector(ctx, id, ownerPermalink)
 }
 
-func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mgmtPB.User, state datamodel.ConnectorState) (*datamodel.Connector, error) {
+func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorState) (*datamodel.Connector, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
-
-	ownerPermalink := GenOwnerPermalink(owner)
 
 	// Validation: HTTP and gRPC connector cannot be disconnected
 	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
@@ -348,20 +347,10 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		return nil, err
 	}
 
-	connState, err := s.GetResourceState(conn.UID)
-	if err != nil {
-		return nil, err
-	}
-
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
 		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
 			break
-		}
-
-		// Set connector state to user desire state
-		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
-			return nil, err
 		}
 
 		configuration := func() *structpb.Struct {
@@ -383,23 +372,20 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 		}
 
 		taskName, _ := con.GetTaskName()
-		// if err != nil {
-		// 	return nil, err
-		// }
+		if err != nil {
+			return nil, err
+		}
+
+		// Set connector state to user desire state
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
+			return nil, err
+		}
 
 		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, taskName); err != nil {
 			return nil, err
 		}
-
-		// Check resource state
-		if datamodel.ConnectorState(*connState) != state {
-			if state, err := s.CheckConnectorByUID(ctx, conn.UID); err == nil {
-				if err := s.UpdateResourceState(conn.UID, *state, nil); err != nil {
-					return nil, err
-				}
-			} else {
-				return nil, err
-			}
+		if err := s.UpdateResourceState(conn.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
+			return nil, err
 		}
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
@@ -420,7 +406,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, owner *mg
 			return nil, st.Err()
 		}
 
-		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, state); err != nil {
+		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED)); err != nil {
 			return nil, err
 		}
 		if err := s.UpdateResourceState(conn.UID, connectorPB.Connector_State(state), nil); err != nil {
