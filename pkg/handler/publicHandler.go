@@ -1493,7 +1493,6 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 			logUUID.String(),
 			owner,
 			eventName,
-			custom_otel.SetEventResource(outputs),
 		)))
 	}
 	return resp, nil
