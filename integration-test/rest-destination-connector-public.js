@@ -11,23 +11,23 @@ export function CheckCreate() {
 
     group("Connector API: Create destination connectors", () => {
 
-        // destination-http
+        // response
         var httpDstConnector = {
-            "id": "destination-http",
-            "connector_definition_name": constant.httpDstDefRscName,
+            "id": "response",
+            "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
-        var resDstHTTP = http.request(
+        var resDst = http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpDstConnector), constant.params)
-        check(resDstHTTP, {
+        check(resDst, {
             "POST /v1alpha/connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
             "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${httpDstConnector.id}`,
             "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
-            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.httpDstDefRscName,
+            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.dstDefRscName,
             "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
         });
 
@@ -38,28 +38,6 @@ export function CheckCreate() {
             "POST /v1alpha/connectors response duplicate HTTP destination connector status 409": (r) => r.status === 409
         });
 
-        // destination-grpc
-        var gRPCDstConnector = {
-            "id": "destination-grpc",
-            "connector_definition_name": constant.gRPCDstDefRscName,
-            "configuration": {}
-        }
-
-        var resDstGRPC = http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(gRPCDstConnector), constant.params)
-
-        check(resDstGRPC, {
-            "POST /v1alpha/connectors response status for creating gRPC destination connector 201": (r) => r.status === 201,
-        });
-
-        check(http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            {}, constant.params), {
-            "POST /v1alpha/connectors response status for creating empty body 400": (r) => r.status === 400,
-        });
 
         // destination-csv
         var csvDstConnector = {
@@ -145,11 +123,8 @@ export function CheckCreate() {
         // });
 
         // Delete test records
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstHTTP.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDstHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
-        });
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstGRPC.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDstGRPC.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDst.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resDst.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
@@ -218,20 +193,20 @@ export function CheckList() {
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0].configuration is null": (r) => r.json().connectors[0].configuration === null,
-            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_BASIC response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0].configuration is not null": (r) => r.json().connectors[0].configuration !== null,
             "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0].connector_definition_detail is not null": (r) => r.json().connectors[0].connector_definition_detail !== null,
-            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
+            "GET /v1alpha/connectors?page_size=1&view=VIEW_FULL response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1`), {
             "GET /v1alpha/connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/connectors?page_size=1 response connectors[0].configuration is null": (r) => r.json().connectors[0].configuration === null,
-            "GET /v1alpha/connectors?page_size=1 response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
+            "GET /v1alpha/connectors?page_size=1 response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user),
         });
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=${limitedRecords.json().total_size}`), {

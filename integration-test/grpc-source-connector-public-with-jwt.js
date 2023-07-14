@@ -22,32 +22,18 @@ export function CheckCreate() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
-        var gRPCSrcConnector = {
-            "id": "source-grpc",
-            "connector_definition_name": constant.gRPCSrcDefRscName,
-            "description": "gRPC source",
-            "configuration": {},
-        }
-
         // Cannot create source connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         }, constant.paramsGRPCWithJwt), {
             [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnector create HTTP source response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
-        })
-
-        // Cannot create source connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: gRPCSrcConnector
-        }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnector create gRPC source response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         client.close();
@@ -79,14 +65,14 @@ export function CheckGet() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         })
 
         // Cannot get source connector of a non-exist user
@@ -114,31 +100,31 @@ export function CheckUpdate() {
             plaintext: true
         });
 
-        var gRPCSrcConnector = {
-            "id": "source-grpc",
-            "connector_definition_name": constant.gRPCSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: gRPCSrcConnector
+            connector: srcConnector
         }), {
             "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response CreateConnector StatusOK": (r) => r.status === grpc.StatusOK,
         });
 
-        gRPCSrcConnector.description = randomString(20)
+        srcConnector.description = randomString(20)
 
         // Cannot update source connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector', {
-            connector: gRPCSrcConnector
+            connector: srcConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${gRPCSrcConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateConnector ${srcConnector.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-            name: `connectors/${gRPCSrcConnector.id}`
+            name: `connectors/${srcConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${gRPCSrcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${srcConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -156,16 +142,16 @@ export function CheckDelete() {
 
         // Cannot delete source connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector', {
-            name: `connectors/source-http`
+            name: `connectors/trigger`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector trigger response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // Cannot delete destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector', {
-            name: `connectors/destination-http`
+            name: `connectors/response`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector destination-http response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector response response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         client.close();
@@ -180,14 +166,14 @@ export function CheckLookUp() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         })
 
         // Cannot look up source connector of a non-exist user
@@ -198,9 +184,9 @@ export function CheckLookUp() {
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-            name: `connectors/source-http`
+            name: `connectors/trigger`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector trigger response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -215,14 +201,14 @@ export function CheckState() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         })
 
         // Cannot connect source connector of a non-exist user
@@ -240,9 +226,9 @@ export function CheckState() {
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-            name: `connectors/source-http`
+            name: `connectors/trigger`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector trigger response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -257,14 +243,14 @@ export function CheckRename() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         })
 
         // Cannot rename source connector of a non-exist user
@@ -276,9 +262,9 @@ export function CheckRename() {
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-            name: `connectors/source-http`
+            name: `connectors/trigger`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector source-http response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector trigger response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -292,14 +278,14 @@ export function CheckTest() {
             plaintext: true
         });
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
         }
 
         var resHTTP = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpSrcConnector
+            connector: srcConnector
         })
 
         // Cannot test connector of a non-exist user

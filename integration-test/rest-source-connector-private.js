@@ -25,15 +25,8 @@ export function CheckList() {
 
         var reqBodies = [];
         reqBodies[0] = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
-            "configuration": {}
-
-        }
-
-        reqBodies[1] = {
-            "id": "source-grpc",
-            "connector_definition_name": constant.gRPCSrcDefRscName,
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
 
         }
@@ -109,20 +102,20 @@ export function CheckLookUp() {
 
     group("Connector API: Look up source connectors by UID by admin", () => {
 
-        var httpSrcConnector = {
-            "id": "source-http",
-            "connector_definition_name": constant.httpSrcDefRscName,
+        var srcConnector = {
+            "id": "trigger",
+            "connector_definition_name": constant.srcDefRscName,
             "configuration": {}
 
         }
 
         var resHTTP = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(httpSrcConnector), constant.params)
+            JSON.stringify(srcConnector), constant.params)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors/${resHTTP.json().connector.uid}/lookUp`), {
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector uid`]: (r) => r.json().connector.uid === resHTTP.json().connector.uid,
-            [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector.connector_definition_name === constant.httpSrcDefRscName,
+            [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector.connector_definition_name === constant.srcDefRscName,
             [`GET /v1alpha/admin/connectors/${resHTTP.json().uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector.user),
         });
 
