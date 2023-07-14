@@ -60,7 +60,7 @@
     }
   },
   {
-    "id": "instill-stable-diffusion-1-5-fp16-txt2img",
+    "id": "instill-stable-diffusion-xl-1024-v0-9",
     "uid": "40bf6822-8a8c-4f9f-a0b9-c233b5404973",
     "connector_definition_uid": "ddcf42c3-4c30-4c65-9585-25f1c89b2b48",
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
@@ -68,7 +68,7 @@
     "configuration": {
       "api_token": "<CFG_CONNECTORAI_INSTILLMODEL_APITOKEN>",
       "server_url": "<CFG_CONNECTORAI_INSTILLMODEL_SERVERURL>",
-      "model_id": "stable-diffusion-1-5-fp16-txt2img"
+      "model_id": "stable-diffusion-xl-1024-v0-9"
     }
   },
   {
