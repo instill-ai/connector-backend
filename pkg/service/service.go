@@ -456,14 +456,6 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 		return nil, st.Err()
 	}
 
-	// if err := s.DeleteResourceState(id); err != nil {
-	// 	return nil, err
-	// }
-
-	// if err := s.UpdateResourceState(newID, connectorPB.Connector_State(existingConnector.State), nil, nil); err != nil {
-	// 	return nil, err
-	// }
-
 	if err := s.repository.UpdateConnectorID(ctx, id, ownerPermalink, newID); err != nil {
 		return nil, err
 	}

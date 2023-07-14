@@ -198,30 +198,16 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 
 	if dbConnector.State == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
 		state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
-
-		if err != nil {
-			return resp, err
-		}
-
-		_, err = h.service.UpdateConnectorState(ctx, dbConnector.ID, dbConnector.Owner, datamodel.ConnectorState(*state))
 		if err != nil {
 			return resp, err
 		}
 
 		resp.State = *state
-
 		return resp, nil
 
 	} else {
-
-		_, err = h.service.UpdateConnectorState(ctx, dbConnector.ID, dbConnector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED))
-		if err != nil {
-			return resp, err
-		}
-
 		resp.State = connectorPB.Connector_STATE_DISCONNECTED
 		return resp, nil
-
 	}
 
 }
