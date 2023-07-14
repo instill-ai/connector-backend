@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/instill-ai/connector-backend/pkg/connector"
+	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -97,8 +98,8 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 		return nil, err
 	}
 
-	// Validation: HTTP and gRPC connector
-	if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+	// Validation: trigger and responsee connector
+	if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
 		if connector.ID != connDef.GetId() {
 			st, err := sterr.CreateErrorBadRequest(
 				"[service] create connector",
@@ -151,7 +152,7 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 		return nil, err
 	}
 
-	if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+	if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
 		// User desire state = CONNECTED
 		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
@@ -242,7 +243,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 
 	updatedConnector.Owner = ownerPermalink
 
-	// Validation: HTTP and gRPC connector cannot be updated
+	// Validation: trigger and response connector cannot be updated
 	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
 	if err != nil {
 		return nil, err
@@ -253,7 +254,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 		return nil, err
 	}
 
-	if strings.Contains(def.GetId(), "http") || strings.Contains(def.GetId(), "grpc") {
+	if def.GetId() == constant.TriggerConnectorId || def.GetId() == constant.ResponseConnectorId {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -336,7 +337,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	// Validation: HTTP and gRPC connector cannot be disconnected
+	// Validation: trigger and response connector cannot be disconnected
 	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
 	if err != nil {
 		return nil, err
@@ -349,7 +350,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
-		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+		if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
 			break
 		}
 
@@ -390,7 +391,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
 
-		if strings.Contains(connDef.GetId(), "http") || strings.Contains(connDef.GetId(), "grpc") {
+		if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
 			st, err := sterr.CreateErrorPreconditionFailure(
 				"[service] update connector state",
 				[]*errdetails.PreconditionFailure_Violation{
@@ -428,7 +429,7 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 
 	ownerPermalink := GenOwnerPermalink(owner)
 
-	// Validation: HTTP and gRPC connectors cannot be renamed
+	// Validation: trigger and response connectors cannot be renamed
 	existingConnector, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, true)
 	if err != nil {
 		return nil, err
@@ -439,7 +440,7 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 		return nil, err
 	}
 
-	if strings.Contains(def.GetId(), "http") || strings.Contains(def.GetId(), "grpc") {
+	if def.GetId() == constant.TriggerConnectorId || def.GetId() == constant.ResponseConnectorId {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector id",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -512,7 +513,7 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 
 	dbConnector, err := s.repository.GetConnectorByUIDAdmin(ctx, connUID, false)
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}
 
 	configuration := func() *structpb.Struct {
@@ -530,29 +531,29 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 	con, err := s.connectorAll.CreateConnection(dbConnector.ConnectorDefinitionUID, configuration, logger)
 
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}
 
 	state, err := con.Test()
 	logger.Warn(fmt.Sprintf("con.Test(): %s %v", state, err))
 	if err != nil {
-		return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}
 
 	switch state {
 	case connectorPB.Connector_STATE_CONNECTED:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+			return connectorPB.Connector_STATE_ERROR.Enum(), nil
 		}
 		return connectorPB.Connector_STATE_CONNECTED.Enum(), nil
 	case connectorPB.Connector_STATE_ERROR:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+			return connectorPB.Connector_STATE_ERROR.Enum(), nil
 		}
 		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	default:
 		if err := s.UpdateResourceState(dbConnector.UID, connectorPB.Connector_STATE_ERROR, nil); err != nil {
-			return connectorPB.Connector_STATE_UNSPECIFIED.Enum(), nil
+			return connectorPB.Connector_STATE_ERROR.Enum(), nil
 		}
 		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}

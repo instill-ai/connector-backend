@@ -4,3 +4,5 @@ package constant
 const DefaultOwnerID string = "instill-ai"
 const HeaderOwnerUIDKey = "jwt-sub"
 const HeaderOwnerIDKey = "owner-id"
+const TriggerConnectorId = "trigger"
+const ResponseConnectorId = "response"

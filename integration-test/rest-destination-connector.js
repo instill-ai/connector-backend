@@ -11,26 +11,26 @@ export function CheckCreate() {
 
     group("Connector API: Create destination connectors", () => {
 
-        // destination-http
+        // response
         var httpDstConnector = {
-            "id": "destination-http",
-            "connector_definition_name": constant.httpDstDefRscName,
+            "id": "response",
+            "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
 
-        var resDstHTTP = http.request(
+        var resDst = http.request(
             "POST",
             `${connectorPublicHost}/v1alpha/connectors`,
             JSON.stringify(httpDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
 
-        check(resDstHTTP, {
+        check(resDst, {
             "POST /v1alpha/connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
             "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${httpDstConnector.id}`,
             "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
-            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.httpDstDefRscName
+            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.dstDefRscName
         });
 
         check(http.request(
@@ -40,33 +40,6 @@ export function CheckCreate() {
             headers: { "Content-Type": "application/json" },
         }), {
             "POST /v1alpha/connectors response duplicate HTTP destination connector status 409": (r) => r.status === 409
-        });
-
-        // destination-grpc
-        var gRPCDstConnector = {
-            "id": "destination-grpc",
-            "connector_definition_name": constant.gRPCDstDefRscName,
-            "configuration": {}
-        }
-
-        var resDstGRPC = http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(gRPCDstConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
-
-        check(resDstGRPC, {
-            "POST /v1alpha/connectors response status for creating gRPC destination connector 201": (r) => r.status === 201,
-        });
-
-        check(http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            {}, {
-            headers: { "Content-Type": "application/json" },
-        }), {
-            "POST /v1alpha/connectors response status for creating empty body 400": (r) => r.status === 400,
         });
 
         // destination-csv
@@ -164,11 +137,8 @@ export function CheckCreate() {
         // });
 
         // Delete test records
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstHTTP.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDstHTTP.json().connector.id} response status 204`]: (r) => r.status === 204,
-        });
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstGRPC.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDstGRPC.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDst.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resDst.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
@@ -518,7 +488,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`, {})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -555,7 +525,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`, {})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -592,7 +562,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`, {})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
@@ -629,7 +599,7 @@ export function CheckExecute() {
             JSON.stringify(csvDstConnector), {
             headers: { "Content-Type": "application/json" },
         })
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,{})
+        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`, {})
 
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",

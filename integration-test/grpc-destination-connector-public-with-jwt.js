@@ -22,10 +22,10 @@ export function CheckCreate() {
             plaintext: true
         });
 
-        // destination-http
+        // response
         var httpDstConnector = {
-            "id": "destination-http",
-            "connector_definition_name": constant.httpDstDefRscName,
+            "id": "response",
+            "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
         }
@@ -35,20 +35,6 @@ export function CheckCreate() {
             connector: httpDstConnector
         }, constant.paramsGRPCWithJwt), {
             [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
-        })
-
-        // destination-grpc
-        var gRPCDstConnector = {
-            "id": "destination-grpc",
-            "connector_definition_name": constant.gRPCDstDefRscName,
-            "configuration": {}
-        }
-
-        // Cannot create grpc destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: gRPCDstConnector
-        }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnector gRPC response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })
 
         // destination-csv

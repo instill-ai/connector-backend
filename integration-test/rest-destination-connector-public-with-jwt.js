@@ -11,21 +11,15 @@ export function CheckCreate() {
 
     group(`Connector API: Create destination connectors [with random "jwt-sub" header]`, () => {
 
-        // destination-http
+        // response
         var httpDstConnector = {
-            "id": "destination-http",
-            "connector_definition_name": constant.httpDstDefRscName,
+            "id": "response",
+            "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
 
         }
 
-        // destination-grpc
-        var gRPCDstConnector = {
-            "id": "destination-grpc",
-            "connector_definition_name": constant.gRPCDstDefRscName,
-            "configuration": {}
-        }
 
         // Cannot create http destination connector of a non-exist user
         check(http.request("POST",
@@ -34,12 +28,6 @@ export function CheckCreate() {
             [`[with random "jwt-sub" header] POST /v1alpha/connectors response for creating HTTP destination status is 404`]: (r) => r.status === 404,
         });
 
-        // Cannot create grpc destination connector of a non-exist user
-        check(http.request("POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(gRPCDstConnector), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors response for creating gRPC destination status is 404`]: (r) => r.status === 404,
-        });
     });
 
 }

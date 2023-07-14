@@ -735,10 +735,10 @@ github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230712070708-0f5e6ecec4d2 h1
 github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230712070708-0f5e6ecec4d2/go.mod h1:CKViA4vgLduDbeRBWt6RaXrrH3H8uhXPBYgKnNGAcYQ=
 github.com/instill-ai/connector-blockchain v0.0.0-20230710140714-d61672cca5a5 h1:f4vQyYd8a3/A/5E/tCF55cMpV8NoV5xZWBE7NMAqTjE=
 github.com/instill-ai/connector-blockchain v0.0.0-20230710140714-d61672cca5a5/go.mod h1:Ihg6rtYaTgYphlWU5hkVn3ryyfBgw7qONWhrFT16wi0=
-github.com/instill-ai/connector-destination v0.1.0-alpha h1:lznt6tDHLubev1Ten0l83osLOIvHAol9L4HPpGpjErE=
-github.com/instill-ai/connector-destination v0.1.0-alpha/go.mod h1:PAexFoCuvtj2Zap24QC4vWizcaWxMnvxld41Nnifyqo=
-github.com/instill-ai/connector-source v0.1.0-alpha h1:oru9u2pBtFhXcT37Bxsy71zRBzzpidEVNzvM/0sqPVQ=
-github.com/instill-ai/connector-source v0.1.0-alpha/go.mod h1:eShvlmXRnityn/rKGlVN9HHIt9mtNnRLPW3PRpfhbvE=
+github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230714084546-f3cda01baeab h1:w3Tkrxfn+uDuq7SGds0G+5T3Edxky1hrx7LZumFQ6vs=
+github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230714084546-f3cda01baeab/go.mod h1:PAexFoCuvtj2Zap24QC4vWizcaWxMnvxld41Nnifyqo=
+github.com/instill-ai/connector-source v0.1.0-alpha.0.20230714083732-63cf490ad2ba h1:Z6F5rGoaERvBw66DB/6Pdp9TA5CwVPzgXUYnqMMV8qg=
+github.com/instill-ai/connector-source v0.1.0-alpha.0.20230714083732-63cf490ad2ba/go.mod h1:eShvlmXRnityn/rKGlVN9HHIt9mtNnRLPW3PRpfhbvE=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2 h1:e8AG+hOq2FkIz2IRq+lEJBWKY3BhzgpmjOTHVVMBEcY=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2/go.mod h1:qsq5ecnA1xi2rLnVQFo/9xksA7I7wQu8c7rqM5xbIrQ=
 github.com/instill-ai/usage-client v0.2.4-alpha h1:mYXd62eZsmGKBlzwMcdEgTBgn8zlbagYUHro6+p50c8=

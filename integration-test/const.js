@@ -50,17 +50,11 @@ export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
 export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
-export const httpSrcDefRscName = "connector-definitions/source-http"
-export const httpSrcDefRscPermalink = "connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
+export const srcDefRscName = "connector-definitions/trigger"
+export const srcDefRscPermalink = "connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
 
-export const gRPCSrcDefRscName = "connector-definitions/source-grpc"
-export const gRPCSrcDefRscPermalink = "connector-definitions/82ca7d29-a35c-4222-b900-8d6878195e7a"
-
-export const httpDstDefRscName = "connector-definitions/destination-http"
-export const httpDstDefRscPermalink = "connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
-
-export const gRPCDstDefRscName = "connector-definitions/destination-grpc"
-export const gRPCDstDefRscPermalink = "connector-definitions/c0e4a82c-9620-4a72-abd1-18586f2acccd"
+export const dstDefRscName = "connector-definitions/response"
+export const dstDefRscPermalink = "connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
 
 export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
 export const mySQLDstDefRscPermalink = "connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
