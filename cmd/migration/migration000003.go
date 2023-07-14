@@ -93,7 +93,8 @@ func Migrate000003() error {
 	})
 
 	if err != nil {
-		panic("Could not open database connection")
+		fmt.Println("no model db, skip")
+		return nil
 	}
 
 	modelSqlDB, _ := modelDb.DB()
