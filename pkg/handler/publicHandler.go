@@ -1521,12 +1521,12 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 	dataPoint := utils.NewDataPoint(
 		*owner.Uid,
 		logUUID.String(),
-		conn,
+		connector,
 		pipelineMetedata,
 		startTime,
 	)
 
-	if outputs, err := h.service.Execute(ctx, conn, owner, req.GetInputs()); err != nil {
+	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
 		h.service.WriteNewDataPoint(dataPoint.AddTag("status", mgmtPB.Status_STATUS_ERRORED.String()))
