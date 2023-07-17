@@ -18,6 +18,8 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/pkg/connector"
+	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 
@@ -80,11 +82,12 @@ func main() {
 	repository := repository.NewRepository(db)
 
 	airbyte := connectorDestinationAirbyte.Init(logger, connectorDestinationAirbyte.ConnectorOptions{
-		MountSourceVDP:     config.Config.Container.MountSource.VDP,
-		MountTargetVDP:     config.Config.Container.MountTarget.VDP,
-		MountSourceAirbyte: config.Config.Container.MountSource.Airbyte,
-		MountTargetAirbyte: config.Config.Container.MountTarget.Airbyte,
-		VDPProtocolPath:    "/etc/vdp/vdp_protocol.yaml",
+		MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
+		MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
+		MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
+		MountTargetAirbyte:    config.Config.Connector.Airbyte.MountTarget.Airbyte,
+		ExcludeLocalConnector: config.Config.Connector.Airbyte.ExcludeLocalConnector,
+		VDPProtocolPath:       "/etc/vdp/vdp_protocol.yaml",
 	})
 
 	// TODO: use pagination
@@ -195,4 +198,14 @@ func main() {
 		}
 
 	}
+
+	// Set tombstone based on definition
+	connectors := connector.InitConnectorAll(logger)
+	definitions := connectors.ListConnectorDefinitions()
+	for idx := range definitions {
+		if definitions[idx].Tombstone {
+			db.Unscoped().Model(&datamodel.Connector{}).Where("connector_definition_uid = ?", definitions[idx].Uid).Update("tombstone", true)
+		}
+	}
+
 }

@@ -9,12 +9,12 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
-	github.com/instill-ai/connector v0.1.0-alpha
-	github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230712070708-0f5e6ecec4d2
-	github.com/instill-ai/connector-blockchain v0.0.0-20230710140714-d61672cca5a5
-	github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230714084546-f3cda01baeab
-	github.com/instill-ai/connector-source v0.1.0-alpha.0.20230714083732-63cf490ad2ba
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230628145744-8bd74278dff2
+	github.com/instill-ai/connector v0.1.0-alpha.0.20230717104353-9833ed07cd2e
+	github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230717121222-5ce8b04cb355
+	github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230717105600-fc482078cd6d
+	github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230717115254-874e653abee6
+	github.com/instill-ai/connector-source v0.1.0-alpha.0.20230717115215-dc34763dabe3
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230717101605-87e3b68be4cf
 	github.com/instill-ai/usage-client v0.2.4-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
@@ -80,7 +80,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.16.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.39.0 // indirect

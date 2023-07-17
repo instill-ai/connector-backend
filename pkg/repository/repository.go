@@ -42,7 +42,7 @@ type Repository interface {
 	UpdateConnectorID(ctx context.Context, id string, ownerPermalink string, newID string) error
 	UpdateConnectorStateByID(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorState) error
 	UpdateConnectorStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
-	UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task string) error
+	UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error
 
 	ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
 	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
@@ -602,13 +602,10 @@ func (r *repository) UpdateConnectorStateByID(ctx context.Context, id string, ow
 	return nil
 }
 
-func (r *repository) UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task string) error {
+func (r *repository) UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error {
 	// TODO: refactor this
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if task == "" {
-		task = "TASK_UNSPECIFIED"
-	}
 	if result := r.db.Model(&datamodel.Connector{}).
 		Where("id = ? AND owner = ?", id, ownerPermalink).
 		Update("task", task); result.Error != nil {
