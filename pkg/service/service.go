@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -43,7 +45,7 @@ type Service interface {
 	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
 	// Execute connector
-	Execute(ctx context.Context, id string, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error)
+	Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error)
@@ -52,6 +54,9 @@ type Service interface {
 	GetResourceState(uid uuid.UUID) (*connectorPB.Connector_State, error)
 	UpdateResourceState(uid uuid.UUID, state connectorPB.Connector_State, progress *int32) error
 	DeleteResourceState(uid uuid.UUID) error
+
+	// Influx API
+	WriteNewDataPoint(p *write.Point)
 }
 
 type service struct {
@@ -60,6 +65,7 @@ type service struct {
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
 	controllerClient            controllerPB.ControllerPrivateServiceClient
 	connectorAll                connectorBase.IConnector
+	influxDBWriteClient         api.WriteAPI
 }
 
 // NewService initiates a service instance
@@ -69,6 +75,7 @@ func NewService(
 	u mgmtPB.MgmtPrivateServiceClient,
 	p pipelinePB.PipelinePublicServiceClient,
 	c controllerPB.ControllerPrivateServiceClient,
+	i api.WriteAPI,
 ) Service {
 	logger, _ := logger.GetZapLogger(t)
 	return &service{
@@ -77,6 +84,7 @@ func NewService(
 		pipelinePublicServiceClient: p,
 		controllerClient:            c,
 		connectorAll:                connector.InitConnectorAll(logger),
+		influxDBWriteClient:         i,
 	}
 }
 
@@ -481,16 +489,9 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 	return dbConnector, nil
 }
 
-func (s *service) Execute(ctx context.Context, id string, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error) {
+func (s *service) Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
-
-	ownerPermalink := GenOwnerPermalink(owner)
-
-	conn, err := s.repository.GetConnectorByID(ctx, id, ownerPermalink, false)
-	if err != nil {
-		return nil, err
-	}
 
 	configuration := func() *structpb.Struct {
 		if conn.Configuration != nil {

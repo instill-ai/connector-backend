@@ -25,6 +25,7 @@ type AppConfig struct {
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
 	Controller      ControllerConfig      `koanf:"controller"`
 	Log             LogConfig             `koanf:"log"`
+	InfluxDB        InfluxDBConfig        `koanf:"influxdb"`
 }
 
 // ServerConfig defines HTTP server configurations
@@ -115,6 +116,19 @@ type LogConfig struct {
 	OtelCollector struct {
 		Host string `koanf:"host"`
 		Port string `koanf:"port"`
+	}
+}
+
+// InfluxDBConfig related to influxDB database
+type InfluxDBConfig struct {
+	URL           string `koanf:"url"`
+	Token         string `koanf:"token"`
+	Org           string `koanf:"org"`
+	Bucket        string `koanf:"bucket"`
+	FlushInterval int    `koanf:"flushinterval"`
+	HTTPS         struct {
+		Cert string `koanf:"cert"`
+		Key  string `koanf:"key"`
 	}
 }
 

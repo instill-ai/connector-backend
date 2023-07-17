@@ -147,6 +147,16 @@ func main() {
 		defer controllerClientConn.Close()
 	}
 
+	influxDBClient, influxDBWriteClient := external.InitInfluxDBServiceClient(ctx)
+	defer influxDBClient.Close()
+
+	influxErrCh := influxDBWriteClient.Errors()
+	go func() {
+		for err := range influxErrCh {
+			logger.Error(fmt.Sprintf("write to bucket %s error: %s\n", config.Config.InfluxDB.Bucket, err.Error()))
+		}
+	}()
+
 	repository := repository.NewRepository(db)
 
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
@@ -165,6 +175,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
+				influxDBWriteClient,
 			)))
 
 	connectorPB.RegisterConnectorPublicServiceServer(
@@ -177,6 +188,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
+				influxDBWriteClient,
 			)))
 
 	privateServeMux := runtime.NewServeMux(

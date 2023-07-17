@@ -31,6 +31,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
+	"github.com/instill-ai/connector-backend/pkg/utils"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
@@ -1474,6 +1475,7 @@ func (h *PublicHandler) TestConnector(ctx context.Context, req *connectorPB.Test
 
 func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.ExecuteConnectorRequest) (resp *connectorPB.ExecuteConnectorResponse, err error) {
 
+	startTime := time.Now()
 	eventName := "ExecuteConnector"
 
 	ctx, span := tracer.Start(ctx, eventName,
@@ -1487,11 +1489,13 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 	resp = &connectorPB.ExecuteConnectorResponse{}
 	connID, err := resource.GetRscNameID(req.GetName())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
 	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
 	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 	connector, err := h.service.GetConnectorByID(ctx, connID, owner, true)
@@ -1521,6 +1525,8 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 			owner,
 			eventName,
 		)))
+		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
+		h.service.WriteNewDataPoint(dataPoint.AddTag("status", "completed"))
 	}
 	return resp, nil
 

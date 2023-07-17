@@ -4,10 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"time"
 
+	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/influxdata/influxdb-client-go/v2/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/logger"
@@ -114,4 +119,42 @@ func InitControllerPrivateServiceClient(ctx context.Context) (controllerPB.Contr
 	}
 
 	return controllerPB.NewControllerPrivateServiceClient(clientConn), clientConn
+}
+
+// InitInfluxDBServiceClient initialises a InfluxDBServiceClient instance
+func InitInfluxDBServiceClient(ctx context.Context) (influxdb2.Client, api.WriteAPI) {
+
+	logger, _ := logger.GetZapLogger(ctx)
+
+	var creds credentials.TransportCredentials
+	var err error
+
+	influxOptions := influxdb2.DefaultOptions()
+	if config.Config.Server.Debug {
+		influxOptions = influxOptions.SetLogLevel(log.DebugLevel)
+	}
+	influxOptions = influxOptions.SetFlushInterval(uint(time.Duration(config.Config.InfluxDB.FlushInterval * int(time.Second)).Milliseconds()))
+
+	if config.Config.InfluxDB.HTTPS.Cert != "" && config.Config.InfluxDB.HTTPS.Key != "" {
+		// TODO: support TLS
+		creds, err = credentials.NewServerTLSFromFile(config.Config.InfluxDB.HTTPS.Cert, config.Config.InfluxDB.HTTPS.Key)
+		if err != nil {
+			logger.Fatal(err.Error())
+		}
+		logger.Info(creds.Info().ServerName)
+	}
+
+	client := influxdb2.NewClientWithOptions(
+		config.Config.InfluxDB.URL,
+		config.Config.InfluxDB.Token,
+		influxOptions,
+	)
+
+	if _, err := client.Ping(ctx); err != nil {
+		logger.Warn(err.Error())
+	}
+
+	writeAPI := client.WriteAPI(config.Config.InfluxDB.Org, config.Config.InfluxDB.Bucket)
+
+	return client, writeAPI
 }

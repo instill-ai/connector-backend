@@ -1,6 +1,15 @@
 package utils
 
-import "strings"
+import (
+	"strings"
+	"time"
+
+	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/instill-ai/connector-backend/pkg/datamodel"
+	"google.golang.org/protobuf/types/known/structpb"
+
+	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+)
 
 const (
 	CreateEvent     string = "Create"
@@ -25,4 +34,30 @@ func IsAuditEvent(eventName string) bool {
 // TODO: billable connectors TBD
 func IsBillableEvent(eventName string) bool {
 	return false
+}
+
+func NewDataPoint(
+	ownerUUID string,
+	connectorExecuteId string,
+	connector *datamodel.Connector,
+	pipelineMetadata *structpb.Value,
+	startTime time.Time,
+) *write.Point {
+	return influxdb2.NewPoint(
+		"connector.execute",
+		map[string]string{},
+		map[string]interface{}{
+			"pipeline_id":              pipelineMetadata.GetStructValue().GetFields()["id"],
+			"pipeline_uid":             pipelineMetadata.GetStructValue().GetFields()["uid"],
+			"pipeline_owner":           pipelineMetadata.GetStructValue().GetFields()["owner"],
+			"pipeline_trigger_id":      pipelineMetadata.GetStructValue().GetFields()["trigger_id"],
+			"connector_owner_uid":      ownerUUID,
+			"connector_id":             connector.ID,
+			"connector_uid":            connector.UID.String(),
+			"connector_definition_uid": connector.ConnectorDefinitionUID.String(),
+			"connector_execute_id":     connectorExecuteId,
+			"execute_time":             startTime.Format(time.RFC3339Nano),
+		},
+		time.Now(),
+	)
 }
