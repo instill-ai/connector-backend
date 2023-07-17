@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -43,13 +44,14 @@ func NewDataPoint(
 	pipelineMetadata *structpb.Value,
 	startTime time.Time,
 ) *write.Point {
+	pipelineOwnerUUID, _ := resource.GetPermalinkUID(strings.Split(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue(), "/")[1])
 	return influxdb2.NewPoint(
 		"connector.execute",
 		map[string]string{},
 		map[string]interface{}{
 			"pipeline_id":              pipelineMetadata.GetStructValue().GetFields()["id"].GetStringValue(),
 			"pipeline_uid":             pipelineMetadata.GetStructValue().GetFields()["uid"].GetStringValue(),
-			"pipeline_owner":           pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue(),
+			"pipeline_owner":           pipelineOwnerUUID,
 			"pipeline_trigger_id":      pipelineMetadata.GetStructValue().GetFields()["trigger_id"].GetStringValue(),
 			"connector_owner_uid":      ownerUUID,
 			"connector_id":             connector.ID,

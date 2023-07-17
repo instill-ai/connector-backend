@@ -41,6 +41,7 @@ import (
 	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 )
 
 var tracer = otel.Tracer("connector-backend.public-handler.tracer")
@@ -1515,7 +1516,20 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		return resp, st.Err()
 	}
 
-	if outputs, err := h.service.Execute(ctx, connID, owner, req.GetInputs()); err != nil {
+	pipelineMetedata := req.GetInputs()[0].Metadata.GetFields()["pipeline"]
+
+	dataPoint := utils.NewDataPoint(
+		*owner.Uid,
+		logUUID.String(),
+		conn,
+		pipelineMetedata,
+		startTime,
+	)
+
+	if outputs, err := h.service.Execute(ctx, conn, owner, req.GetInputs()); err != nil {
+		span.SetStatus(1, err.Error())
+		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
+		h.service.WriteNewDataPoint(dataPoint.AddTag("status", mgmtPB.Status_STATUS_ERRORED.String()))
 		return nil, err
 	} else {
 		resp.Outputs = outputs
@@ -1526,7 +1540,7 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 			eventName,
 		)))
 		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
-		h.service.WriteNewDataPoint(dataPoint.AddTag("status", "completed"))
+		h.service.WriteNewDataPoint(dataPoint.AddTag("status", mgmtPB.Status_STATUS_COMPLETED.String()))
 	}
 	return resp, nil
 
