@@ -343,6 +343,19 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 		return nil, err
 	}
 
+	if conn.Tombstone {
+		st, _ := sterr.CreateErrorPreconditionFailure(
+			"[service] update connector state",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "STATE",
+					Subject:     fmt.Sprintf("id %s", id),
+					Description: "the connector definition is deprecated, you can not use anymore",
+				},
+			})
+		return nil, st.Err()
+	}
+
 	connDef, err := s.connectorAll.GetConnectorDefinitionByUid(conn.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
@@ -372,7 +385,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 			return nil, err
 		}
 
-		taskName, _ := con.GetTaskName()
+		taskName, _ := con.GetTask()
 		if err != nil {
 			return nil, err
 		}
@@ -382,7 +395,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 			return nil, err
 		}
 
-		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, taskName); err != nil {
+		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, datamodel.Task(taskName)); err != nil {
 			return nil, err
 		}
 		if err := s.UpdateResourceState(conn.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {

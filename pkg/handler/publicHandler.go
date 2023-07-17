@@ -141,6 +141,16 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 	}
 
 	unfilteredDefs := h.connectors.ListConnectorDefinitions()
+
+	// don't return definition with tombstone = true
+	unfilteredDefsRemoveTombstone := []*connectorPB.ConnectorDefinition{}
+	for idx := range unfilteredDefs {
+		if !unfilteredDefs[idx].Tombstone {
+			unfilteredDefsRemoveTombstone = append(unfilteredDefsRemoveTombstone, unfilteredDefs[idx])
+		}
+	}
+	unfilteredDefs = unfilteredDefsRemoveTombstone
+
 	var defs []*connectorPB.ConnectorDefinition
 	if filter.CheckedExpr != nil {
 		trans := repository.NewTranspiler(filter)
@@ -442,7 +452,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		ConnectorType:          datamodel.ConnectorType(connDefResp.ConnectorDefinition.GetConnectorType()),
 		Description:            connDesc,
 		Visibility:             datamodel.ConnectorVisibility(req.Connector.Visibility),
-		Task:                   "TASK_UNSPECIFIED", // TODO: refactor this
+		Task:                   datamodel.Task(connectorPB.Task_TASK_UNSPECIFIED),
 	}
 
 	dbConnector, err = h.service.CreateConnector(ctx, owner, dbConnector)
@@ -1484,6 +1494,23 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 	if err != nil {
 		return resp, err
 	}
+	connector, err := h.service.GetConnectorByID(ctx, connID, owner, true)
+	if err != nil {
+		return resp, err
+	}
+	if connector.Tombstone {
+		st, _ := sterr.CreateErrorPreconditionFailure(
+			"ExecuteConnector",
+			[]*errdetails.PreconditionFailure_Violation{
+				{
+					Type:        "STATE",
+					Subject:     fmt.Sprintf("id %s", connID),
+					Description: "the connector definition is deprecated, you can not use it anymore",
+				},
+			})
+		return resp, st.Err()
+	}
+
 	if outputs, err := h.service.Execute(ctx, connID, owner, req.GetInputs()); err != nil {
 		return nil, err
 	} else {

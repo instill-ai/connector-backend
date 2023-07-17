@@ -13,13 +13,15 @@ server:
   debug: true
   prebuiltconnector:
     enabled: false
-container:
-  mountsource:
-    vdp: vdp # vdp docker volume name by default
-    airbyte: airbyte # airbyte docker volume name by default
-  mounttarget:
-    vdp: /vdp
-    airbyte: /local
+connector:
+  airbyte:
+    mountsource:
+      vdp: vdp # vdp docker volume name by default
+      airbyte: airbyte # airbyte docker volume name by default
+    mounttarget:
+      vdp: /vdp
+      airbyte: /local
+    excludelocalconnector: false
 database:
   username: postgres
   password: password

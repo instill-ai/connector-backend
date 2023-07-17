@@ -30,11 +30,12 @@ type Connector struct {
 func GetConnectorDestinationOptions() connectorDestination.ConnectorOptions {
 	return connectorDestination.ConnectorOptions{
 		Airbyte: connectorDestinationAirbyte.ConnectorOptions{
-			MountSourceVDP:     config.Config.Container.MountSource.VDP,
-			MountTargetVDP:     config.Config.Container.MountTarget.VDP,
-			MountSourceAirbyte: config.Config.Container.MountSource.Airbyte,
-			MountTargetAirbyte: config.Config.Container.MountTarget.Airbyte,
-			VDPProtocolPath:    "/etc/vdp/vdp_protocol.yaml",
+			MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
+			MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
+			MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
+			MountTargetAirbyte:    config.Config.Connector.Airbyte.MountTarget.Airbyte,
+			ExcludeLocalConnector: config.Config.Connector.Airbyte.ExcludeLocalConnector,
+			VDPProtocolPath:       "/etc/vdp/vdp_protocol.yaml",
 		},
 	}
 

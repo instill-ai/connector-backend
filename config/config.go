@@ -19,7 +19,7 @@ var Config AppConfig
 // AppConfig defines
 type AppConfig struct {
 	Server          ServerConfig          `koanf:"server"`
-	Container       ContainerConfig       `koanf:"container"`
+	Connector       ConnectorConfig       `koanf:"connector"`
 	Database        DatabaseConfig        `koanf:"database"`
 	PipelineBackend PipelineBackendConfig `koanf:"pipelinebackend"`
 	MgmtBackend     MgmtBackendConfig     `koanf:"mgmtbackend"`
@@ -48,15 +48,18 @@ type ServerConfig struct {
 	}
 }
 
-// ContainerConfig defines the container configurations
-type ContainerConfig struct {
-	MountSource struct {
-		VDP     string `koanf:"vdp"`
-		Airbyte string `koanf:"airbyte"`
-	}
-	MountTarget struct {
-		VDP     string `koanf:"vdp"`
-		Airbyte string `koanf:"airbyte"`
+// ConnectorConfig defines the connector configurations
+type ConnectorConfig struct {
+	Airbyte struct {
+		MountSource struct {
+			VDP     string `koanf:"vdp"`
+			Airbyte string `koanf:"airbyte"`
+		}
+		MountTarget struct {
+			VDP     string `koanf:"vdp"`
+			Airbyte string `koanf:"airbyte"`
+		}
+		ExcludeLocalConnector bool `koanf:"excludelocalconnector"`
 	}
 }
 

@@ -196,6 +196,11 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 		return resp, err
 	}
 
+	if dbConnector.Tombstone {
+		resp.State = connectorPB.Connector_STATE_ERROR
+		return resp, nil
+	}
+
 	if dbConnector.State == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
 		state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
 		if err != nil {

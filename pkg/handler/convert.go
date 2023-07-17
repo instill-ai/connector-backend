@@ -62,7 +62,7 @@ func PBToDBConnector(
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
 		Visibility:             datamodel.ConnectorVisibility(pbConnector.Visibility),
-		Task:                   "TASK_UNSPECIFIED", //TODO:refactor this
+		Task:                   datamodel.Task(connectorPB.Task_TASK_UNSPECIFIED),
 
 		Configuration: func() []byte {
 			if configuration != nil {
@@ -104,7 +104,7 @@ func DBToPBConnector(
 		CreateTime:              timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
 		Visibility:              connectorPB.Connector_Visibility(dbConnector.Visibility),
-		Task:                    dbConnector.Task,
+		Task:                    connectorPB.Task(dbConnector.Task),
 
 		Configuration: func() *structpb.Struct {
 			if dbConnector.Configuration != nil {
