@@ -44,7 +44,7 @@ func NewDataPoint(
 	pipelineMetadata *structpb.Value,
 	startTime time.Time,
 ) *write.Point {
-	pipelineOwnerUUID, _ := resource.GetPermalinkUID(strings.Split(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue(), "/")[1])
+	pipelineOwnerUUID, _ := resource.GetPermalinkUID(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue())
 	return influxdb2.NewPoint(
 		"connector.execute",
 		map[string]string{},
