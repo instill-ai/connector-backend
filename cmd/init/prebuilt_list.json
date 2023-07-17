@@ -120,5 +120,33 @@
       "metadata_structured_data": false,
       "metadata_metadata": true
     }
+  },
+  {
+    "id": "instill-openai-gpt3.5",
+    "uid": "43c1d0c2-9f95-41a4-ae06-735333268c3d",
+    "connector_definition_uid": "9fb6a2cb-bff5-4c69-bc6d-4538dd8e3362",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_TEXT_GENERATION",
+    "configuration": {
+      "api_key": "<CFG_CONNECTORAI_OPENAI_APIKEY>",
+      "task": "Text Generation",
+      "model": "gpt-3.5-turbo",
+      "system_message": "You are a helpful assistant.",
+      "temperature": 0.7,
+      "n": 1,
+      "max_tokens": 1000
+    }
+  },
+  {
+    "id": "instill-openai-embedding-ada-002",
+    "uid": "2c941e9c-7a63-4b0a-a0e2-d818fe183708",
+    "connector_definition_uid": "9fb6a2cb-bff5-4c69-bc6d-4538dd8e3362",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_TEXT_EMBEDDINGS",
+    "configuration": {
+      "api_key": "<CFG_CONNECTORAI_OPENAI_APIKEY>",
+      "task": "Text Embeddings",
+      "model": "text-embedding-ada-002"
+    }
   }
 ]
