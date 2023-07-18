@@ -9,12 +9,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
+	github.com/influxdata/influxdb-client-go/v2 v2.12.3
 	github.com/instill-ai/connector v0.1.0-alpha.0.20230717104353-9833ed07cd2e
 	github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230717121222-5ce8b04cb355
 	github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230717105600-fc482078cd6d
 	github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230717115254-874e653abee6
 	github.com/instill-ai/connector-source v0.1.0-alpha.0.20230717115215-dc34763dabe3
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230717101605-87e3b68be4cf
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230717175816-09fb1ab0a259
 	github.com/instill-ai/usage-client v0.2.4-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
@@ -48,6 +49,7 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/catalinc/hashcash v0.0.0-20220723060415-5e3ec3e24f67 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+	github.com/deepmap/oapi-codegen v1.8.2 // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v24.0.2+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -63,6 +65,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

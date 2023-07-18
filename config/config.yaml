@@ -57,3 +57,12 @@ log:
   otelcollector:
     host: otel-collector
     port: 8095
+influxdb:
+  url: http://influxdb:8086
+  token: i-love-instill-ai
+  org: instill-ai
+  bucket: instill-ai
+  flushinterval: 10 # In seconds for non-blocking batch mode
+  https:
+    cert:
+    key:
