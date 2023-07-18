@@ -540,7 +540,6 @@ func (s *service) CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*
 	}
 
 	state, err := con.Test()
-	logger.Warn(fmt.Sprintf("con.Test(): %s %v", state, err))
 	if err != nil {
 		return connectorPB.Connector_STATE_ERROR.Enum(), nil
 	}

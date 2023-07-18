@@ -731,10 +731,10 @@ github.com/imdario/mergo v0.3.12/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/instill-ai/connector v0.1.0-alpha.0.20230717104353-9833ed07cd2e h1:DJP5mRLcT1ViNgGCgn/orzMlFLQrv1ySPN0OVKid6UA=
 github.com/instill-ai/connector v0.1.0-alpha.0.20230717104353-9833ed07cd2e/go.mod h1:3kLmWi+0vdp4PfjRrolQQwOXU55HG1e1N9J7y83MBhw=
-github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230717121222-5ce8b04cb355 h1:mPi2sH3wPMf31M5tx2S/xNJDfIX4r1nLx4MjO0K7SiI=
-github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230717121222-5ce8b04cb355/go.mod h1:hqFjtshM7hwOxhGYLiFJwWKAVMQNxouMM6EwyGem7q0=
-github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230717105600-fc482078cd6d h1:JDXQ7Fqo57T38XrCFp3y8EzTWNgokSu7rYJ8SMAjYPw=
-github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230717105600-fc482078cd6d/go.mod h1:oiwBj9CLmVrVthHU8TZHb9P182syfcraKqRtms5F3GQ=
+github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230718123225-0a2ad3eccdd4 h1:mRgdP3dmHhZsQ36Q/a1MqAy9HDaSa7hAAWxX7QfkdjY=
+github.com/instill-ai/connector-ai v0.1.0-alpha.0.20230718123225-0a2ad3eccdd4/go.mod h1:hqFjtshM7hwOxhGYLiFJwWKAVMQNxouMM6EwyGem7q0=
+github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230718054814-f1e2d608cfa4 h1:sKbk5vSMZ5KhF3SpnEIydYo1GHXDxub5q9yY5ha1T+s=
+github.com/instill-ai/connector-blockchain v0.1.0-alpha.0.20230718054814-f1e2d608cfa4/go.mod h1:oiwBj9CLmVrVthHU8TZHb9P182syfcraKqRtms5F3GQ=
 github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230717115254-874e653abee6 h1:Oyd6sAmv3krtl6r91c4Y8pINCfc4KpIG9mL+5W7vhJk=
 github.com/instill-ai/connector-destination v0.1.0-alpha.0.20230717115254-874e653abee6/go.mod h1:jyaqvjipeuDLe4rC6yMsQuLz2vCX/Nkz+Y6a8AgI5Ow=
 github.com/instill-ai/connector-source v0.1.0-alpha.0.20230717115215-dc34763dabe3 h1:kz1iH4Z65NnMTaVrBS3Q7wVoSP4zHbq8iYr/t/64SF4=
