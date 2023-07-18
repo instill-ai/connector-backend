@@ -1499,7 +1499,7 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	connector, err := h.service.GetConnectorByID(ctx, connID, owner, true)
+	connector, err := h.service.GetConnectorByID(ctx, connID, owner, false)
 	if err != nil {
 		return resp, err
 	}
@@ -1516,13 +1516,11 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		return resp, st.Err()
 	}
 
-	pipelineMetedata := req.GetInputs()[0].Metadata.GetFields()["pipeline"]
-
 	dataPoint := utils.NewDataPoint(
 		*owner.Uid,
 		logUUID.String(),
 		connector,
-		pipelineMetedata,
+		req.GetInputs()[0].Metadata.GetFields()["pipeline"],
 		startTime,
 	)
 
