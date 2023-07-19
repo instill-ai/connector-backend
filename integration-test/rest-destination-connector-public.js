@@ -64,64 +64,6 @@ export function CheckCreate() {
             [`GET /v1alpha/connectors/${resCSVDst.json().connector.id} response STATE_CONNECTED`]: (r) => r.json().connector.state === "STATE_CONNECTED",
         });
 
-        // destination-mysql (will end up with STATE_ERROR)
-        var mySQLDstConnector = {
-            "id": randomString(10),
-            "connector_definition_name": constant.mySQLDstDefRscName,
-            "configuration": {
-                "host": randomString(10),
-                "port": 3306,
-                "username": randomString(10),
-                "database": randomString(10),
-            }
-        }
-
-        var resDstMySQL = http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(mySQLDstConnector), constant.params)
-
-        check(resDstMySQL, {
-            "POST /v1alpha/connectors response status for creating MySQL destination connector 201": (r) => r.status === 201,
-            "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${mySQLDstConnector.id}`,
-            "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
-            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.mySQLDstDefRscName,
-            "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
-        });
-
-        // TODO check when connect
-        // check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resDstMySQL.json().connector.id}/watch`), {
-        //     [`GET /v1alpha/connectors/${resDstMySQL.json().connector.id}/watch response connector state ended up STATE_ERROR`]: (r) => r.json().state === "STATE_ERROR",
-        // })
-
-        // // check JSON Schema failure cases
-        // var jsonSchemaFailedBodyCSV = {
-        //     "id": randomString(10),
-        //     "connector_definition_name": constant.csvDstDefRscName,
-        //     "description": randomString(50),
-        //     "configuration": {} // required destination_path
-        // }
-
-        // check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyCSV), constant.params), {
-        //     "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-csv missing destination_path)": (r) => r.status === 400,
-        // });
-
-        // var jsonSchemaFailedBodyMySQL = {
-        //     "id": randomString(10),
-        //     "connector_definition_name": constant.mySQLDstDefRscName,
-        //     "description": randomString(50),
-        //     "configuration": {
-        //         "host": randomString(10),
-        //         "port": "3306",
-        //         "username": randomString(10),
-        //         "database": randomString(10),
-        //     } // required port integer type
-        // }
-
-        // check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors`, JSON.stringify(jsonSchemaFailedBodyMySQL), constant.params), {
-        //     "POST /v1alpha/connectors response status for JSON Schema failed body 400 (destination-mysql port not integer)": (r) => r.status === 400,
-        // });
-
         // Delete test records
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resDst.json().connector.id} response status 204`]: (r) => r.status === 204,
@@ -129,9 +71,7 @@ export function CheckCreate() {
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstMySQL.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDstMySQL.json().connector.id} response status 204`]: (r) => r.status === 204,
-        });
+
     });
 
 }
@@ -355,6 +295,83 @@ export function CheckLookUp() {
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
+
+    });
+}
+
+export function CheckConnect() {
+    group("Connector API: Check Connect", () => {
+
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "connector_definition_name": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": {}
+        }
+
+        // Cannot connect with unfinished config
+        var resDstCsv = http.request(
+            "POST",
+            `${connectorPublicHost}/v1alpha/connectors`,
+            JSON.stringify(csvDstConnector), constant.params)
+
+        check(resDstCsv, {
+            "POST /v1alpha/connectors response status for creating MySQL destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${csvDstConnector.id}`,
+            "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
+            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.csvDstDefRscName,
+            "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
+        });
+
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}/connect`), {
+            [`POST /v1alpha/connectors/${resDstCsv.json().connector.id}/connect response status 400`]: (r) => r.status === 400,
+        });
+
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}/disconnect`), {
+            [`POST /v1alpha/connectors/${resDstCsv.json().connector.id}/disconnect response status 200`]: (r) => r.status === 200,
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resDstCsv.json().connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
+        var csvDstConnector = {
+            "id": randomString(10),
+            "connector_definition_name": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig
+        }
+
+        // Cannot connect with unfinished config
+        var resDstCsv = http.request(
+            "POST",
+            `${connectorPublicHost}/v1alpha/connectors`,
+            JSON.stringify(csvDstConnector), constant.params)
+
+        check(resDstCsv, {
+            "POST /v1alpha/connectors response status for creating MySQL destination connector 201": (r) => r.status === 201,
+            "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${csvDstConnector.id}`,
+            "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
+            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.csvDstDefRscName,
+            "POST /v1alpha/connectors response connector owner is UUID": (r) => helper.isValidOwner(r.json().connector.user),
+        });
+
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}/connect`), {
+            [`POST /v1alpha/connectors/${resDstCsv.json().connector.id}/connect response status 200`]: (r) => r.status === 200,
+        });
+
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}/disconnect`), {
+            [`POST /v1alpha/connectors/${resDstCsv.json().connector.id}/disconnect response status 200`]: (r) => r.status === 200,
+        });
+
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDstCsv.json().connector.id}`), {
+            [`DELETE /v1alpha/connectors/${resDstCsv.json().connector.id} response status 204`]: (r) => r.status === 204,
+        });
+
+
+
+
 
     });
 }
