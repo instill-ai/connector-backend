@@ -288,37 +288,11 @@ export function CheckDelete() {
         });
 
 
-        var createClsModelRes = http.request("POST", `${constant.modelPublicHost}/v1alpha/models`, JSON.stringify({
-            "id": "dummy-cls",
-            "model_definition": "model-definitions/github",
-            "configuration": {
-                "repository": "instill-ai/model-dummy-cls",
-                "tag": "v1.0"
-            },
-        }), constant.params)
-        check(createClsModelRes, {
-            "POST /v1alpha/models cls response status is 201": (r) => r.status === 201,
-        })
-        // Check model creation finished
-        let currentTime = new Date().getTime();
-        let timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = http.get(`${constant.modelPublicHost}/v1alpha/${createClsModelRes.json().operation.name}`, {
-                headers: helper.genHeader(`application/json`),
-            })
-            if (res.json().operation.done === true) {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
         const detSyncRecipe = {
             recipe: {
                 "version": "v1alpha",
                 "components": [
                     { "id": "s01", "resource_name": "connectors/trigger" },
-                    { "id": "m01", "resource_name": "models/dummy-cls" },
                     { "id": "d01", "resource_name": "connectors/response" },
                 ]
             },
@@ -370,24 +344,6 @@ export function CheckDelete() {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector response response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
-        // Wait for model state to be updated
-        currentTime = new Date().getTime();
-        timeoutTime = new Date().getTime() + 120000;
-        while (timeoutTime > currentTime) {
-            var res = client.invoke('vdp.model.v1alpha.ModelPublicService/WatchModel', {
-                name: `models/dummy-cls`
-            }, {})
-            if (res.message.state !== "STATE_UNSPECIFIED") {
-                break
-            }
-            sleep(1)
-            currentTime = new Date().getTime();
-        }
-
-        // Can delete model now
-        check(http.request("DELETE", `${constant.modelPublicHost}/v1alpha/models/dummy-cls`), {
-            [`DELETE /v1alpha/models/dummy-cls response status is 204`]: (r) => r.status === 204,
-        });
 
         client.close();
     });
