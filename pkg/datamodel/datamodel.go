@@ -9,6 +9,7 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	taskPB "github.com/instill-ai/protogen-go/common/task/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -60,7 +61,7 @@ type ConnectorVisibility connectorPB.Connector_Visibility
 type ConnectorType connectorPB.ConnectorType
 
 // ConnectorType is an alias type for Protobuf enum ConnectorType
-type Task connectorPB.Task
+type Task taskPB.Task
 
 // Scan function for custom GORM type ConnectorType
 func (c *ConnectorType) Scan(value interface{}) error {
@@ -100,11 +101,11 @@ func (r ConnectorVisibility) Value() (driver.Value, error) {
 
 // Scan function for custom GORM type Task
 func (r *Task) Scan(value interface{}) error {
-	*r = Task(connectorPB.Task_value[value.(string)])
+	*r = Task(taskPB.Task_value[value.(string)])
 	return nil
 }
 
 // Value function for custom GORM type Task
 func (r Task) Value() (driver.Value, error) {
-	return connectorPB.Task(r).String(), nil
+	return taskPB.Task(r).String(), nil
 }
