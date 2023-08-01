@@ -5,14 +5,10 @@ import {
 } from 'k6';
 
 import * as constant from "./const.js"
-import * as sourceConnectorDefinition from './grpc-source-connector-definition.js';
-import * as destinationConnectorDefinition from './grpc-destination-connector-definition.js';
-import * as sourceConnectorPublic from './grpc-source-connector-public.js';
-import * as destinationConnectorPublic from './grpc-destination-connector-public.js';
-import * as sourceConnectorPublicWithJwt from './grpc-source-connector-public-with-jwt.js';
-import * as destinationConnectorPublicWithJwt from './grpc-destination-connector-public-with-jwt.js';
-import * as sourceConnectorPrivate from './grpc-source-connector-private.js';
-import * as destinationConnectorPrivate from './grpc-destination-connector-private.js';
+import * as dataConnectorDefinition from './grpc-data-connector-definition.js';
+import * as dataConnectorPublic from './grpc-data-connector-public.js';
+import * as dataConnectorPublicWithJwt from './grpc-data-connector-public-with-jwt.js';
+import * as dataConnectorPrivate from './grpc-data-connector-private.js';
 
 const client = new grpc.Client();
 client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
@@ -31,7 +27,7 @@ export function setup() {
     plaintext: true
   });
 
-  group("Connector API: Pre delete all source connector", () => {
+  group("Connector API: Pre delete all connector", () => {
     for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
       check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
         name: `connectors/${connector.id}`
@@ -64,66 +60,36 @@ export default function (data) {
   });
 
   if (!constant.apiGatewayMode) {
-    // Source connector private
-    sourceConnectorPrivate.CheckList()
-    sourceConnectorPrivate.CheckLookUp()
+    // data connector private
+    dataConnectorPrivate.CheckList()
+    dataConnectorPrivate.CheckLookUp()
 
-    // Destination connector private
-    destinationConnectorPrivate.CheckList()
-    destinationConnectorPrivate.CheckLookUp()
-
-    // Source public with jwt-sub
-    sourceConnectorPublicWithJwt.CheckCreate()
-    sourceConnectorPublicWithJwt.CheckList()
-    sourceConnectorPublicWithJwt.CheckGet()
-    sourceConnectorPublicWithJwt.CheckUpdate()
-    sourceConnectorPublicWithJwt.CheckDelete()
-    sourceConnectorPublicWithJwt.CheckLookUp()
-    sourceConnectorPublicWithJwt.CheckState()
-    sourceConnectorPublicWithJwt.CheckRename()
-    sourceConnectorPublicWithJwt.CheckTest()
-
-    // Destination public with jwt-sub
-    destinationConnectorPublicWithJwt.CheckCreate()
-    destinationConnectorPublicWithJwt.CheckList()
-    destinationConnectorPublicWithJwt.CheckGet()
-    destinationConnectorPublicWithJwt.CheckUpdate()
-    destinationConnectorPublicWithJwt.CheckLookUp()
-    destinationConnectorPublicWithJwt.CheckState()
-    destinationConnectorPublicWithJwt.CheckRename()
-    destinationConnectorPublicWithJwt.CheckExecute()
-    destinationConnectorPublicWithJwt.CheckTest()
+    // data public with jwt-sub
+    dataConnectorPublicWithJwt.CheckCreate()
+    dataConnectorPublicWithJwt.CheckList()
+    dataConnectorPublicWithJwt.CheckGet()
+    dataConnectorPublicWithJwt.CheckUpdate()
+    dataConnectorPublicWithJwt.CheckLookUp()
+    dataConnectorPublicWithJwt.CheckState()
+    dataConnectorPublicWithJwt.CheckRename()
+    dataConnectorPublicWithJwt.CheckExecute()
+    dataConnectorPublicWithJwt.CheckTest()
   }
 
-  // Source connector Definitions
-  sourceConnectorDefinition.CheckList()
-  sourceConnectorDefinition.CheckGet()
+  // data connector Definitions
+  dataConnectorDefinition.CheckList()
+  dataConnectorDefinition.CheckGet()
 
-  // Destination connector Definitions
-  destinationConnectorDefinition.CheckList()
-  destinationConnectorDefinition.CheckGet()
-
-  // Source connector
-  sourceConnectorPublic.CheckCreate()
-  sourceConnectorPublic.CheckList()
-  sourceConnectorPublic.CheckGet()
-  sourceConnectorPublic.CheckUpdate()
-  sourceConnectorPublic.CheckDelete()
-  sourceConnectorPublic.CheckLookUp()
-  sourceConnectorPublic.CheckState()
-  sourceConnectorPublic.CheckRename()
-  sourceConnectorPublic.CheckTest()
-
-  // Destination connectors
-  destinationConnectorPublic.CheckCreate()
-  destinationConnectorPublic.CheckList()
-  destinationConnectorPublic.CheckGet()
-  destinationConnectorPublic.CheckUpdate()
-  destinationConnectorPublic.CheckLookUp()
-  destinationConnectorPublic.CheckState()
-  destinationConnectorPublic.CheckRename()
-  destinationConnectorPublic.CheckExecute()
-  destinationConnectorPublic.CheckTest()
+  // data connectors
+  dataConnectorPublic.CheckCreate()
+  dataConnectorPublic.CheckList()
+  dataConnectorPublic.CheckGet()
+  dataConnectorPublic.CheckUpdate()
+  dataConnectorPublic.CheckLookUp()
+  dataConnectorPublic.CheckState()
+  dataConnectorPublic.CheckRename()
+  dataConnectorPublic.CheckExecute()
+  dataConnectorPublic.CheckTest()
 
 }
 
@@ -150,7 +116,7 @@ export function teardown(data) {
   client.connect(constant.connectorGRPCPublicHost, {
     plaintext: true
   });
-  group("Connector API: Delete all source connector created by this test", () => {
+  group("Connector API: Delete all connector created by this test", () => {
     for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
       check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
         name: `connectors/${connector.id}`

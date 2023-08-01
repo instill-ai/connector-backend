@@ -39,9 +39,9 @@ import (
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
-	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 )
 
 var tracer = otel.Tracer("connector-backend.public-handler.tracer")
@@ -269,6 +269,8 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 	var connDefRscName string
 
 	resp = &connectorPB.CreateConnectorResponse{}
+	fmt.Println()
+	fmt.Println(req)
 
 	// Set all OUTPUT_ONLY fields to zero value on the requested payload
 	if err := checkfield.CheckCreateOutputOnlyFields(req.GetConnector(), outputOnlyFields); err != nil {

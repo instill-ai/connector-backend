@@ -50,10 +50,10 @@ export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
 export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
-export const srcDefRscName = "connector-definitions/trigger"
+export const srcDefRscName = "connector-definitions/start-operator"
 export const srcDefRscPermalink = "connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
 
-export const dstDefRscName = "connector-definitions/response"
+export const dstDefRscName = "connector-definitions/end-operator"
 export const dstDefRscPermalink = "connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
 
 export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
@@ -85,35 +85,6 @@ export const paramsHTTPWithJwt = {
   },
 }
 
-const singleModelPipelineMetadata = {
-  "pipeline": {
-    "name": "pipelines/dummy-pipeline",
-    "recipe": {
-      "version": "v1alpha",
-      "components": [
-        { "id": "s01", "resource_name": "source-connectors/dummy-source" },
-        { "id": "m01", "resource_name": "models/dummy-model" },
-        { "id": "d01", "resource_name": "destination-connectors/dummy-destination" }
-      ]
-    }
-  }
-}
-
-const multipleModelOutputsMetadata = {
-  "pipeline": {
-    "name": "pipelines/dummy-pipeline",
-    "recipe": {
-      "version": "v1alpha",
-      "components": [
-        { "id": "s01", "resource_name": "source-connectors/dummy-source" },
-        { "id": "m01", "resource_name": "models/dummy-model-1" },
-        { "id": "m02", "resource_name": "models/dummy-model-2" },
-        { "id": "d01", "resource_name": "destination-connectors/dummy-destination" }
-      ]
-    }
-  }
-}
-
 export const clsModelOutputs = [{
   "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPA",
   "structured_data": {
@@ -122,7 +93,6 @@ export const clsModelOutputs = [{
       "score": 0.99
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 
@@ -149,8 +119,7 @@ export const detectionModelOutputs = [
         "category": "person",
         "score": 0.99
       }
-    },
-    "metadata": multipleModelOutputsMetadata
+    }
   },
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
@@ -173,8 +142,7 @@ export const detectionModelOutputs = [
         "category": "person",
         "score": 0.99
       }
-    },
-    "metadata": multipleModelOutputsMetadata
+    }
   },
   {
     "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
@@ -197,8 +165,7 @@ export const detectionModelOutputs = [
         "category": "person",
         "score": 0.99
       }
-    },
-    "metadata": multipleModelOutputsMetadata
+    }
   }
 ]
 
@@ -209,7 +176,6 @@ export const detectionEmptyModelOutputs = [{
       "objects": []
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 
@@ -229,7 +195,6 @@ export const keypointModelOutputs = [{
       ]
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const ocrModelOutputs = [{
@@ -250,7 +215,6 @@ export const ocrModelOutputs = [{
       ],
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const semanticSegModelOutputs = [{
@@ -273,7 +237,6 @@ export const semanticSegModelOutputs = [{
       ]
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const instSegModelOutputs = [{
@@ -306,7 +269,6 @@ export const instSegModelOutputs = [{
       ]
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const textToImageModelOutputs = [{
@@ -321,7 +283,6 @@ export const textToImageModelOutputs = [{
       ]
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const textGenerationModelOutputs = [{
@@ -331,7 +292,6 @@ export const textGenerationModelOutputs = [{
       "text": "The winds of change are blowing strong, bring new beginnings, righting wrongs. The world around us is constantly turning, and with each sunrise, our spirits are yearning..."
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]
 
 export const unspecifiedModelOutputs = [{
@@ -348,5 +308,4 @@ export const unspecifiedModelOutputs = [{
       ],
     }
   },
-  "metadata": singleModelPipelineMetadata
 }]

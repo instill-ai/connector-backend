@@ -11,9 +11,8 @@ import (
 
 	connectorAI "github.com/instill-ai/connector-ai/pkg"
 	connectorBlockchain "github.com/instill-ai/connector-blockchain/pkg"
-	connectorDestination "github.com/instill-ai/connector-destination/pkg"
-	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
-	connectorSource "github.com/instill-ai/connector-source/pkg"
+	connectorData "github.com/instill-ai/connector-data/pkg"
+	connectorDataAirbyte "github.com/instill-ai/connector-data/pkg/airbyte"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 )
 
@@ -21,15 +20,14 @@ const credentialMaskString = "*****MASK*****"
 
 type Connector struct {
 	connectorBase.BaseConnector
-	Destination connectorBase.IConnector
-	Source      connectorBase.IConnector
-	Blockchain  connectorBase.IConnector
-	AI          connectorBase.IConnector
+	Data       connectorBase.IConnector
+	Blockchain connectorBase.IConnector
+	AI         connectorBase.IConnector
 }
 
-func GetConnectorDestinationOptions() connectorDestination.ConnectorOptions {
-	return connectorDestination.ConnectorOptions{
-		Airbyte: connectorDestinationAirbyte.ConnectorOptions{
+func GetConnectorDataOptions() connectorData.ConnectorOptions {
+	return connectorData.ConnectorOptions{
+		Airbyte: connectorDataAirbyte.ConnectorOptions{
 			MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
 			MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
 			MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
@@ -42,31 +40,20 @@ func GetConnectorDestinationOptions() connectorDestination.ConnectorOptions {
 }
 
 func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
-	connectorSource := connectorSource.Init(logger)
-	connectorDestination := connectorDestination.Init(logger, GetConnectorDestinationOptions())
+
+	connectorData := connectorData.Init(logger, GetConnectorDataOptions())
 	connectorBlockchain := connectorBlockchain.Init(logger, connectorBlockchain.ConnectorOptions{})
 	connectorAI := connectorAI.Init(logger, connectorAI.ConnectorOptions{})
 
 	connector := &Connector{
 		BaseConnector: connectorBase.BaseConnector{},
-		Destination:   connectorDestination,
-		Source:        connectorSource,
+		Data:          connectorData,
 		Blockchain:    connectorBlockchain,
 		AI:            connectorAI,
 	}
 
-	for _, uid := range connectorDestination.ListConnectorDefinitionUids() {
-		def, err := connectorDestination.GetConnectorDefinitionByUid(uid)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		err = connector.AddConnectorDefinition(uid, def.GetId(), def)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	}
-	for _, uid := range connectorSource.ListConnectorDefinitionUids() {
-		def, err := connectorSource.GetConnectorDefinitionByUid(uid)
+	for _, uid := range connectorData.ListConnectorDefinitionUids() {
+		def, err := connectorData.GetConnectorDefinitionByUid(uid)
 		if err != nil {
 			logger.Error(err.Error())
 		}
@@ -100,10 +87,8 @@ func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 
 func (c *Connector) CreateConnection(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorBase.IConnection, error) {
 	switch {
-	case c.Destination.HasUid(defUid):
-		return c.Destination.CreateConnection(defUid, config, logger)
-	case c.Source.HasUid(defUid):
-		return c.Source.CreateConnection(defUid, config, logger)
+	case c.Data.HasUid(defUid):
+		return c.Data.CreateConnection(defUid, config, logger)
 	case c.Blockchain.HasUid(defUid):
 		return c.Blockchain.CreateConnection(defUid, config, logger)
 	case c.AI.HasUid(defUid):

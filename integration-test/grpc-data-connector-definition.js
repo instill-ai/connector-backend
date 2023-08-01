@@ -15,14 +15,14 @@ client.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
 
 export function CheckList() {
 
-    group("Connector API: List source connector definitions", () => {
+    group("Connector API: List data connector definitions", () => {
 
         client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA"
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions response connectorDefinitions array`]: (r) => Array.isArray(r.message.connectorDefinitions),
@@ -30,10 +30,10 @@ export function CheckList() {
         });
 
         var limitedRecords = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA"
         }, {})
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 0
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=0 response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -41,7 +41,7 @@ export function CheckList() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -49,11 +49,11 @@ export function CheckList() {
         });
 
         var pageRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1
         }, {})
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1,
             pageToken: pageRes.message.nextPageToken
         }, {}), {
@@ -62,7 +62,7 @@ export function CheckList() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1,
             view: "VIEW_BASIC"
         }, {}), {
@@ -71,7 +71,7 @@ export function CheckList() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1,
             view: "VIEW_FULL"
         }, {}), {
@@ -80,7 +80,7 @@ export function CheckList() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: 1,
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=1 response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -88,7 +88,7 @@ export function CheckList() {
         });
 
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
             pageSize: limitedRecords.message.totalSize,
         }, {}), {
             [`vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions pageSize=${limitedRecords.message.totalSize} response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -100,13 +100,13 @@ export function CheckList() {
 }
 
 export function CheckGet() {
-    group("Connector API: Get source connector definition", () => {
+    group("Connector API: Get data connector definition", () => {
         client.connect(constant.connectorGRPCPublicHost, {
             plaintext: true
         });
 
         var allRes = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorDefinitions', {
-            filter: "connector_type=CONNECTOR_TYPE_SOURCE",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
         }, {})
         var def = allRes.message.connectorDefinitions[0]
 

@@ -13,9 +13,8 @@ require (
 	github.com/instill-ai/connector v0.2.0-alpha.0.20230724051505-16610a2b30d4
 	github.com/instill-ai/connector-ai v0.2.0-alpha.0.20230724053154-09e787a5b8d0
 	github.com/instill-ai/connector-blockchain v0.2.0-alpha.0.20230724053200-6214cf2b24fa
-	github.com/instill-ai/connector-destination v0.2.0-alpha.0.20230724053205-39d6f72a968b
-	github.com/instill-ai/connector-source v0.2.0-alpha.0.20230724053145-05dce14020a9
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230724032341-29e39edfce64
+	github.com/instill-ai/connector-data v0.0.0-20230801040113-299b2e4908d1
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801033704-c6a602d6e5dc
 	github.com/instill-ai/usage-client v0.2.4-alpha
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
