@@ -7,17 +7,16 @@ import (
 
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/connector"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/x/repo"
-	"go.einride.tech/aip/filtering"
+	"github.com/redis/go-redis/v9"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	connectorData "github.com/instill-ai/connector-data/pkg"
 	connectorBase "github.com/instill-ai/connector/pkg/base"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	usagePB "github.com/instill-ai/protogen-go/base/usage/v1alpha"
-	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	usageClient "github.com/instill-ai/usage-client/client"
 	usageReporter "github.com/instill-ai/usage-client/reporter"
 )
@@ -32,13 +31,14 @@ type Usage interface {
 type usage struct {
 	repository               repository.Repository
 	mgmtPrivateServiceClient mgmtPB.MgmtPrivateServiceClient
+	redisClient              *redis.Client
 	reporter                 usageReporter.Reporter
 	version                  string
 	connectorData            connectorBase.IConnector
 }
 
 // NewUsage initiates a usage instance
-func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivateServiceClient, usc usagePB.UsageServiceClient) Usage {
+func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivateServiceClient, rc *redis.Client, usc usagePB.UsageServiceClient) Usage {
 	logger, _ := logger.GetZapLogger(ctx)
 
 	version, err := repo.ReadReleaseManifest("release-please/manifest.json")
@@ -56,6 +56,7 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivat
 	return &usage{
 		repository:               r,
 		mgmtPrivateServiceClient: ma,
+		redisClient:              rc,
 		reporter:                 reporter,
 		version:                  version,
 		connectorData:            connectorData.Init(logger, connector.GetConnectorDataOptions()),
@@ -75,28 +76,6 @@ func (u *usage) RetrieveUsageData() interface{} {
 	userPageToken := ""
 	userPageSizeMax := int64(repository.MaxPageSize)
 
-	var connType connectorPB.ConnectorType
-	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
-		filtering.DeclareStandardFunctions(),
-		filtering.DeclareEnumIdent("connector_type", connType.Type()),
-	}...)
-	if err != nil {
-		logger.Error(fmt.Sprintf("%s", err))
-	}
-
-	var dstParser filtering.Parser
-	dstParser.Init("connector_type=CONNECTOR_TYPE_DATA")
-	dstParsedExpr, err := dstParser.Parse()
-	if err != nil {
-		logger.Error(fmt.Sprintf("%s", err))
-	}
-	var dstChecker filtering.Checker
-	dstChecker.Init(dstParsedExpr.Expr, dstParsedExpr.SourceInfo, declarations)
-	dstCheckedExpr, err := dstChecker.Check()
-	if err != nil {
-		logger.Error(fmt.Sprintf("%s", err))
-	}
-
 	for {
 		userResp, err := u.mgmtPrivateServiceClient.ListUsersAdmin(ctx, &mgmtPB.ListUsersAdminRequest{
 			PageSize:  &userPageSizeMax,
@@ -110,49 +89,38 @@ func (u *usage) RetrieveUsageData() interface{} {
 		// Roll all pipeline resources on a user
 		for _, user := range userResp.Users {
 
-			connPageToken := ""
-			dstConnConnectedStateNum := int64(0)
-			dstConnDisconnectedStateNum := int64(0)
-			dstConnDefSet := make(map[string]struct{})
-			for {
-				dbDstConns, _, connNextPageToken, err := u.repository.ListConnectors(
-					ctx,
-					fmt.Sprintf("users/%s", user.GetUid()),
-					int64(repository.MaxPageSize),
-					connPageToken,
-					true,
-					filtering.Filter{
-						CheckedExpr: dstCheckedExpr,
-					},
-				)
+			executeDataList := []*usagePB.ConnectorUsageData_UserUsageData_ConnectorExecuteData{}
 
-				if err != nil {
-					logger.Error(fmt.Sprintf("%s", err))
-				}
+			executeCount := u.redisClient.LLen(ctx, fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid())).Val() // O(1)
 
-				for _, conn := range dbDstConns {
-					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
-						dstConnConnectedStateNum++
+			if executeCount != 0 {
+				for i := int64(0); i < executeCount; i++ {
+					// LPop O(1)
+					timeStr, _ := time.Parse(time.RFC3339Nano, u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.execute_time", user.GetUid())).Val())
+					executeData := &usagePB.ConnectorUsageData_UserUsageData_ConnectorExecuteData{
+						ExecuteUid:             u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid())).Val(),
+						ExecuteTime:            timestamppb.New(timeStr),
+						ConnectorUid:           u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.connector_uid", user.GetUid())).Val(),
+						ConnectorDefinitionUid: u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.connector_definition_uid", user.GetUid())).Val(),
+						Status:                 mgmtPB.Status(mgmtPB.Status_value[u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.status", user.GetUid())).Val()]),
 					}
-					if conn.State == datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED) {
-						dstConnDisconnectedStateNum++
-					}
-					dstConnDef, err := u.connectorData.GetConnectorDefinitionByUid(conn.ConnectorDefinitionUID)
-					if err != nil {
-						logger.Error(fmt.Sprintf("%s", err))
-					}
-					dstConnDefSet[dstConnDef.GetId()] = struct{}{}
-				}
-
-				if connNextPageToken == "" {
-					break
-				} else {
-					connPageToken = connNextPageToken
+					executeDataList = append(executeDataList, executeData)
 				}
 			}
 
+			// Cleanup in case of length mismatch between lists
+			u.redisClient.Unlink(
+				ctx,
+				fmt.Sprintf("user:%s:execute.execute_time", user.GetUid()),
+				fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid()),
+				fmt.Sprintf("user:%s:execute.connector_uid", user.GetUid()),
+				fmt.Sprintf("user:%s:execute.connector_definition_uid", user.GetUid()),
+				fmt.Sprintf("user:%s:execute.status", user.GetUid()),
+			)
+
 			pbConnectorUsageData = append(pbConnectorUsageData, &usagePB.ConnectorUsageData_UserUsageData{
-				UserUid: user.GetUid(),
+				UserUid:              user.GetUid(),
+				ConnectorExecuteData: executeDataList,
 			})
 
 		}

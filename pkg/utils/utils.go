@@ -6,10 +6,11 @@ import (
 
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 )
 
 const (
@@ -37,28 +38,36 @@ func IsBillableEvent(eventName string) bool {
 	return false
 }
 
-func NewDataPoint(
-	ownerUUID string,
-	connectorExecuteId string,
-	connector *datamodel.Connector,
-	pipelineMetadata *structpb.Value,
-	startTime time.Time,
-) *write.Point {
+type UsageMetricData struct {
+	OwnerUID               string
+	Status                 mgmtPB.Status
+	ConnectorID            string
+	ConnectorUID           string
+	ConnectorExecuteUID    string
+	ConnectorDefinitionUid string
+	ExecuteTime            time.Time
+	ComputeTimeDuration    float64
+}
+
+func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write.Point {
 	pipelineOwnerUUID, _ := resource.GetPermalinkUID(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue())
 	return influxdb2.NewPoint(
 		"connector.execute",
-		map[string]string{},
+		map[string]string{
+			"status": data.Status.String(),
+		},
 		map[string]interface{}{
 			"pipeline_id":              pipelineMetadata.GetStructValue().GetFields()["id"].GetStringValue(),
 			"pipeline_uid":             pipelineMetadata.GetStructValue().GetFields()["uid"].GetStringValue(),
 			"pipeline_owner":           pipelineOwnerUUID,
 			"pipeline_trigger_id":      pipelineMetadata.GetStructValue().GetFields()["trigger_id"].GetStringValue(),
-			"connector_owner_uid":      ownerUUID,
-			"connector_id":             connector.ID,
-			"connector_uid":            connector.UID.String(),
-			"connector_definition_uid": connector.ConnectorDefinitionUID.String(),
-			"connector_execute_id":     connectorExecuteId,
-			"execute_time":             startTime.Format(time.RFC3339Nano),
+			"connector_owner_uid":      data.OwnerUID,
+			"connector_id":             data.ConnectorID,
+			"connector_uid":            data.ConnectorExecuteUID,
+			"connector_definition_uid": data.ConnectorDefinitionUid,
+			"connector_execute_id":     data.ConnectorExecuteUID,
+			"execute_time":             data.ExecuteTime.Format(time.RFC3339Nano),
+			"compute_time_duration":    data.ComputeTimeDuration,
 		},
 		time.Now(),
 	)

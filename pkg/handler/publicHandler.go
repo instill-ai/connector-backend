@@ -1519,18 +1519,20 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		return resp, st.Err()
 	}
 
-	dataPoint := utils.NewDataPoint(
-		*owner.Uid,
-		logUUID.String(),
-		connector,
-		req.GetInputs()[0].Metadata.GetFields()["pipeline"],
-		startTime,
-	)
+	dataPoint := utils.UsageMetricData{
+		OwnerUID:               *owner.Uid,
+		ConnectorID:            connector.ID,
+		ConnectorUID:           connector.UID.String(),
+		ConnectorExecuteUID:    logUUID.String(),
+		ConnectorDefinitionUid: connector.ConnectorDefinitionUID.String(),
+		ExecuteTime:            startTime,
+	}
 
 	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
-		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
-		h.service.WriteNewDataPoint(dataPoint.AddTag("status", mgmtPB.Status_STATUS_ERRORED.String()))
+		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
+		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED
+		h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
 		return nil, err
 	} else {
 		resp.Outputs = outputs
@@ -1540,8 +1542,9 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 			owner,
 			eventName,
 		)))
-		dataPoint = dataPoint.AddField("compute_time_duration", time.Since(startTime).Seconds())
-		h.service.WriteNewDataPoint(dataPoint.AddTag("status", mgmtPB.Status_STATUS_COMPLETED.String()))
+		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
+		dataPoint.Status = mgmtPB.Status_STATUS_COMPLETED
+		h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
 	}
 	return resp, nil
 
