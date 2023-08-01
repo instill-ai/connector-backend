@@ -14,6 +14,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 
+	taskPB "github.com/instill-ai/protogen-go/common/task/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -62,7 +63,7 @@ func PBToDBConnector(
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
 		Visibility:             datamodel.ConnectorVisibility(pbConnector.Visibility),
-		Task:                   datamodel.Task(connectorPB.Task_TASK_UNSPECIFIED),
+		Task:                   datamodel.Task(taskPB.Task_TASK_UNSPECIFIED),
 
 		Configuration: func() []byte {
 			if configuration != nil {
@@ -104,7 +105,7 @@ func DBToPBConnector(
 		CreateTime:              timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
 		Visibility:              connectorPB.Connector_Visibility(dbConnector.Visibility),
-		Task:                    connectorPB.Task(dbConnector.Task),
+		Task:                    taskPB.Task(dbConnector.Task),
 
 		Configuration: func() *structpb.Struct {
 			if dbConnector.Configuration != nil {

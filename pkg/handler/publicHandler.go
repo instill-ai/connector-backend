@@ -41,6 +41,7 @@ import (
 	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
+	taskPB "github.com/instill-ai/protogen-go/common/task/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -456,7 +457,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		ConnectorType:          datamodel.ConnectorType(connDefResp.ConnectorDefinition.GetConnectorType()),
 		Description:            connDesc,
 		Visibility:             datamodel.ConnectorVisibility(req.Connector.Visibility),
-		Task:                   datamodel.Task(connectorPB.Task_TASK_UNSPECIFIED),
+		Task:                   datamodel.Task(taskPB.Task_TASK_UNSPECIFIED),
 	}
 
 	dbConnector, err = h.service.CreateConnector(ctx, owner, dbConnector)

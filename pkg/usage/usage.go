@@ -151,16 +151,8 @@ func (u *usage) RetrieveUsageData() interface{} {
 				}
 			}
 
-			dstConnDefs := make([]string, 0, len(dstConnDefSet))
-			for k := range dstConnDefSet {
-				dstConnDefs = append(dstConnDefs, k)
-			}
-
 			pbConnectorUsageData = append(pbConnectorUsageData, &usagePB.ConnectorUsageData_UserUsageData{
-				UserUid:                                  user.GetUid(),
-				DestinationConnectorConnectedStateNum:    dstConnConnectedStateNum,
-				DestinationConnectorDisconnectedStateNum: dstConnDisconnectedStateNum,
-				DestinationConnectorDefinitionIds:        dstConnDefs,
+				UserUid: user.GetUid(),
 			})
 
 		}
