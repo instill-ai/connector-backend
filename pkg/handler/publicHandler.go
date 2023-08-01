@@ -1525,14 +1525,14 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		ConnectorUID:           connector.UID.String(),
 		ConnectorExecuteUID:    logUUID.String(),
 		ConnectorDefinitionUid: connector.ConnectorDefinitionUID.String(),
-		ExecuteTime:            startTime,
+		ExecuteTime:            startTime.Format(time.RFC3339Nano),
 	}
 
 	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED
-		h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
+		_ = h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
 		return nil, err
 	} else {
 		resp.Outputs = outputs
@@ -1544,7 +1544,9 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		)))
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_COMPLETED
-		h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
+		if err := h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"]); err != nil {
+			logger.Warn("usage and metric data write fail")
+		}
 	}
 	return resp, nil
 

@@ -57,7 +57,7 @@ type Service interface {
 	DeleteResourceState(uid uuid.UUID) error
 
 	// Influx API
-	WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value)
+	WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) error
 }
 
 type service struct {

@@ -2,6 +2,7 @@ package usage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/connector-backend/pkg/utils"
 	"github.com/instill-ai/x/repo"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -91,32 +93,32 @@ func (u *usage) RetrieveUsageData() interface{} {
 
 			executeDataList := []*usagePB.ConnectorUsageData_UserUsageData_ConnectorExecuteData{}
 
-			executeCount := u.redisClient.LLen(ctx, fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid())).Val() // O(1)
+			executeCount := u.redisClient.LLen(ctx, fmt.Sprintf("user:%s:connector.execute_data", user.GetUid())).Val() // O(1)
 
 			if executeCount != 0 {
 				for i := int64(0); i < executeCount; i++ {
 					// LPop O(1)
-					timeStr, _ := time.Parse(time.RFC3339Nano, u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.execute_time", user.GetUid())).Val())
-					executeData := &usagePB.ConnectorUsageData_UserUsageData_ConnectorExecuteData{
-						ExecuteUid:             u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid())).Val(),
-						ExecuteTime:            timestamppb.New(timeStr),
-						ConnectorUid:           u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.connector_uid", user.GetUid())).Val(),
-						ConnectorDefinitionUid: u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.connector_definition_uid", user.GetUid())).Val(),
-						Status:                 mgmtPB.Status(mgmtPB.Status_value[u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:execute.status", user.GetUid())).Val()]),
+					strData := u.redisClient.LPop(ctx, fmt.Sprintf("user:%s:connector.execute_data", user.GetUid())).Val()
+
+					executeData := &utils.UsageMetricData{}
+					if err := json.Unmarshal([]byte(strData), executeData); err != nil {
+						logger.Warn("Usage data might be corrupted")
 					}
-					executeDataList = append(executeDataList, executeData)
+
+					executeTime, _ := time.Parse(time.RFC3339Nano, executeData.ExecuteTime)
+
+					executeDataList = append(
+						executeDataList,
+						&usagePB.ConnectorUsageData_UserUsageData_ConnectorExecuteData{
+							ExecuteUid:             executeData.ConnectorExecuteUID,
+							ExecuteTime:            timestamppb.New(executeTime),
+							ConnectorUid:           executeData.ConnectorUID,
+							ConnectorDefinitionUid: executeData.ConnectorDefinitionUid,
+							Status:                 executeData.Status,
+						},
+					)
 				}
 			}
-
-			// Cleanup in case of length mismatch between lists
-			u.redisClient.Unlink(
-				ctx,
-				fmt.Sprintf("user:%s:execute.execute_time", user.GetUid()),
-				fmt.Sprintf("user:%s:execute.execute_uid", user.GetUid()),
-				fmt.Sprintf("user:%s:execute.connector_uid", user.GetUid()),
-				fmt.Sprintf("user:%s:execute.connector_definition_uid", user.GetUid()),
-				fmt.Sprintf("user:%s:execute.status", user.GetUid()),
-			)
 
 			pbConnectorUsageData = append(pbConnectorUsageData, &usagePB.ConnectorUsageData_UserUsageData{
 				UserUid:              user.GetUid(),

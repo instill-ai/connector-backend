@@ -45,7 +45,7 @@ type UsageMetricData struct {
 	ConnectorUID           string
 	ConnectorExecuteUID    string
 	ConnectorDefinitionUid string
-	ExecuteTime            time.Time
+	ExecuteTime            string
 	ComputeTimeDuration    float64
 }
 
@@ -66,7 +66,7 @@ func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write
 			"connector_uid":            data.ConnectorExecuteUID,
 			"connector_definition_uid": data.ConnectorDefinitionUid,
 			"connector_execute_id":     data.ConnectorExecuteUID,
-			"execute_time":             data.ExecuteTime.Format(time.RFC3339Nano),
+			"execute_time":             data.ExecuteTime,
 			"compute_time_duration":    data.ComputeTimeDuration,
 		},
 		time.Now(),

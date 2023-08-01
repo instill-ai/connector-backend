@@ -2,21 +2,28 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/utils"
 )
 
-func (s *service) WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) {
+func (s *service) WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) error {
 
-	s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:execute.execute_time", data.OwnerUID), data.ExecuteTime.Format(time.RFC3339Nano))
-	s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:execute.execute_uid", data.OwnerUID), data.ConnectorExecuteUID)
-	s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:execute.connector_uid", data.OwnerUID), data.ConnectorUID)
-	s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:execute.connector_definition_uid", data.OwnerUID), data.ConnectorDefinitionUid)
-	s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:execute.status", data.OwnerUID), data.Status.String())
+	if config.Config.Server.Usage.Enabled {
+
+		bData, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+
+		s.redisClient.RPush(ctx, fmt.Sprintf("user:%s:connector.execute_data", data.OwnerUID), string(bData))
+	}
 
 	s.influxDBWriteClient.WritePoint(utils.NewDataPoint(data, pipelineMetadata))
+
+	return nil
 }
