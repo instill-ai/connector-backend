@@ -748,7 +748,6 @@ github.com/influxdata/influxdb-client-go/v2 v2.12.3 h1:28nRlNMRIV4QbtIUvxhWqaxn0
 github.com/influxdata/influxdb-client-go/v2 v2.12.3/go.mod h1:IrrLUbCjjfkmRuaCiGQg4m2GbkaeJDcuWoxiWdQEbA0=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
-<<<<<<< HEAD
 github.com/instill-ai/connector v0.2.0-alpha.0.20230801091210-6dd88b698d85 h1:y2ZTrCT7Tit8vgiatq9bvW5LmFmELRwgKSmY9UeEr8M=
 github.com/instill-ai/connector v0.2.0-alpha.0.20230801091210-6dd88b698d85/go.mod h1:pWSwUcs6PwnWU+5LOxYVTTekksHTxlRKJ5jB8KS2t2A=
 github.com/instill-ai/connector-ai v0.2.0-alpha.0.20230801103851-4750a6868e87 h1:BRk1E/QSiSuiMt6xbrQG0quDNI9EcoOZ8H4NrFzj15Y=
@@ -759,18 +758,6 @@ github.com/instill-ai/connector-data v0.0.0-20230801111356-284ae94ed203 h1:jARrq
 github.com/instill-ai/connector-data v0.0.0-20230801111356-284ae94ed203/go.mod h1:0Wy7bTjd55z8k6MNrjtLSUFMPBGUeOf5JB9/cjFAbHw=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801085304-c9e30fb0f220 h1:moXVYUrVc8N4TFNVykVCiW5Ens2EzI09GhyuNV6F3u4=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801085304-c9e30fb0f220/go.mod h1:qsq5ecnA1xi2rLnVQFo/9xksA7I7wQu8c7rqM5xbIrQ=
-=======
-github.com/instill-ai/connector v0.2.0-alpha.0.20230724051505-16610a2b30d4 h1:EQlkZ1QsMY3/W4bF6qL3SjII1qEKEa0n6XKRefCzIY8=
-github.com/instill-ai/connector v0.2.0-alpha.0.20230724051505-16610a2b30d4/go.mod h1:8L3fikA244oinWaSQk7/zyJ3xb81HgGezoWFxNDXBgk=
-github.com/instill-ai/connector-ai v0.2.0-alpha.0.20230724053154-09e787a5b8d0 h1:nzd1IvehSdSsNNsfcEK3iJSE9NNw4vnTDYggT7WuPUM=
-github.com/instill-ai/connector-ai v0.2.0-alpha.0.20230724053154-09e787a5b8d0/go.mod h1:/czSDepJPPC4HxrW847C07J/W3sTkbSAyWlBJFNbVxI=
-github.com/instill-ai/connector-blockchain v0.2.0-alpha.0.20230724053200-6214cf2b24fa h1:WvixwQXcb8vq6J7b1Ydo7ZMFxbIwy5Tiy/ePEdQ/ZJk=
-github.com/instill-ai/connector-blockchain v0.2.0-alpha.0.20230724053200-6214cf2b24fa/go.mod h1:byl/ETZ9VflG4S1o48cslNnHE/SUVO+t9WdTZ8Fny7k=
-github.com/instill-ai/connector-data v0.0.0-20230801040113-299b2e4908d1 h1:v/t9+qei3aFnlmBJ3KxgJymOMjSthLG3KmBZBlZbmoM=
-github.com/instill-ai/connector-data v0.0.0-20230801040113-299b2e4908d1/go.mod h1:TXV5fOxUqBDbI0XYGsuZexF/WO9383qssUWVApotPec=
-github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801054209-3434c24f09a7 h1:uEoB5nlh7Iod2VJqBj5Nf4m3hLlQ1051srA8cxItvsg=
-github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801054209-3434c24f09a7/go.mod h1:qsq5ecnA1xi2rLnVQFo/9xksA7I7wQu8c7rqM5xbIrQ=
->>>>>>> 58af572 (chore(usage): update usage collection data format)
 github.com/instill-ai/usage-client v0.2.4-alpha h1:mYXd62eZsmGKBlzwMcdEgTBgn8zlbagYUHro6+p50c8=
 github.com/instill-ai/usage-client v0.2.4-alpha/go.mod h1:BMxgyr02sqH6SeITXSV4M1ewwvfklzXIc5yzIqaN0c8=
 github.com/instill-ai/x v0.3.0-alpha h1:z9fedROOG2dVHhswBfVwU/hzHuq8/JKSUON7inF+FH8=
