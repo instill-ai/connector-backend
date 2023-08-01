@@ -4,14 +4,10 @@ import { check, group } from "k6";
 import { connectorPublicHost, pipelinePublicHost } from "./const.js"
 
 import * as constant from "./const.js"
-import * as sourceConnectorDefinition from './rest-source-connector-definition.js';
-import * as destinationConnectorDefinition from './rest-destination-connector-definition.js';
-import * as sourceConnectorPublic from './rest-source-connector-public.js';
-import * as destinationConnectorPublic from './rest-destination-connector-public.js';
-import * as sourceConnectorPublicWithJwt from './rest-source-connector-public-with-jwt.js';
-import * as destinationConnectorPublicWithJwt from './rest-destination-connector-public-with-jwt.js';
-import * as sourceConnectorPrivate from './rest-source-connector-private.js';
-import * as destinationConnectorPrivate from './rest-destination-connector-private.js';
+import * as dataConnectorDefinition from './rest-data-connector-definition.js';
+import * as dataConnectorPublic from './rest-data-connector-public.js';
+import * as dataConnectorPublicWithJwt from './rest-data-connector-public-with-jwt.js';
+import * as dataConnectorPrivate from './rest-data-connector-private.js';
 
 export let options = {
   setupTimeout: '300s',
@@ -48,67 +44,39 @@ export default function (data) {
 
   // private API do not expose to public.
   if (!constant.apiGatewayMode) {
-    // Source connectors
-    sourceConnectorPrivate.CheckList()
-    sourceConnectorPrivate.CheckLookUp()
 
-    // Destination connectors
-    destinationConnectorPrivate.CheckList()
-    destinationConnectorPrivate.CheckLookUp()
+    // data connectors
+    dataConnectorPrivate.CheckList()
+    dataConnectorPrivate.CheckLookUp()
 
-    // Source public with jwt-sub
-    sourceConnectorPublicWithJwt.CheckCreate()
-    sourceConnectorPublicWithJwt.CheckList()
-    sourceConnectorPublicWithJwt.CheckGet()
-    sourceConnectorPublicWithJwt.CheckUpdate()
-    sourceConnectorPublicWithJwt.CheckDelete()
-    sourceConnectorPublicWithJwt.CheckLookUp()
-    sourceConnectorPublicWithJwt.CheckState()
-    sourceConnectorPublicWithJwt.CheckRename()
-    sourceConnectorPublicWithJwt.CheckTest()
-
-    // Destination public with jwt-sub
-    destinationConnectorPublicWithJwt.CheckCreate()
-    destinationConnectorPublicWithJwt.CheckList()
-    destinationConnectorPublicWithJwt.CheckGet()
-    destinationConnectorPublicWithJwt.CheckUpdate()
-    destinationConnectorPublicWithJwt.CheckLookUp()
-    destinationConnectorPublicWithJwt.CheckState()
-    destinationConnectorPublicWithJwt.CheckRename()
-    destinationConnectorPublicWithJwt.CheckExecute()
-    destinationConnectorPublicWithJwt.CheckTest()
+    // data public with jwt-sub
+    dataConnectorPublicWithJwt.CheckCreate()
+    dataConnectorPublicWithJwt.CheckList()
+    dataConnectorPublicWithJwt.CheckGet()
+    dataConnectorPublicWithJwt.CheckUpdate()
+    dataConnectorPublicWithJwt.CheckLookUp()
+    dataConnectorPublicWithJwt.CheckState()
+    dataConnectorPublicWithJwt.CheckRename()
+    dataConnectorPublicWithJwt.CheckExecute()
+    dataConnectorPublicWithJwt.CheckTest()
   }
 
-  // Source connector definitions
-  sourceConnectorDefinition.CheckList()
-  sourceConnectorDefinition.CheckGet()
 
-  // Destination connector definitions
-  destinationConnectorDefinition.CheckList()
-  destinationConnectorDefinition.CheckGet()
+  // data connector definitions
+  dataConnectorDefinition.CheckList()
+  dataConnectorDefinition.CheckGet()
 
-  // Source connectors
-  sourceConnectorPublic.CheckCreate()
-  sourceConnectorPublic.CheckList()
-  sourceConnectorPublic.CheckGet()
-  sourceConnectorPublic.CheckUpdate()
-  sourceConnectorPublic.CheckDelete()
-  sourceConnectorPublic.CheckLookUp()
-  sourceConnectorPublic.CheckState()
-  sourceConnectorPublic.CheckRename()
-  sourceConnectorPublic.CheckTest()
-
-  // Destination connectors
-  destinationConnectorPublic.CheckCreate()
-  destinationConnectorPublic.CheckList()
-  destinationConnectorPublic.CheckGet()
-  destinationConnectorPublic.CheckUpdate()
-  destinationConnectorPublic.CheckConnect()
-  destinationConnectorPublic.CheckLookUp()
-  destinationConnectorPublic.CheckState()
-  destinationConnectorPublic.CheckRename()
-  destinationConnectorPublic.CheckExecute()
-  destinationConnectorPublic.CheckTest()
+  // data connectors
+  dataConnectorPublic.CheckCreate()
+  dataConnectorPublic.CheckList()
+  dataConnectorPublic.CheckGet()
+  dataConnectorPublic.CheckUpdate()
+  dataConnectorPublic.CheckConnect()
+  dataConnectorPublic.CheckLookUp()
+  dataConnectorPublic.CheckState()
+  dataConnectorPublic.CheckRename()
+  dataConnectorPublic.CheckExecute()
+  dataConnectorPublic.CheckTest()
 
 }
 
@@ -117,14 +85,6 @@ export function teardown(data) {
     for (const pipeline of http.request("GET", `${pipelinePublicHost}/v1alpha/pipelines?page_size=100`).json("pipelines")) {
       check(http.request("DELETE", `${pipelinePublicHost}/v1alpha/pipelines/${pipeline.id}`), {
         [`DELETE /v1alpha/pipelines response status is 204`]: (r) => r.status === 204,
-      });
-    }
-  });
-
-  group("Connector API: Delete all source connector created by this test", () => {
-    for (const connector of http.request("GET", `${connectorPublicHost}/v1alpha/connectors`).json("connectors")) {
-      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${connector.id}`), {
-        [`DELETE /v1alpha/connectors/${connector.id} response status is 204`]: (r) => r.status === 204,
       });
     }
   });

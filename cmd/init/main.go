@@ -24,7 +24,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/repository"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
-	connectorDestinationAirbyte "github.com/instill-ai/connector-destination/pkg/airbyte"
+	connectorDataAirbyte "github.com/instill-ai/connector-data/pkg/airbyte"
 )
 
 type PrebuiltConnector struct {
@@ -81,7 +81,7 @@ func main() {
 
 	repository := repository.NewRepository(db)
 
-	airbyte := connectorDestinationAirbyte.Init(logger, connectorDestinationAirbyte.ConnectorOptions{
+	airbyte := connectorDataAirbyte.Init(logger, connectorDataAirbyte.ConnectorOptions{
 		MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
 		MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
 		MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
@@ -96,7 +96,7 @@ func main() {
 		panic(err)
 	}
 
-	airbyteConnector := airbyte.(*connectorDestinationAirbyte.Connector)
+	airbyteConnector := airbyte.(*connectorDataAirbyte.Connector)
 	var uids []uuid.UUID
 	for idx := range conns {
 		uid := conns[idx].ConnectorDefinitionUID

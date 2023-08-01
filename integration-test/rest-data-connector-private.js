@@ -20,7 +20,7 @@ export function CheckList() {
 
     group("Connector API: List destination connectors by admin", () => {
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA`), {
             [`GET /v1alpha/admin/connectors response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors response connectors array is 0 length`]: (r) => r.json().connectors.length === 0,
             [`GET /v1alpha/admin/connectors response next_page_token is empty`]: (r) => r.json().next_page_token === "",
@@ -47,49 +47,49 @@ export function CheckList() {
             });
         }
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA`), {
             [`GET /v1alpha/admin/connectors response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors response has connectors array`]: (r) => Array.isArray(r.json().connectors),
             [`GET /v1alpha/admin/connectors response has total_size = ${numConnectors}`]: (r) => r.json().total_size == numConnectors,
         });
 
-        var limitedRecords = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION`)
+        var limitedRecords = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA`)
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?page_size=0`), {
             "GET /v1alpha/admin/connectors?page_size=0 response status is 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=0 response all records": (r) => r.json().connectors.length === limitedRecords.json().connectors.length,
         });
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1`), {
             "GET /v1alpha/admin/connectors?page_size=1 response status is 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=1 response connectors size 1": (r) => r.json().connectors.length === 1,
         });
 
-        var pageRes = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1`)
+        var pageRes = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1`)
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?page_size=1&page_token=${pageRes.json().next_page_token}`), {
             [`GET /v1alpha/admin/connectors?page_size=1&page_token=${pageRes.json().next_page_token} response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors?page_size=1&page_token=${pageRes.json().next_page_token} response connectors size 1`]: (r) => r.json().connectors.length === 1,
         });
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1&view=VIEW_BASIC`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1&view=VIEW_BASIC`), {
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_BASIC response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_BASIC response connectors[0].configuration is null": (r) => r.json().connectors[0].configuration === null,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_BASIC response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
         });
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1&view=VIEW_FULL`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1&view=VIEW_FULL`), {
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0].configuration is not null": (r) => r.json().connectors[0].configuration !== null,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0].connector_definition_detail is not null": (r) => r.json().connectors[0].connector_definition_detail !== null,
             "GET /v1alpha/admin/connectors?page_size=1&view=VIEW_FULL response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
         });
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=1`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1`), {
             "GET /v1alpha/admin/connectors?page_size=1 response status 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connectors?page_size=1 response connectors[0].configuration is null": (r) => r.json().connectors[0].configuration === null,
             "GET /v1alpha/admin/connectors?page_size=1 response connectors[0].owner is UUID": (r) => helper.isValidOwner(r.json().connectors[0].user ),
         });
 
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION&page_size=${limitedRecords.json().total_size}`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connectors?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=${limitedRecords.json().total_size}`), {
             [`GET /v1alpha/admin/connectors?page_size=${limitedRecords.json().total_size} response status 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connectors?page_size=${limitedRecords.json().total_size} response next_page_token is empty`]: (r) => r.json().next_page_token === ""
         });

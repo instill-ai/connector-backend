@@ -107,7 +107,7 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 	}
 
 	// Validation: trigger and responsee connector
-	if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
+	if connDef.GetId() == constant.StartConnectorId || connDef.GetId() == constant.EndConnectorId {
 		if connector.ID != connDef.GetId() {
 			st, err := sterr.CreateErrorBadRequest(
 				"[service] create connector",
@@ -160,7 +160,7 @@ func (s *service) CreateConnector(ctx context.Context, owner *mgmtPB.User, conne
 		return nil, err
 	}
 
-	if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
+	if connDef.GetId() == constant.StartConnectorId || connDef.GetId() == constant.EndConnectorId {
 		// User desire state = CONNECTED
 		if err := s.repository.UpdateConnectorStateByID(ctx, connector.ID, connector.Owner, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
@@ -262,7 +262,7 @@ func (s *service) UpdateConnector(ctx context.Context, id string, owner *mgmtPB.
 		return nil, err
 	}
 
-	if def.GetId() == constant.TriggerConnectorId || def.GetId() == constant.ResponseConnectorId {
+	if def.GetId() == constant.StartConnectorId || def.GetId() == constant.EndConnectorId {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector",
 			[]*errdetails.PreconditionFailure_Violation{
@@ -371,7 +371,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 
 	switch state {
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED):
-		if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
+		if connDef.GetId() == constant.StartConnectorId || connDef.GetId() == constant.EndConnectorId {
 			break
 		}
 
@@ -412,7 +412,7 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 
 	case datamodel.ConnectorState(connectorPB.Connector_STATE_DISCONNECTED):
 
-		if connDef.GetId() == constant.TriggerConnectorId || connDef.GetId() == constant.ResponseConnectorId {
+		if connDef.GetId() == constant.StartConnectorId || connDef.GetId() == constant.EndConnectorId {
 			st, err := sterr.CreateErrorPreconditionFailure(
 				"[service] update connector state",
 				[]*errdetails.PreconditionFailure_Violation{
@@ -461,7 +461,7 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 		return nil, err
 	}
 
-	if def.GetId() == constant.TriggerConnectorId || def.GetId() == constant.ResponseConnectorId {
+	if def.GetId() == constant.StartConnectorId || def.GetId() == constant.EndConnectorId {
 		st, err := sterr.CreateErrorPreconditionFailure(
 			"[service] update connector id",
 			[]*errdetails.PreconditionFailure_Violation{

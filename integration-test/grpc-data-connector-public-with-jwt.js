@@ -22,9 +22,9 @@ export function CheckCreate() {
             plaintext: true
         });
 
-        // response
+        // end
         var httpDstConnector = {
-            "id": "response",
+            "id": "end-operator",
             "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
@@ -86,7 +86,7 @@ export function CheckList() {
 
         // Cannot list destination connector of a non-exist user
         check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {
-            filter: "connector_type=CONNECTOR_TYPE_DESTINATION",
+            filter: "connector_type=CONNECTOR_TYPE_DATA",
         }, constant.paramsGRPCWithJwt), {
             [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListConnectors response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
         })

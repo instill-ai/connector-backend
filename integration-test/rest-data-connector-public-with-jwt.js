@@ -11,9 +11,9 @@ export function CheckCreate() {
 
     group(`Connector API: Create destination connectors [with random "jwt-sub" header]`, () => {
 
-        // response
+        // end
         var httpDstConnector = {
-            "id": "response",
+            "id": "end-operator",
             "connector_definition_name": constant.dstDefRscName,
             "description": "HTTP source",
             "configuration": {},
@@ -37,7 +37,7 @@ export function CheckList() {
     group(`Connector API: List destination connectors [with random "jwt-sub" header]`, () => {
 
         // Cannot list destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DESTINATION`, null, constant.paramsHTTPWithJwt), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DATA`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] GET /v1alpha/connectors response status is 404`]: (r) => r.status === 404,
         });
     });
