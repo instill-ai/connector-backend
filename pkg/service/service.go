@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/influxdata/influxdb-client-go/v2/api"
-	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/redis/go-redis/v9"
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -18,6 +18,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/connector-backend/pkg/utils"
 	"github.com/instill-ai/x/sterr"
 
 	connectorBase "github.com/instill-ai/connector/pkg/base"
@@ -56,7 +57,7 @@ type Service interface {
 	DeleteResourceState(uid uuid.UUID) error
 
 	// Influx API
-	WriteNewDataPoint(p *write.Point)
+	WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) error
 }
 
 type service struct {
@@ -66,6 +67,7 @@ type service struct {
 	controllerClient            controllerPB.ControllerPrivateServiceClient
 	connectorAll                connectorBase.IConnector
 	influxDBWriteClient         api.WriteAPI
+	redisClient                 *redis.Client
 }
 
 // NewService initiates a service instance
@@ -75,6 +77,7 @@ func NewService(
 	u mgmtPB.MgmtPrivateServiceClient,
 	p pipelinePB.PipelinePublicServiceClient,
 	c controllerPB.ControllerPrivateServiceClient,
+	rc *redis.Client,
 	i api.WriteAPI,
 ) Service {
 	logger, _ := logger.GetZapLogger(t)
@@ -84,6 +87,7 @@ func NewService(
 		pipelinePublicServiceClient: p,
 		controllerClient:            c,
 		connectorAll:                connector.InitConnectorAll(logger),
+		redisClient:                 rc,
 		influxDBWriteClient:         i,
 	}
 }

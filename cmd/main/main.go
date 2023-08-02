@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -147,6 +148,9 @@ func main() {
 		defer controllerClientConn.Close()
 	}
 
+	redisClient := redis.NewClient(&config.Config.Cache.Redis.RedisOptions)
+	defer redisClient.Close()
+
 	influxDBClient, influxDBWriteClient := external.InitInfluxDBServiceClient(ctx)
 	defer influxDBClient.Close()
 
@@ -175,6 +179,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
+				redisClient,
 				influxDBWriteClient,
 			)))
 
@@ -188,6 +193,7 @@ func main() {
 				mgmtPrivateServiceClient,
 				pipelinePublicServiceClient,
 				controllerClient,
+				redisClient,
 				influxDBWriteClient,
 			)))
 
@@ -232,7 +238,7 @@ func main() {
 			logger.Info("try to start usage reporter")
 			go func() {
 				for {
-					usg = usage.NewUsage(ctx, repository, mgmtPrivateServiceClient, usageServiceClient)
+					usg = usage.NewUsage(ctx, repository, mgmtPrivateServiceClient, redisClient, usageServiceClient)
 					if usg != nil {
 						usg.StartReporter(ctx)
 						logger.Info("usage reporter started")
