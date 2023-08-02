@@ -1,6 +1,6 @@
 [
   {
-    "id": "instill-stable-diffusion-xl-1024-v0-9",
+    "id": "instill-stable-diffusion-xl-1024-v1-0",
     "uid": "9cb733e3-d1ca-4240-ae78-2b5d897530db",
     "connector_definition_uid": "c86a95cc-7d32-4e22-a290-8c699f6705a4",
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
@@ -8,11 +8,11 @@
     "configuration": {
       "api_key": "<CFG_CONNECTORAI_STABILITYAI_APIKEY>",
       "task": "Text to Image",
-      "engine": "stable-diffusion-xl-1024-v0-9"
+      "engine": "stable-diffusion-xl-1024-v1-0"
     }
   },
   {
-    "id": "instill-stable-diffusion-xl-1024-v0-9-image-to-image",
+    "id": "instill-stable-diffusion-xl-1024-v1-0-image-to-image",
     "uid": "9c31de6c-7b5d-4cbf-a86a-8e21c203b746",
     "connector_definition_uid": "c86a95cc-7d32-4e22-a290-8c699f6705a4",
     "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
@@ -20,7 +20,7 @@
     "configuration": {
       "api_key": "<CFG_CONNECTORAI_STABILITYAI_APIKEY>",
       "task": "Image to Image",
-      "engine": "stable-diffusion-xl-1024-v0-9"
+      "engine": "stable-diffusion-xl-1024-v1-0"
     }
   },
   {
@@ -159,6 +159,18 @@
       "api_key": "<CFG_CONNECTORAI_OPENAI_APIKEY>",
       "task": "Text Embeddings",
       "model": "text-embedding-ada-002"
+    }
+  },
+  {
+    "id": "instill-openai-speech-recognition-whisper-1",
+    "uid": "337d8e5a-a1bf-4036-8ef3-8fec27095c53",
+    "connector_definition_uid": "9fb6a2cb-bff5-4c69-bc6d-4538dd8e3362",
+    "owner": "users/eeaf4fe1-5725-4802-98b9-6165bd2b1e58",
+    "task": "TASK_SPEECH_RECOGNITION",
+    "configuration": {
+      "api_key": "<CFG_CONNECTORAI_OPENAI_APIKEY>",
+      "task": "Speech Recognition",
+      "model": "whisper-1"
     }
   }
 ]
