@@ -752,8 +752,8 @@ github.com/instill-ai/connector v0.3.0-alpha h1:LidxuKead9F0XaNxGjtQj91z0PNxbZYm
 github.com/instill-ai/connector v0.3.0-alpha/go.mod h1:pWSwUcs6PwnWU+5LOxYVTTekksHTxlRKJ5jB8KS2t2A=
 github.com/instill-ai/connector-ai v0.3.0-alpha h1:putdeCBkxfLBJb4Kk79q71j6Z2QfKis6AQoEJPK1KcE=
 github.com/instill-ai/connector-ai v0.3.0-alpha/go.mod h1:3JfMMVQl3rp0VvWv9M0dmwqmUodsE1DAQd0x+Z1kji4=
-github.com/instill-ai/connector-blockchain v0.3.0-alpha h1:k7YtvWvM1pBZXv2UyFf8NPWxrILeut/9FoZA1LoOjtc=
-github.com/instill-ai/connector-blockchain v0.3.0-alpha/go.mod h1:HgjxcO2D9GLA3cDpIwdy3r8pDTgX3RHj8iNQ3r3JKE8=
+github.com/instill-ai/connector-blockchain v0.2.0-alpha.0.20230803134715-6badd48997d1 h1:iLZxUqHFuebItb4MTsVrDTQtycoMYtfqx+9TbRJ4LLU=
+github.com/instill-ai/connector-blockchain v0.2.0-alpha.0.20230803134715-6badd48997d1/go.mod h1:HgjxcO2D9GLA3cDpIwdy3r8pDTgX3RHj8iNQ3r3JKE8=
 github.com/instill-ai/connector-data v0.3.0-alpha h1:AfrABM6Pa5iDwEEqD6zaeYe5wJrZ9uv3sdTeTsRkhoo=
 github.com/instill-ai/connector-data v0.3.0-alpha/go.mod h1:fcHQJL+oyzj8wQENe9YmsV6Mo765h1RuWkSsBQ9yTbg=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230801085304-c9e30fb0f220 h1:moXVYUrVc8N4TFNVykVCiW5Ens2EzI09GhyuNV6F3u4=
