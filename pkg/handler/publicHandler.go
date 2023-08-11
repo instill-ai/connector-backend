@@ -270,8 +270,6 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 	var connDefRscName string
 
 	resp = &connectorPB.CreateConnectorResponse{}
-	fmt.Println()
-	fmt.Println(req)
 
 	// Set all OUTPUT_ONLY fields to zero value on the requested payload
 	if err := checkfield.CheckCreateOutputOnlyFields(req.GetConnector(), outputOnlyFields); err != nil {
@@ -309,8 +307,7 @@ func (h *PublicHandler) CreateConnector(ctx context.Context, req *connectorPB.Cr
 		return resp, st.Err()
 	}
 
-	// TODO
-	// Validate DestinationConnector JSON Schema
+	// Validate JSON Schema
 	configLoader := connectorConfigLoader.InitJSONSchema(logger)
 	if err := connectorConfigLoader.ValidateJSONSchema(configLoader.ConnJSONSchema, req.GetConnector(), false); err != nil {
 		st, err := sterr.CreateErrorBadRequest(
@@ -1528,11 +1525,20 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		ExecuteTime:            startTime.Format(time.RFC3339Nano),
 	}
 
+	md, _ := metadata.FromIncomingContext(ctx)
+
+	pipelineVal, _ := structpb.NewValue(map[string]interface{}{
+		"id":         md.Get("id")[0],
+		"uid":        md.Get("uid")[0],
+		"owner":      md.Get("owner")[0],
+		"trigger_id": md.Get("trigger_id")[0],
+	})
+
 	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED
-		_ = h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"])
+		_ = h.service.WriteNewDataPoint(ctx, dataPoint, pipelineVal)
 		return nil, err
 	} else {
 		resp.Outputs = outputs
@@ -1544,7 +1550,7 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 		)))
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_COMPLETED
-		if err := h.service.WriteNewDataPoint(ctx, dataPoint, req.GetInputs()[0].Metadata.GetFields()["pipeline"]); err != nil {
+		if err := h.service.WriteNewDataPoint(ctx, dataPoint, pipelineVal); err != nil {
 			logger.Warn("usage and metric data write fail")
 		}
 	}
