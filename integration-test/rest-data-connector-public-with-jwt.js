@@ -13,11 +13,10 @@ export function CheckCreate() {
 
         // end
         var httpDstConnector = {
-            "id": "end-operator",
-            "connector_definition_name": constant.dstDefRscName,
-            "description": "HTTP source",
-            "configuration": {},
-
+            "id": randomString(10),
+            "connector_definition_name": constant.csvDstDefRscName,
+            "description": randomString(50),
+            "configuration": constant.csvDstConfig,
         }
 
 

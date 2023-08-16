@@ -22,36 +22,6 @@ export function CheckCreate() {
             plaintext: true
         });
 
-        // end
-        var httpDstConnector = {
-            "id": "end-operator",
-            "connector_definition_name": constant.dstDefRscName,
-            "description": "HTTP source",
-            "configuration": {},
-        }
-
-        var resDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpDstConnector
-        })
-
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnector', {
-            name: `connectors/${httpDstConnector.id}`
-        })
-
-        check(resDst, {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusOK": (r) => r.status === grpc.StatusOK,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector name": (r) => r.message.connector.name == `connectors/${httpDstConnector.id}`,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector uid": (r) => helper.isUUID(r.message.connector.uid),
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector connectorDefinition": (r) => r.message.connector.connectorDefinitionName === constant.dstDefRscName,
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response destinationConnector owner is UUID": (r) => helper.isValidOwner(r.message.connector.user),
-        });
-
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpDstConnector
-        }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnector response StatusAlreadyExists": (r) => r.status === grpc.StatusAlreadyExists,
-        });
-
         // destination-csv
         var csvDstConnector = {
             "id": randomString(10),
@@ -158,12 +128,6 @@ export function CheckCreate() {
         // });
 
         // Delete test records
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-            name: `connectors/${resDst.message.connector.id}`
-        }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${resDst.message.connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-        });
-
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
             name: `connectors/${resCSVDst.message.connector.id}`
         }), {

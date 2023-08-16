@@ -1527,12 +1527,15 @@ func (h *PublicHandler) ExecuteConnector(ctx context.Context, req *connectorPB.E
 
 	md, _ := metadata.FromIncomingContext(ctx)
 
-	pipelineVal, _ := structpb.NewValue(map[string]interface{}{
-		"id":         md.Get("id")[0],
-		"uid":        md.Get("uid")[0],
-		"owner":      md.Get("owner")[0],
-		"trigger_id": md.Get("trigger_id")[0],
-	})
+	pipelineVal := &structpb.Value{}
+	if len(md.Get("id")) > 0 && len(md.Get("uid")) > 0 && len(md.Get("owner")) > 0 && len(md.Get("trigger_id")) > 0 {
+		pipelineVal, _ = structpb.NewValue(map[string]interface{}{
+			"id":         md.Get("id")[0],
+			"uid":        md.Get("uid")[0],
+			"owner":      md.Get("owner")[0],
+			"trigger_id": md.Get("trigger_id")[0],
+		})
+	}
 
 	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
