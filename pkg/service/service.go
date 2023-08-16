@@ -46,7 +46,7 @@ type Service interface {
 	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
 
 	// Execute connector
-	Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error)
+	Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*structpb.Struct) ([]*structpb.Struct, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.Connector_State, error)
@@ -379,37 +379,11 @@ func (s *service) UpdateConnectorState(ctx context.Context, id string, ownerPerm
 			break
 		}
 
-		configuration := func() *structpb.Struct {
-			if conn.Configuration != nil {
-				str := structpb.Struct{}
-				err := str.UnmarshalJSON(conn.Configuration)
-				if err != nil {
-					logger.Fatal(err.Error())
-				}
-				return &str
-			}
-			return nil
-		}()
-
-		con, err := s.connectorAll.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
-
-		if err != nil {
-			return nil, err
-		}
-
-		taskName, _ := con.GetTask()
-		if err != nil {
-			return nil, err
-		}
-
 		// Set connector state to user desire state
 		if err := s.repository.UpdateConnectorStateByID(ctx, id, ownerPermalink, datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED)); err != nil {
 			return nil, err
 		}
 
-		if err := s.repository.UpdateConnectorTaskByID(ctx, id, ownerPermalink, datamodel.Task(taskName)); err != nil {
-			return nil, err
-		}
 		if err := s.UpdateResourceState(conn.UID, connectorPB.Connector_STATE_CONNECTED, nil); err != nil {
 			return nil, err
 		}
@@ -493,7 +467,7 @@ func (s *service) UpdateConnectorID(ctx context.Context, id string, owner *mgmtP
 	return dbConnector, nil
 }
 
-func (s *service) Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*connectorPB.DataPayload) ([]*connectorPB.DataPayload, error) {
+func (s *service) Execute(ctx context.Context, conn *datamodel.Connector, owner *mgmtPB.User, inputs []*structpb.Struct) ([]*structpb.Struct, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 

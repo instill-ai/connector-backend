@@ -50,12 +50,6 @@ export const modelPublicHost = `${proto}://${mHost}:${mPublicPort}`;
 export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
 export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
 
-export const srcDefRscName = "connector-definitions/start-operator"
-export const srcDefRscPermalink = "connector-definitions/f20a3c02-c70e-4e76-8566-7c13ca11d18d"
-
-export const dstDefRscName = "connector-definitions/end-operator"
-export const dstDefRscPermalink = "connector-definitions/909c3278-f7d1-461c-9352-87741bef11d3"
-
 export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
 export const mySQLDstDefRscPermalink = "connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
@@ -86,157 +80,142 @@ export const paramsHTTPWithJwt = {
 }
 
 export const clsModelOutputs = [{
-  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPA",
-  "structured_data": {
-    "classification": {
-      "category": "person",
-      "score": 0.99
-    }
-  },
+  "classification": {
+    "category": "person",
+    "score": 0.99
+  }
 }]
 
 
 
 export const detectionModelOutputs = [
   {
-    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-    "structured_data": {
-      "detection": {
-        "objects": [
-          {
-            "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
-            "category": "dog",
-            "score": 0.980409
-          },
-          {
-            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-            "category": "dog",
-            "score": 0.9009272
-          }
-        ]
-      },
-      "classification": {
-        "category": "person",
-        "score": 0.99
-      }
+    "detection": {
+      "objects": [
+        {
+          "bounding_box": { "height": 0, "left": 0, "top": 99.084984, "width": 204.18988 },
+          "category": "dog",
+          "score": 0.980409
+        },
+        {
+          "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+          "category": "dog",
+          "score": 0.9009272
+        }
+      ]
+    },
+    "classification": {
+      "category": "person",
+      "score": 0.99
     }
+
   },
   {
-    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPN",
-    "structured_data": {
-      "detection": {
-        "objects": [
-          {
-            "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-            "category": "dog",
-            "score": 0.980409
-          },
-          {
-            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-            "category": "dog",
-            "score": 0.9009272
-          }
-        ]
-      },
-      "classification": {
-        "category": "person",
-        "score": 0.99
-      }
+
+    "detection": {
+      "objects": [
+        {
+          "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+          "category": "dog",
+          "score": 0.980409
+        },
+        {
+          "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+          "category": "dog",
+          "score": 0.9009272
+        }
+      ]
+    },
+    "classification": {
+      "category": "person",
+      "score": 0.99
     }
+
   },
   {
-    "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPO",
-    "structured_data": {
-      "detection": {
-        "objects": [
-          {
-            "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
-            "category": "dog",
-            "score": 0.980409
-          },
-          {
-            "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-            "category": "dog",
-            "score": 0.9009272
-          }
-        ]
-      },
-      "classification": {
-        "category": "person",
-        "score": 0.99
-      }
+    "detection": {
+      "objects": [
+        {
+          "bounding_box": { "height": 0, "left": 325.7926, "top": 99.084984, "width": 204.18988 },
+          "category": "dog",
+          "score": 0.980409
+        },
+        {
+          "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+          "category": "dog",
+          "score": 0.9009272
+        }
+      ]
+    },
+    "classification": {
+      "category": "person",
+      "score": 0.99
     }
+
   }
 ]
 
 export const detectionEmptyModelOutputs = [{
-  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPM",
-  "structured_data": {
-    "detection": {
-      "objects": []
-    }
-  },
+
+  "detection": {
+    "objects": []
+  }
+
 }]
 
 
 export const keypointModelOutputs = [{
-  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPT",
-  "structured_data": {
-    "keypoint": {
-      "objects": [
-        {
-          "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
-          "score": 0.99
-        },
-        {
-          "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
-          "score": 0.99
-        },
-      ]
-    }
-  },
+  "keypoint": {
+    "objects": [
+      {
+        "keypoints": [{ "x": 10, "y": 100, "v": 0.6 }, { "x": 11, "y": 101, "v": 0.2 }],
+        "score": 0.99
+      },
+      {
+        "keypoints": [{ "x": 20, "y": 10, "v": 0.6 }, { "x": 12, "y": 120, "v": 0.7 }],
+        "score": 0.99
+      },
+    ]
+  }
+
 }]
 
 export const ocrModelOutputs = [{
-  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "structured_data": {
-    "ocr": {
-      "objects": [
-        {
-          "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
-          "text": "some text",
-          "score": 0.99
-        },
-        {
-          "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
-          "text": "some text",
-          "score": 0.99
-        },
-      ],
-    }
-  },
+  "ocr": {
+    "objects": [
+      {
+        "bounding_box": { "height": 402.58002, "left": 0, "top": 99.084984, "width": 204.18988 },
+        "text": "some text",
+        "score": 0.99
+      },
+      {
+        "bounding_box": { "height": 242.36627, "left": 133.76924, "top": 195.17859, "width": 207.40651 },
+        "text": "some text",
+        "score": 0.99
+      },
+    ],
+  }
+
 }]
 
 export const semanticSegModelOutputs = [{
-  "data_mapping_index": "01GB5T5ZK9W9C2VXMWWRYM8WPU",
-  "structured_data": {
-    "semantic_segmentation": {
-      "stuffs": [
-        {
-          "rle": "2918,12,382,33,...",
-          "category": "person"
-        },
-        {
-          "rle": "34,18,230,18,...",
-          "category": "sky"
-        },
-        {
-          "rle": "34,18,230,18,...",
-          "category": "dog"
-        }
-      ]
-    }
-  },
+  "semantic_segmentation": {
+    "stuffs": [
+      {
+        "rle": "2918,12,382,33,...",
+        "category": "person"
+      },
+      {
+        "rle": "34,18,230,18,...",
+        "category": "sky"
+      },
+      {
+        "rle": "34,18,230,18,...",
+        "category": "dog"
+      }
+    ]
+
+  }
 }]
 
 export const instSegModelOutputs = [{

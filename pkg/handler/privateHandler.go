@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	proto "google.golang.org/protobuf/proto"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/connector"
@@ -215,4 +216,33 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 		return resp, nil
 	}
 
+}
+
+func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req *connectorPB.LookUpConnectorDefinitionAdminRequest) (resp *connectorPB.LookUpConnectorDefinitionAdminResponse, err error) {
+
+	logger, _ := logger.GetZapLogger(ctx)
+
+	resp = &connectorPB.LookUpConnectorDefinitionAdminResponse{}
+
+	var connUID string
+
+	if connUID, err = resource.GetRscNameID(req.GetPermalink()); err != nil {
+		return resp, err
+	}
+	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+
+	dbDef, err := h.connectors.GetConnectorDefinitionByUid(uuid.FromStringOrNil(connUID))
+	if err != nil {
+		return resp, err
+	}
+	resp.ConnectorDefinition = proto.Clone(dbDef).(*connectorPB.ConnectorDefinition)
+	if isBasicView {
+		resp.ConnectorDefinition.Spec = nil
+	}
+	resp.ConnectorDefinition.VendorAttributes = nil
+	resp.ConnectorDefinition.Name = fmt.Sprintf("connector-definitions/%s", resp.ConnectorDefinition.GetId())
+
+	logger.Info("GetConnectorDefinitionAdmin")
+
+	return resp, nil
 }

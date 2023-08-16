@@ -22,21 +22,6 @@ export function CheckCreate() {
             plaintext: true
         });
 
-        // end
-        var httpDstConnector = {
-            "id": "end-operator",
-            "connector_definition_name": constant.dstDefRscName,
-            "description": "HTTP source",
-            "configuration": {},
-        }
-
-        // Cannot create http destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnector', {
-            connector: httpDstConnector
-        }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnector HTTP response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
-        })
-
         // destination-csv
         var csvDstConnector = {
             "id": randomString(10),

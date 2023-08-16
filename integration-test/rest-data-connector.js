@@ -11,36 +11,6 @@ export function CheckCreate() {
 
     group("Connector API: Create destination connectors", () => {
 
-        // end
-        var httpDstConnector = {
-            "id": "end-operator",
-            "connector_definition_name": constant.dstDefRscName,
-            "description": "HTTP source",
-            "configuration": {},
-        }
-
-        var resDst = http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(httpDstConnector), {
-            headers: { "Content-Type": "application/json" },
-        })
-
-        check(resDst, {
-            "POST /v1alpha/connectors response status for creating HTTP destination connector 201": (r) => r.status === 201,
-            "POST /v1alpha/connectors response connector name": (r) => r.json().connector.name == `connectors/${httpDstConnector.id}`,
-            "POST /v1alpha/connectors response connector uid": (r) => helper.isUUID(r.json().connector.uid),
-            "POST /v1alpha/connectors response connector connector_definition_name": (r) => r.json().connector.connector_definition_name === constant.dstDefRscName
-        });
-
-        check(http.request(
-            "POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
-            JSON.stringify(httpDstConnector), {
-            headers: { "Content-Type": "application/json" },
-        }), {
-            "POST /v1alpha/connectors response duplicate HTTP destination connector status 409": (r) => r.status === 409
-        });
 
         // destination-csv
         var csvDstConnector = {
@@ -100,9 +70,6 @@ export function CheckCreate() {
 
 
         // Delete test records
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resDst.json().connector.id} response status 204`]: (r) => r.status === 204,
-        });
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
             [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
         });
