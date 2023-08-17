@@ -15,7 +15,7 @@ require (
 	github.com/instill-ai/connector-blockchain v0.3.0-alpha.0.20230817135403-78ed89bf69c8
 	github.com/instill-ai/connector-data v0.3.0-alpha.0.20230817135353-d8376c533ef8
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230817132923-94c25875d8aa
-	github.com/instill-ai/usage-client v0.2.4-alpha
+	github.com/instill-ai/usage-client v0.2.4-alpha.0.20230814155646-874e57a1e4b0
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/knadh/koanf v1.5.0
