@@ -33,19 +33,19 @@ const MaxPageSize = 100
 type Repository interface {
 
 	// Connector
-	CreateConnector(ctx context.Context, connector *datamodel.Connector) error
-	ListConnectors(ctx context.Context, ownerPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByID(ctx context.Context, id string, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
-	GetConnectorByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error)
-	UpdateConnector(ctx context.Context, id string, ownerPermalink string, connector *datamodel.Connector) error
-	DeleteConnector(ctx context.Context, id string, ownerPermalink string) error
-	UpdateConnectorID(ctx context.Context, id string, ownerPermalink string, newID string) error
-	UpdateConnectorStateByID(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorState) error
-	UpdateConnectorStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error
-	UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error
+	CreateConnectorResource(ctx context.Context, connector *datamodel.ConnectorResource) error
+	ListConnectorResources(ctx context.Context, ownerPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	GetConnectorResourceByID(ctx context.Context, id string, ownerPermalink string, isBasicView bool) (*datamodel.ConnectorResource, error)
+	GetConnectorResourceByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.ConnectorResource, error)
+	UpdateConnectorResource(ctx context.Context, id string, ownerPermalink string, connector *datamodel.ConnectorResource) error
+	DeleteConnectorResource(ctx context.Context, id string, ownerPermalink string) error
+	UpdateConnectorResourceID(ctx context.Context, id string, ownerPermalink string, newID string) error
+	UpdateConnectorResourceStateByID(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorResourceState) error
+	UpdateConnectorResourceStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorResourceState) error
+	UpdateConnectorResourceTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error
 
-	ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.Connector, int64, string, error)
-	GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error)
+	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
 }
 
 type repository struct {
@@ -59,11 +59,11 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) CreateConnector(ctx context.Context, connector *datamodel.Connector) error {
+func (r *repository) CreateConnectorResource(ctx context.Context, connector *datamodel.ConnectorResource) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).Create(connector); result.Error != nil {
+	if result := r.db.Model(&datamodel.ConnectorResource{}).Create(connector); result.Error != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(result.Error, &pgErr) {
 			if pgErr.Code == "23505" {
@@ -85,7 +85,7 @@ func (r *repository) CreateConnector(ctx context.Context, connector *datamodel.C
 	return nil
 }
 
-func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorResources(ctx context.Context, ownerPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -95,12 +95,12 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 	}
 
 	if expr == nil {
-		r.db.Model(&datamodel.Connector{}).Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).Count(&totalSize)
+		r.db.Model(&datamodel.ConnectorResource{}).Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC)).Count(&totalSize)
 	} else {
-		r.db.Model(&datamodel.Connector{}).Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC), expr).Count(&totalSize)
+		r.db.Model(&datamodel.ConnectorResource{}).Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC), expr).Count(&totalSize)
 	}
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC").Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
+	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).Order("create_time DESC, uid DESC").Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC))
 
 	if pageSize == 0 {
 		pageSize = DefaultPageSize
@@ -157,7 +157,7 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var item datamodel.Connector
+		var item datamodel.ConnectorResource
 		if err = r.db.ScanRows(rows, &item); err != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
@@ -178,10 +178,10 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 
 	if len(connectors) > 0 {
 		lastUID := (connectors)[len(connectors)-1].UID
-		lastItem := &datamodel.Connector{}
+		lastItem := &datamodel.ConnectorResource{}
 		if expr == nil {
-			if result := r.db.Model(&datamodel.Connector{}).
-				Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC)).
+			if result := r.db.Model(&datamodel.ConnectorResource{}).
+				Where("owner = ? or visibility = ?", ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC)).
 				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 				st, err := sterr.CreateErrorResourceInfo(
 					codes.Internal,
@@ -197,8 +197,8 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 				return nil, 0, "", st.Err()
 			}
 		} else {
-			if result := r.db.Model(&datamodel.Connector{}).
-				Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC), expr).
+			if result := r.db.Model(&datamodel.ConnectorResource{}).
+				Where("(owner = ? or visibility = ?) and ?", ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC), expr).
 				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 				st, err := sterr.CreateErrorResourceInfo(
 					codes.Internal,
@@ -225,7 +225,7 @@ func (r *repository) ListConnectors(ctx context.Context, ownerPermalink string, 
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.Connector, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 	var expr *clause.Expr
@@ -234,12 +234,12 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 	}
 
 	if expr == nil {
-		r.db.Model(&datamodel.Connector{}).Count(&totalSize)
+		r.db.Model(&datamodel.ConnectorResource{}).Count(&totalSize)
 	} else {
-		r.db.Model(&datamodel.Connector{}).Where("?", expr).Count(&totalSize)
+		r.db.Model(&datamodel.ConnectorResource{}).Where("?", expr).Count(&totalSize)
 	}
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).Order("create_time DESC, uid DESC")
+	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).Order("create_time DESC, uid DESC")
 
 	if pageSize == 0 {
 		pageSize = DefaultPageSize
@@ -296,7 +296,7 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var item datamodel.Connector
+		var item datamodel.ConnectorResource
 		if err = r.db.ScanRows(rows, &item); err != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
@@ -317,9 +317,9 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 
 	if len(connectors) > 0 {
 		lastUID := (connectors)[len(connectors)-1].UID
-		lastItem := &datamodel.Connector{}
+		lastItem := &datamodel.ConnectorResource{}
 		if expr == nil {
-			if result := r.db.Model(&datamodel.Connector{}).
+			if result := r.db.Model(&datamodel.ConnectorResource{}).
 				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 				st, err := sterr.CreateErrorResourceInfo(
 					codes.Internal,
@@ -335,7 +335,7 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 				return nil, 0, "", st.Err()
 			}
 		} else {
-			if result := r.db.Model(&datamodel.Connector{}).
+			if result := r.db.Model(&datamodel.ConnectorResource{}).
 				Where("?", expr).
 				Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 				st, err := sterr.CreateErrorResourceInfo(
@@ -363,14 +363,14 @@ func (r *repository) ListConnectorsAdmin(ctx context.Context, pageSize int64, pa
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) GetConnectorByID(ctx context.Context, id string, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorResourceByID(ctx context.Context, id string, ownerPermalink string, isBasicView bool) (*datamodel.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	var connector datamodel.Connector
+	var connector datamodel.ConnectorResource
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("id = ? AND (owner = ? or visibility = ?)", id, ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
+	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).
+		Where("id = ? AND (owner = ? or visibility = ?)", id, ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC))
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -393,14 +393,14 @@ func (r *repository) GetConnectorByID(ctx context.Context, id string, ownerPerma
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorResourceByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, isBasicView bool) (*datamodel.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	var connector datamodel.Connector
+	var connector datamodel.ConnectorResource
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).
-		Where("uid = ? AND (owner = ? or visibility = ?)", uid, ownerPermalink, datamodel.ConnectorVisibility(connectorPB.Connector_VISIBILITY_PUBLIC))
+	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).
+		Where("uid = ? AND (owner = ? or visibility = ?)", uid, ownerPermalink, datamodel.ConnectorResourceVisibility(connectorPB.ConnectorResource_VISIBILITY_PUBLIC))
 
 	if isBasicView {
 		queryBuilder.Omit("configuration")
@@ -423,13 +423,13 @@ func (r *repository) GetConnectorByUID(ctx context.Context, uid uuid.UUID, owner
 	return &connector, nil
 }
 
-func (r *repository) GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.Connector, error) {
+func (r *repository) GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	var connector datamodel.Connector
+	var connector datamodel.ConnectorResource
 
-	queryBuilder := r.db.Model(&datamodel.Connector{}).
+	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("uid = ?", uid)
 
 	if isBasicView {
@@ -453,11 +453,11 @@ func (r *repository) GetConnectorByUIDAdmin(ctx context.Context, uid uuid.UUID, 
 	return &connector, nil
 }
 
-func (r *repository) UpdateConnector(ctx context.Context, id string, ownerPermalink string, connector *datamodel.Connector) error {
+func (r *repository) UpdateConnectorResource(ctx context.Context, id string, ownerPermalink string, connector *datamodel.ConnectorResource) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).
+	if result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("id = ? AND owner = ?", id, ownerPermalink).
 		Updates(connector); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -489,13 +489,13 @@ func (r *repository) UpdateConnector(ctx context.Context, id string, ownerPermal
 	return nil
 }
 
-func (r *repository) DeleteConnector(ctx context.Context, id string, ownerPermalink string) error {
+func (r *repository) DeleteConnectorResource(ctx context.Context, id string, ownerPermalink string) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	result := r.db.Model(&datamodel.Connector{}).
+	result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("id = ? AND owner = ? ", id, ownerPermalink).
-		Delete(&datamodel.Connector{})
+		Delete(&datamodel.ConnectorResource{})
 
 	if result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -530,11 +530,11 @@ func (r *repository) DeleteConnector(ctx context.Context, id string, ownerPermal
 	return nil
 }
 
-func (r *repository) UpdateConnectorID(ctx context.Context, id string, ownerPermalink string, newID string) error {
+func (r *repository) UpdateConnectorResourceID(ctx context.Context, id string, ownerPermalink string, newID string) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).
+	if result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("id = ? AND owner = ? ", id, ownerPermalink).
 		Update("id", newID); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -566,11 +566,11 @@ func (r *repository) UpdateConnectorID(ctx context.Context, id string, ownerPerm
 	return nil
 }
 
-func (r *repository) UpdateConnectorStateByID(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorResourceStateByID(ctx context.Context, id string, ownerPermalink string, state datamodel.ConnectorResourceState) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).
+	if result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("id = ? AND owner = ?", id, ownerPermalink).
 		Update("state", state); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -602,11 +602,11 @@ func (r *repository) UpdateConnectorStateByID(ctx context.Context, id string, ow
 	return nil
 }
 
-func (r *repository) UpdateConnectorTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error {
+func (r *repository) UpdateConnectorResourceTaskByID(ctx context.Context, id string, ownerPermalink string, task datamodel.Task) error {
 	// TODO: refactor this
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).
+	if result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("id = ? AND owner = ?", id, ownerPermalink).
 		Update("task", task); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -638,11 +638,11 @@ func (r *repository) UpdateConnectorTaskByID(ctx context.Context, id string, own
 	return nil
 }
 
-func (r *repository) UpdateConnectorStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorState) error {
+func (r *repository) UpdateConnectorResourceStateByUID(ctx context.Context, uid uuid.UUID, ownerPermalink string, state datamodel.ConnectorResourceState) error {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	if result := r.db.Model(&datamodel.Connector{}).
+	if result := r.db.Model(&datamodel.ConnectorResource{}).
 		Where("uid = ? AND owner = ?", uid, ownerPermalink).
 		Update("state", state); result.Error != nil {
 		st, err := sterr.CreateErrorResourceInfo(

@@ -47,7 +47,7 @@ func (h *PrivateHandler) SetService(s service.Service) {
 	h.service = s
 }
 
-func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connectorPB.ListConnectorsAdminRequest) (resp *connectorPB.ListConnectorsAdminResponse, err error) {
+func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *connectorPB.ListConnectorResourcesAdminRequest) (resp *connectorPB.ListConnectorResourcesAdminResponse, err error) {
 
 	var pageSize int64
 	var pageToken string
@@ -55,7 +55,7 @@ func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connector
 
 	var connDefColID string
 
-	resp = &connectorPB.ListConnectorsAdminResponse{}
+	resp = &connectorPB.ListConnectorResourcesAdminResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
 
@@ -75,12 +75,12 @@ func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connector
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorsAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
 		return resp, err
 	}
 
-	var pbConnectors []*connectorPB.Connector
+	var pbConnectors []*connectorPB.ConnectorResource
 	for idx := range dbConnectors {
 		dbConnDef, err := h.connectors.GetConnectorDefinitionByUid(dbConnectors[idx].ConnectorDefinitionUID)
 		if err != nil {
@@ -102,7 +102,7 @@ func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connector
 		)
 	}
 
-	resp.Connectors = pbConnectors
+	resp.ConnectorResources = pbConnectors
 	resp.NextPageToken = nextPageToken
 	resp.TotalSize = totalSize
 
@@ -110,7 +110,7 @@ func (h *PrivateHandler) ListConnectorsAdmin(ctx context.Context, req *connector
 
 }
 
-func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connectorPB.LookUpConnectorAdminRequest) (resp *connectorPB.LookUpConnectorAdminResponse, err error) {
+func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *connectorPB.LookUpConnectorResourceAdminRequest) (resp *connectorPB.LookUpConnectorResourceAdminResponse, err error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -120,7 +120,7 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 
 	var connDefColID string
 
-	resp = &connectorPB.LookUpConnectorAdminResponse{}
+	resp = &connectorPB.LookUpConnectorResourceAdminResponse{}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, lookUpRequiredFields); err != nil {
@@ -151,7 +151,7 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	connDefColID = "connector-definitions"
 
-	dbConnector, err := h.service.GetConnectorByUIDAdmin(ctx, connUID, isBasicView)
+	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -172,23 +172,23 @@ func (h *PrivateHandler) LookUpConnectorAdmin(ctx context.Context, req *connecto
 		connector.MaskCredentialFields(h.connectors, dbConnDef.Id, pbConnector.Configuration)
 		pbConnector.ConnectorDefinition = dbConnDef
 	}
-	resp.Connector = pbConnector
+	resp.ConnectorResource = pbConnector
 
 	return resp, nil
 }
 
-func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.CheckConnectorRequest) (resp *connectorPB.CheckConnectorResponse, err error) {
+func (h *PrivateHandler) CheckConnectorResource(ctx context.Context, req *connectorPB.CheckConnectorResourceRequest) (resp *connectorPB.CheckConnectorResourceResponse, err error) {
 
 	var isBasicView = true
 
 	var connUID string
 
-	resp = &connectorPB.CheckConnectorResponse{}
-	if connUID, err = resource.GetPermalinkUID(req.GetConnectorPermalink()); err != nil {
+	resp = &connectorPB.CheckConnectorResourceResponse{}
+	if connUID, err = resource.GetPermalinkUID(req.GetPermalink()); err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorByUIDAdmin(ctx, uuid.FromStringOrNil(connUID), isBasicView)
+	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, uuid.FromStringOrNil(connUID), isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -198,12 +198,12 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 	}
 
 	if dbConnector.Tombstone {
-		resp.State = connectorPB.Connector_STATE_ERROR
+		resp.State = connectorPB.ConnectorResource_STATE_ERROR
 		return resp, nil
 	}
 
-	if dbConnector.State == datamodel.ConnectorState(connectorPB.Connector_STATE_CONNECTED) {
-		state, err := h.service.CheckConnectorByUID(ctx, dbConnector.UID)
+	if dbConnector.State == datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_CONNECTED) {
+		state, err := h.service.CheckConnectorResourceByUID(ctx, dbConnector.UID)
 		if err != nil {
 			return resp, err
 		}
@@ -212,7 +212,7 @@ func (h *PrivateHandler) CheckConnector(ctx context.Context, req *connectorPB.Ch
 		return resp, nil
 
 	} else {
-		resp.State = connectorPB.Connector_STATE_DISCONNECTED
+		resp.State = connectorPB.ConnectorResource_STATE_DISCONNECTED
 		return resp, nil
 	}
 

@@ -91,7 +91,7 @@ func main() {
 	})
 
 	// TODO: use pagination
-	conns, _, _, err := repository.ListConnectorsAdmin(ctx, 1000, "", false, filtering.Filter{})
+	conns, _, _, err := repository.ListConnectorResourcesAdmin(ctx, 1000, "", false, filtering.Filter{})
 	if err != nil {
 		panic(err)
 	}
@@ -204,7 +204,7 @@ func main() {
 	definitions := connectors.ListConnectorDefinitions()
 	for idx := range definitions {
 		if definitions[idx].Tombstone {
-			db.Unscoped().Model(&datamodel.Connector{}).Where("connector_definition_uid = ?", definitions[idx].Uid).Update("tombstone", true)
+			db.Unscoped().Model(&datamodel.ConnectorResource{}).Where("connector_definition_uid = ?", definitions[idx].Uid).Update("tombstone", true)
 		}
 	}
 

@@ -39,64 +39,68 @@ func (base *BaseDynamic) BeforeCreate(db *gorm.DB) error {
 	return nil
 }
 
-// Connector is the data model of the connector table
-type Connector struct {
+// ConnectorResource is the data model of the connector table
+type ConnectorResource struct {
 	BaseDynamic
 	ID                     string
 	Owner                  string
 	ConnectorDefinitionUID uuid.UUID
 	Description            sql.NullString
 	Tombstone              bool
-	Configuration          datatypes.JSON      `gorm:"type:jsonb"`
-	ConnectorType          ConnectorType       `sql:"type:valid_connector_type"`
-	State                  ConnectorState      `sql:"type:valid_state_type"`
-	Visibility             ConnectorVisibility `sql:"type:valid_visibility"`
-	Task                   Task                `sql:"type:valid_task"`
+	Configuration          datatypes.JSON              `gorm:"type:jsonb"`
+	ConnectorType          ConnectorResourceType       `sql:"type:valid_connector_type"`
+	State                  ConnectorResourceState      `sql:"type:valid_state_type"`
+	Visibility             ConnectorResourceVisibility `sql:"type:valid_visibility"`
+	Task                   Task                        `sql:"type:valid_task"`
 }
 
-// ConnectorType is an alias type for Protobuf enum ConnectorType
-type ConnectorVisibility connectorPB.Connector_Visibility
+func (ConnectorResource) TableName() string {
+	return "connector"
+}
 
-// ConnectorType is an alias type for Protobuf enum ConnectorType
-type ConnectorType connectorPB.ConnectorType
+// ConnectorResourceType is an alias type for Protobuf enum ConnectorType
+type ConnectorResourceVisibility connectorPB.ConnectorResource_Visibility
+
+// ConnectorResourceType is an alias type for Protobuf enum ConnectorType
+type ConnectorResourceType connectorPB.ConnectorType
 
 // ConnectorType is an alias type for Protobuf enum ConnectorType
 type Task taskPB.Task
 
 // Scan function for custom GORM type ConnectorType
-func (c *ConnectorType) Scan(value interface{}) error {
-	*c = ConnectorType(connectorPB.ConnectorType_value[value.(string)])
+func (c *ConnectorResourceType) Scan(value interface{}) error {
+	*c = ConnectorResourceType(connectorPB.ConnectorType_value[value.(string)])
 	return nil
 }
 
 // Value function for custom GORM type ConnectorType
-func (c ConnectorType) Value() (driver.Value, error) {
+func (c ConnectorResourceType) Value() (driver.Value, error) {
 	return connectorPB.ConnectorType(c).String(), nil
 }
 
-// ConnectorState is an alias type for Protobuf enum ConnectorState
-type ConnectorState connectorPB.Connector_State
+// ConnectorResourceState is an alias type for Protobuf enum ConnectorState
+type ConnectorResourceState connectorPB.ConnectorResource_State
 
 // Scan function for custom GORM type ConnectorState
-func (r *ConnectorState) Scan(value interface{}) error {
-	*r = ConnectorState(connectorPB.Connector_State_value[value.(string)])
+func (r *ConnectorResourceState) Scan(value interface{}) error {
+	*r = ConnectorResourceState(connectorPB.ConnectorResource_State_value[value.(string)])
 	return nil
 }
 
 // Value function for custom GORM type ConnectorState
-func (r ConnectorState) Value() (driver.Value, error) {
-	return connectorPB.Connector_State(r).String(), nil
+func (r ConnectorResourceState) Value() (driver.Value, error) {
+	return connectorPB.ConnectorResource_State(r).String(), nil
 }
 
 // Scan function for custom GORM type ReleaseStage
-func (r *ConnectorVisibility) Scan(value interface{}) error {
-	*r = ConnectorVisibility(connectorPB.Connector_Visibility_value[value.(string)])
+func (r *ConnectorResourceVisibility) Scan(value interface{}) error {
+	*r = ConnectorResourceVisibility(connectorPB.ConnectorResource_Visibility_value[value.(string)])
 	return nil
 }
 
 // Value function for custom GORM type ReleaseStage
-func (r ConnectorVisibility) Value() (driver.Value, error) {
-	return connectorPB.Connector_Visibility(r).String(), nil
+func (r ConnectorResourceVisibility) Value() (driver.Value, error) {
+	return connectorPB.ConnectorResource_Visibility(r).String(), nil
 }
 
 // Scan function for custom GORM type Task

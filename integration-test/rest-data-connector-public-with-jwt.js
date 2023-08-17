@@ -22,9 +22,9 @@ export function CheckCreate() {
 
         // Cannot create http destination connector of a non-exist user
         check(http.request("POST",
-            `${connectorPublicHost}/v1alpha/connectors`,
+            `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(httpDstConnector), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors response for creating HTTP destination status is 404`]: (r) => r.status === 404,
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources response for creating HTTP destination status is 404`]: (r) => r.status === 404,
         });
 
     });
@@ -36,8 +36,8 @@ export function CheckList() {
     group(`Connector API: List destination connectors [with random "jwt-sub" header]`, () => {
 
         // Cannot list destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors?filter=connector_type=CONNECTOR_TYPE_DATA`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/connectors response status is 404`]: (r) => r.status === 404,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources?filter=connector_type=CONNECTOR_TYPE_DATA`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/connector-resources response status is 404`]: (r) => r.status === 404,
         });
     });
 }
@@ -53,23 +53,23 @@ export function CheckGet() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+        http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${csvDstConnector.id}/connect`,
             {}, constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
-            [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
         // Cannot get a destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/connectors/${resCSVDst.json().connector.id} response status is 404`]: (r) => r.status === 404,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status is 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+            [`DELETE /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
@@ -85,7 +85,7 @@ export function CheckUpdate() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
         var csvDstConnectorUpdate = {
@@ -101,13 +101,13 @@ export function CheckUpdate() {
         // Cannot patch a destination connector of a non-exist user
         check(http.request(
             "PATCH",
-            `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`,
+            `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`,
             JSON.stringify(csvDstConnectorUpdate), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] PATCH /v1alpha/connectors/${resCSVDst.json().connector.id} response status 404`]: (r) => r.status === 404,
+            [`[with random "jwt-sub" header] PATCH /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}`), {
-            [`DELETE /v1alpha/connectors/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${csvDstConnector.id}`), {
+            [`DELETE /v1alpha/connector-resources/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
@@ -123,16 +123,16 @@ export function CheckLookUp() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
         // Cannot look up a destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/connectors/${resCSVDst.json().connector.uid}/lookUp response status 404`]: (r) => r.status === 404,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+            [`DELETE /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -148,19 +148,19 @@ export function CheckState() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/disconnect`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors/${resCSVDst.json().connector.id}/disconnect response at UNSPECIFIED state status 404`]: (r) => r.status === 404,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/disconnect`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/disconnect response at UNSPECIFIED state status 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/connect`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors/${resCSVDst.json().connector.id}/connect response at UNSPECIFIED state status 404`]: (r) => r.status === 404,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/connect`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/connect response at UNSPECIFIED state status 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+            [`DELETE /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
@@ -178,19 +178,19 @@ export function CheckRename() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
         // Cannot rename destination connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/rename`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/rename`,
             JSON.stringify({
-                "new_connector_id": `some-id-not-${resCSVDst.json().connector.id}`
+                "new_connector_id": `some-id-not-${resCSVDst.json().connector_resource.id}`
             }), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors/${resCSVDst.json().connector.id}/rename response status 404`]: (r) => r.status === 404,
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/rename response status 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}`), {
-            [`DELETE /v1alpha/connectors/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${csvDstConnector.id}`), {
+            [`DELETE /v1alpha/connector-resources/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
@@ -211,29 +211,29 @@ export function CheckExecute() {
             },
         }
 
-        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+        http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${csvDstConnector.id}/connect`,
             {}, constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
-            [`[with random "jwt-sub" header] GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+            [`[with random "jwt-sub" header] GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
         // Cannot write to destination connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/execute`,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/execute`,
             JSON.stringify({
                 "inputs": constant.clsModelOutputs
             }), constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors/${resCSVDst.json().connector.id}/execute response status 404 (classification)`]: (r) => r.status === 404,
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/execute response status 404 (classification)`]: (r) => r.status === 404,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204 (classification)`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+            [`DELETE /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 204 (classification)`]: (r) => r.status === 204,
         });
     });
 }
@@ -249,23 +249,23 @@ export function CheckTest() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connectors`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${csvDstConnector.id}/connect`,
+        http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${csvDstConnector.id}/connect`,
             {}, constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/watch`), {
-            [`GET /v1alpha/connectors/${resCSVDst.json().connector.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
         // Cannot test destination connector of a non-exist user
-        check(http.request("POST", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}/testConnection`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] POST /v1alpha/connectors/${resCSVDst.json().connector.id}/testConnection response status is 404`]: (r) => r.status === 404,
+        check(http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/testConnection`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] POST /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}/testConnection response status is 404`]: (r) => r.status === 404,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${resCSVDst.json().connector.id}`), {
-            [`DELETE /v1alpha/connectors/${resCSVDst.json().connector.id} response status 204`]: (r) => r.status === 204,
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+            [`DELETE /v1alpha/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
