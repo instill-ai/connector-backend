@@ -28,11 +28,11 @@ export function setup() {
   });
 
   group("Connector API: Pre delete all connector", () => {
-    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-        name: `connectors/${connector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources', {}, {}).message.connectorResources) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
+        name: `connector-resources/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });
@@ -117,11 +117,11 @@ export function teardown(data) {
     plaintext: true
   });
   group("Connector API: Delete all connector created by this test", () => {
-    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectors', {}, {}).message.connectors) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector`, {
-        name: `connectors/${connector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources', {}, {}).message.connectorResources) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
+        name: `connector-resources/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnector ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });

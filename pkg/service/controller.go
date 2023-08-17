@@ -10,7 +10,7 @@ import (
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
 )
 
-func (s *service) GetResourceState(connectorUID uuid.UUID) (*connectorPB.Connector_State, error) {
+func (s *service) GetResourceState(connectorUID uuid.UUID) (*connectorPB.ConnectorResource_State, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -27,7 +27,7 @@ func (s *service) GetResourceState(connectorUID uuid.UUID) (*connectorPB.Connect
 	return resp.Resource.GetConnectorState().Enum(), nil
 }
 
-func (s *service) UpdateResourceState(connectorUID uuid.UUID, state connectorPB.Connector_State, progress *int32) error {
+func (s *service) UpdateResourceState(connectorUID uuid.UUID, state connectorPB.ConnectorResource_State, progress *int32) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

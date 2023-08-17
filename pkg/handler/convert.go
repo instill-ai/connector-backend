@@ -21,15 +21,15 @@ import (
 // PBToDBConnector converts protobuf data model to db data model
 func PBToDBConnector(
 	ctx context.Context,
-	pbConnector *connectorPB.Connector,
+	pbConnector *connectorPB.ConnectorResource,
 	ownerRscName string,
-	connectorDefinition *connectorPB.ConnectorDefinition) *datamodel.Connector {
+	connectorDefinition *connectorPB.ConnectorDefinition) *datamodel.ConnectorResource {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	var uid uuid.UUID
 	var id string
-	var state datamodel.ConnectorState
+	var state datamodel.ConnectorResourceState
 	var tombstone bool
 	var description sql.NullString
 	var configuration *structpb.Struct
@@ -38,7 +38,7 @@ func PBToDBConnector(
 	var err error
 
 	id = pbConnector.GetId()
-	state = datamodel.ConnectorState(pbConnector.GetState())
+	state = datamodel.ConnectorResourceState(pbConnector.GetState())
 	tombstone = pbConnector.GetTombstone()
 	configuration = pbConnector.GetConfiguration()
 	createTime = pbConnector.GetCreateTime().AsTime()
@@ -54,15 +54,15 @@ func PBToDBConnector(
 		Valid:  true,
 	}
 
-	return &datamodel.Connector{
+	return &datamodel.ConnectorResource{
 		Owner:                  ownerRscName,
 		ID:                     id,
-		ConnectorType:          datamodel.ConnectorType(connectorDefinition.ConnectorType),
+		ConnectorType:          datamodel.ConnectorResourceType(connectorDefinition.ConnectorType),
 		Description:            description,
 		State:                  state,
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
-		Visibility:             datamodel.ConnectorVisibility(pbConnector.Visibility),
+		Visibility:             datamodel.ConnectorResourceVisibility(pbConnector.Visibility),
 		Task:                   datamodel.Task(taskPB.Task_TASK_UNSPECIFIED),
 
 		Configuration: func() []byte {
@@ -87,24 +87,24 @@ func PBToDBConnector(
 // DBToPBConnector converts db data model to protobuf data model
 func DBToPBConnector(
 	ctx context.Context,
-	dbConnector *datamodel.Connector,
+	dbConnector *datamodel.ConnectorResource,
 	owner string,
-	connectorDefinitionName string) *connectorPB.Connector {
+	connectorDefinitionName string) *connectorPB.ConnectorResource {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	pbConnector := &connectorPB.Connector{
+	pbConnector := &connectorPB.ConnectorResource{
 		Uid:                     dbConnector.UID.String(),
-		Name:                    fmt.Sprintf("connectors/%s", dbConnector.ID),
+		Name:                    fmt.Sprintf("connector-resources/%s", dbConnector.ID),
 		Id:                      dbConnector.ID,
 		ConnectorDefinitionName: connectorDefinitionName,
 		ConnectorType:           connectorPB.ConnectorType(dbConnector.ConnectorType),
 		Description:             &dbConnector.Description.String,
-		State:                   connectorPB.Connector_State(dbConnector.State),
+		State:                   connectorPB.ConnectorResource_State(dbConnector.State),
 		Tombstone:               dbConnector.Tombstone,
 		CreateTime:              timestamppb.New(dbConnector.CreateTime),
 		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
-		Visibility:              connectorPB.Connector_Visibility(dbConnector.Visibility),
+		Visibility:              connectorPB.ConnectorResource_Visibility(dbConnector.Visibility),
 		Task:                    taskPB.Task(dbConnector.Task),
 
 		Configuration: func() *structpb.Struct {
@@ -121,9 +121,9 @@ func DBToPBConnector(
 	}
 
 	if strings.HasPrefix(owner, "users/") {
-		pbConnector.Owner = &connectorPB.Connector_User{User: owner}
+		pbConnector.Owner = &connectorPB.ConnectorResource_User{User: owner}
 	} else if strings.HasPrefix(owner, "organizations/") {
-		pbConnector.Owner = &connectorPB.Connector_Org{Org: owner}
+		pbConnector.Owner = &connectorPB.ConnectorResource_Org{Org: owner}
 	}
 	return pbConnector
 

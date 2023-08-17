@@ -20,9 +20,9 @@ export let options = {
 export function setup() {
 
   group("Connector API: Pre delete all connector", () => {
-    for (const connector of http.request("GET", `${connectorPublicHost}/v1alpha/connectors`).json("connectors")) {
-      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connectors/${connector.id}`), {
-        [`DELETE /v1alpha/connectors/${connector.id} response status is 204`]: (r) => r.status === 204,
+    for (const connectorResource of http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources`).json("connector_resources")) {
+      check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${connectorResource.id}`), {
+        [`DELETE /v1alpha/connector-resources/${connectorResource.id} response status is 204`]: (r) => r.status === 204,
       });
     }
   });
