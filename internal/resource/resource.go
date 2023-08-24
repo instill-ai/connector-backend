@@ -4,16 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/gogo/status"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-
-	"github.com/instill-ai/connector-backend/pkg/constant"
-
-	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 )
 
 // ExtractFromMetadata extracts context metadata given a key
@@ -34,69 +27,49 @@ func GetRequestSingleHeader(ctx context.Context, header string) string {
 	return metaHeader[0]
 }
 
-// GetCollectionID returns the resource collection ID given a resource name
-func GetCollectionID(name string) (string, error) {
-	colID := name[:strings.LastIndex(name, "/")]
-	if colID == "" {
-		return "", fmt.Errorf("Error when extract resource collection id from resource name %s", name)
-	}
-	if strings.LastIndex(colID, "/") != -1 {
-		colID = colID[strings.LastIndex(colID, "/")+1:]
-	}
-	return colID, nil
-}
-
 // GetRscNameID returns the resource ID given a resource name
-func GetRscNameID(name string) (string, error) {
-	id := name[strings.LastIndex(name, "/")+1:]
+func GetRscNameID(path string) (string, error) {
+	id := path[strings.LastIndex(path, "/")+1:]
 	if id == "" {
-		return "", fmt.Errorf("Error when extract resource id from resource name '%s'", name)
+		return "", fmt.Errorf("error when extract resource id from resource name '%s'", path)
 	}
 	return id, nil
 }
 
-// GetPermalinkUID returns the resource UID given a resource permalink
-func GetPermalinkUID(permalink string) (string, error) {
-	uid := permalink[strings.LastIndex(permalink, "/")+1:]
+// GetRscPermalinkUID returns the resource UID given a resource permalink
+func GetRscPermalinkUID(path string) (uuid.UUID, error) {
+	uid := path[strings.LastIndex(path, "/")+1:]
 	if uid == "" {
-		return "", fmt.Errorf("Error when extract resource id from resource permalink '%s'", permalink)
+		return uuid.Nil, fmt.Errorf("error when extract resource id from resource permalink '%s'", path)
 	}
-	return uid, nil
+	return uuid.FromStringOrNil(uid), nil
 }
 
-// GetOwner returns the resource owner
-func GetOwner(ctx context.Context, client mgmtPB.MgmtPrivateServiceClient) (*mgmtPB.User, error) {
-	// Verify if "jwt-sub" is in the header
-	headerOwnerUId := GetRequestSingleHeader(ctx, constant.HeaderOwnerUIDKey)
-	if headerOwnerUId != "" {
-		_, err := uuid.FromString(headerOwnerUId)
-		if err != nil {
-			return nil, status.Errorf(codes.NotFound, "Not found")
-		}
-		ownerPermalink := "users/" + headerOwnerUId
+type NamespaceType string
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		resp, err := client.LookUpUserAdmin(ctx, &mgmtPB.LookUpUserAdminRequest{Permalink: ownerPermalink})
-		if err != nil {
-			return nil, status.Errorf(codes.NotFound, "Not found")
-		}
+const (
+	User         NamespaceType = "users"
+	Organization NamespaceType = "organizations"
+)
 
-		return resp.User, nil
-	}
+type Namespace struct {
+	NsType NamespaceType
+	NsUid  uuid.UUID
+}
 
-	// Verify "owner-id" in the header if there is no "jwt-sub"
-	headerOwnerId := GetRequestSingleHeader(ctx, constant.HeaderOwnerIDKey)
-	if headerOwnerId == "" {
-		return nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
-	}
+func (ns Namespace) String() string {
+	return fmt.Sprintf("%s/%s", ns.NsType, ns.NsUid.String())
+}
 
-	// Get the permalink from management backend from resource name
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	resp, err := client.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: "users/" + headerOwnerId})
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "Not found")
-	}
-	return resp.User, nil
+func UserUidToUserPermalink(userUid uuid.UUID) string {
+	return fmt.Sprintf("users/%s", userUid.String())
+}
+
+func ConvertConnectorToResourceName(connectorName string) string {
+
+	connectorTypeStr := "connectors"
+
+	resourceName := fmt.Sprintf("resources/%s/types/%s", connectorName, connectorTypeStr)
+
+	return resourceName
 }

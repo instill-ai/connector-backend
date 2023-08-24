@@ -50,7 +50,7 @@ type UsageMetricData struct {
 }
 
 func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write.Point {
-	pipelineOwnerUUID, _ := resource.GetPermalinkUID(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue())
+	pipelineOwnerUUID, _ := resource.GetRscPermalinkUID(pipelineMetadata.GetStructValue().GetFields()["owner"].GetStringValue())
 	return influxdb2.NewPoint(
 		"connector.execute",
 		map[string]string{

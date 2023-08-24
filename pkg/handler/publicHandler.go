@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gogo/status"
 	"github.com/iancoleman/strcase"
 	"go.einride.tech/aip/filtering"
 	"go.opentelemetry.io/otel"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/connector"
+	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -49,17 +51,19 @@ var tracer = otel.Tracer("connector-backend.public-handler.tracer")
 
 type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
-	service    service.Service
-	connectors connectorBase.IConnector
+	service        service.Service
+	connectors     connectorBase.IConnector
+	defaultUserUid uuid.UUID
 }
 
 // NewPublicHandler initiates a handler instance
-func NewPublicHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPublicServiceServer {
+func NewPublicHandler(ctx context.Context, s service.Service, defaultUserUid uuid.UUID) connectorPB.ConnectorPublicServiceServer {
 
 	logger, _ := logger.GetZapLogger(ctx)
 	return &PublicHandler{
-		service:    s,
-		connectors: connector.InitConnectorAll(logger),
+		service:        s,
+		connectors:     connector.InitConnectorAll(logger),
+		defaultUserUid: defaultUserUid,
 	}
 }
 
@@ -87,6 +91,22 @@ func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
 		},
 	}, nil
+}
+
+// GetUserPermalink returns the api user
+func (h *PublicHandler) getUserUid(ctx context.Context) (uuid.UUID, error) {
+	// Verify if "jwt-sub" is in the header
+	headerUserUId := resource.GetRequestSingleHeader(ctx, constant.HeaderUserUIDKey)
+	if headerUserUId != "" {
+		_, err := uuid.FromString(headerUserUId)
+		if err != nil {
+			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+		}
+
+		return uuid.FromStringOrNil(headerUserUId), nil
+	}
+
+	return h.defaultUserUid, nil
 }
 
 func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *connectorPB.ListConnectorDefinitionsRequest) (resp *connectorPB.ListConnectorDefinitionsResponse, err error) {
@@ -250,9 +270,100 @@ func (h *PublicHandler) GetConnectorDefinition(ctx context.Context, req *connect
 
 }
 
-func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connectorPB.CreateConnectorResourceRequest) (resp *connectorPB.CreateConnectorResourceResponse, err error) {
+func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connectorPB.ListConnectorResourcesRequest) (resp *connectorPB.ListConnectorResourcesResponse, err error) {
 
-	eventName := "CreateConnectorResource"
+	eventName := "ListConnectorResources"
+
+	ctx, span := tracer.Start(ctx, eventName,
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
+	var pageSize int64
+	var pageToken string
+	var isBasicView bool
+
+	var connDefColID string
+
+	resp = &connectorPB.ListConnectorResourcesResponse{}
+	pageSize = req.GetPageSize()
+	pageToken = req.GetPageToken()
+	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+	connDefColID = "connector-definitions"
+
+	var connType connectorPB.ConnectorType
+	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
+		filtering.DeclareStandardFunctions(),
+		filtering.DeclareEnumIdent("connector_type", connType.Type()),
+	}...)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	filter, err := filtering.ParseFilter(req, declarations)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, userUid, pageSize, pageToken, isBasicView, filter)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	var pbConnectors []*connectorPB.ConnectorResource
+	for idx := range dbConnectors {
+		dbConnDef, err := h.connectors.GetConnectorDefinitionByUid(dbConnectors[idx].ConnectorDefinitionUID)
+		if err != nil {
+			span.SetStatus(1, err.Error())
+			return resp, err
+		}
+		pbConnector, err := h.service.DBToPBConnector(
+			ctx,
+			dbConnectors[idx],
+			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
+		)
+		if err != nil {
+			return resp, err
+		}
+		if !isBasicView {
+			pbConnector.ConnectorDefinition = dbConnDef
+		}
+		connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), pbConnector.Configuration)
+		pbConnectors = append(
+			pbConnectors,
+			pbConnector,
+		)
+	}
+
+	logger.Info(string(custom_otel.NewLogMessage(
+		span,
+		logUUID.String(),
+		userUid.String(),
+		eventName,
+	)))
+
+	resp.ConnectorResources = pbConnectors
+	resp.NextPageToken = nextPageToken
+	resp.TotalSize = totalSize
+
+	return resp, nil
+
+}
+
+func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *connectorPB.CreateUserConnectorResourceRequest) (resp *connectorPB.CreateUserConnectorResourceResponse, err error) {
+
+	eventName := "CreateUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -269,7 +380,35 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 	var connDefUID uuid.UUID
 	var connDefRscName string
 
-	resp = &connectorPB.CreateConnectorResourceResponse{}
+	resp = &connectorPB.CreateUserConnectorResourceResponse{}
+
+	ns, _, err := h.service.GetRscNamespaceAndNameID(req.Parent)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	// TODO: ACL
+	if ns.String() != resource.UserUidToUserPermalink(userUid) {
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] create connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Description: "can not create in other user's namespace",
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		span.SetStatus(1, st.Err().Error())
+		return resp, st.Err()
+	}
 
 	// Set all OUTPUT_ONLY fields to zero value on the requested payload
 	if err := checkfield.CheckCreateOutputOnlyFields(req.GetConnectorResource(), outputOnlyFields); err != nil {
@@ -366,42 +505,6 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 		return resp, err
 	}
 
-	// Validate Connector configuration JSON Schema
-	// connSpec := connDefResp.GetConnectorDefinition().GetSpec().GetConnectionSpecification()
-	// b, err := protojson.Marshal(connSpec)
-	// if err != nil {
-	// 	st, err := sterr.CreateErrorResourceInfo(
-	// 		codes.Internal,
-	// 		"[handler] create connector error",
-	// 		"connector-definitions",
-	// 		fmt.Sprintf("uid %s", connDefResp.ConnectorDefinition.GetUid()),
-	// 		"",
-	// 		err.Error(),
-	// 	)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 	}
-	// 	span.SetStatus(1, st.Err().Error())
-	// 	return resp, st.Err()
-	// }
-
-	// if err := connectorConfigLoader.ValidateJSONSchemaString(string(b), req.GetConnector().GetConfiguration()); err != nil {
-	// 	st, err := sterr.CreateErrorBadRequest(
-	// 		"[handler] create connector error",
-	// 		[]*errdetails.BadRequest_FieldViolation{
-	// 			{
-	// 				Field:       "connector.configuration",
-	// 				Description: err.Error(),
-	// 			},
-	// 		},
-	// 	)
-	// 	if err != nil {
-	// 		logger.Error(err.Error())
-	// 	}
-	// 	span.SetStatus(1, st.Err().Error())
-	// 	return resp, st.Err()
-	// }
-
 	connDefUID, err = uuid.FromString(connDefResp.ConnectorDefinition.GetUid())
 	if err != nil {
 		st, err := sterr.CreateErrorResourceInfo(
@@ -439,15 +542,9 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
 	dbConnector := &datamodel.ConnectorResource{
 		ID:                     connID,
-		Owner:                  owner.GetName(),
+		Owner:                  resource.UserUidToUserPermalink(userUid),
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
@@ -457,7 +554,7 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 		Task:                   datamodel.Task(taskPB.Task_TASK_UNSPECIFIED),
 	}
 
-	dbConnector, err = h.service.CreateConnectorResource(ctx, owner, dbConnector)
+	dbConnector, err = h.service.CreateUserConnectorResource(ctx, *ns, userUid, dbConnector)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -466,16 +563,18 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
-	pbConnector := DBToPBConnector(
+	pbConnector, err := h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		service.GenOwnerPermalink(owner),
 		connDefRscName)
+	if err != nil {
+		return nil, err
+	}
 
 	connector.MaskCredentialFields(h.connectors, connDefResp.ConnectorDefinition.Id, pbConnector.Configuration)
 	resp.ConnectorResource = pbConnector
@@ -491,9 +590,9 @@ func (h *PublicHandler) CreateConnectorResource(ctx context.Context, req *connec
 	return resp, nil
 }
 
-func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connectorPB.ListConnectorResourcesRequest) (resp *connectorPB.ListConnectorResourcesResponse, err error) {
+func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *connectorPB.ListUserConnectorResourcesRequest) (resp *connectorPB.ListUserConnectorResourcesResponse, err error) {
 
-	eventName := "ListConnectorResources"
+	eventName := "ListUserConnectorResources"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -509,7 +608,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 
 	var connDefColID string
 
-	resp = &connectorPB.ListConnectorResourcesResponse{}
+	resp = &connectorPB.ListUserConnectorResourcesResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
@@ -530,13 +629,18 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 		return resp, err
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	ns, _, err := h.service.GetRscNamespaceAndNameID(req.Parent)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, owner, pageSize, pageToken, isBasicView, filter)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, *ns, userUid, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -549,12 +653,14 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 			span.SetStatus(1, err.Error())
 			return resp, err
 		}
-		pbConnector := DBToPBConnector(
+		pbConnector, err := h.service.DBToPBConnector(
 			ctx,
 			dbConnectors[idx],
-			dbConnectors[idx].Owner,
 			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 		)
+		if err != nil {
+			return nil, err
+		}
 		if !isBasicView {
 			pbConnector.ConnectorDefinition = dbConnDef
 		}
@@ -568,7 +674,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 	)))
 
@@ -580,13 +686,13 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 
 }
 
-func (h *PublicHandler) GetConnectorResource(ctx context.Context, req *connectorPB.GetConnectorResourceRequest) (resp *connectorPB.GetConnectorResourceResponse, err error) {
-	return h.getConnectorResource(ctx, req, true)
+func (h *PublicHandler) GetUserConnectorResource(ctx context.Context, req *connectorPB.GetUserConnectorResourceRequest) (resp *connectorPB.GetUserConnectorResourceResponse, err error) {
+	return h.getUserConnectorResource(ctx, req, true)
 }
 
-func (h *PublicHandler) getConnectorResource(ctx context.Context, req *connectorPB.GetConnectorResourceRequest, credentialMask bool) (resp *connectorPB.GetConnectorResourceResponse, err error) {
+func (h *PublicHandler) getUserConnectorResource(ctx context.Context, req *connectorPB.GetUserConnectorResourceRequest, credentialMask bool) (resp *connectorPB.GetUserConnectorResourceResponse, err error) {
 
-	eventName := "GetConnectorResource"
+	eventName := "GetUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -598,26 +704,25 @@ func (h *PublicHandler) getConnectorResource(ctx context.Context, req *connector
 
 	var isBasicView bool
 
-	var connID string
-
 	var connDefColID string
 
-	resp = &connectorPB.GetConnectorResourceResponse{}
-	if connID, err = resource.GetRscNameID(req.GetName()); err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
+	resp = &connectorPB.GetUserConnectorResourceResponse{}
 
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	connDefColID = "connector-definitions"
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, isBasicView)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, isBasicView)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -630,12 +735,14 @@ func (h *PublicHandler) getConnectorResource(ctx context.Context, req *connector
 		return resp, err
 	}
 
-	resp.ConnectorResource = DBToPBConnector(
+	resp.ConnectorResource, err = h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	if credentialMask {
 		connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), resp.ConnectorResource.Configuration)
@@ -648,7 +755,7 @@ func (h *PublicHandler) getConnectorResource(ctx context.Context, req *connector
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -656,9 +763,9 @@ func (h *PublicHandler) getConnectorResource(ctx context.Context, req *connector
 	return resp, nil
 }
 
-func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connectorPB.UpdateConnectorResourceRequest) (resp *connectorPB.UpdateConnectorResourceResponse, err error) {
+func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *connectorPB.UpdateUserConnectorResourceRequest) (resp *connectorPB.UpdateUserConnectorResourceResponse, err error) {
 
-	eventName := "UpdateConnectorResource"
+	eventName := "UpdateUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -670,17 +777,20 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 
 	var mask fieldmask_utils.Mask
 
-	var connID string
-
 	var connDefRscName string
 
-	owner, ownerErr := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-
-	resp = &connectorPB.UpdateConnectorResourceResponse{}
-	if ownerErr != nil {
-		span.SetStatus(1, ownerErr.Error())
-		return resp, ownerErr
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.ConnectorResource.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
 	}
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	resp = &connectorPB.UpdateUserConnectorResourceResponse{}
 
 	pbConnectorReq := req.GetConnectorResource()
 	pbUpdateMask := req.GetUpdateMask()
@@ -728,9 +838,9 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	getResp, err := h.getConnectorResource(
+	getResp, err := h.getUserConnectorResource(
 		ctx,
-		&connectorPB.GetConnectorResourceRequest{
+		&connectorPB.GetUserConnectorResourceRequest{
 			Name: req.GetConnectorResource().GetName(),
 			View: connectorPB.View_VIEW_FULL.Enum(),
 		}, false)
@@ -776,7 +886,7 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 	}
 
 	if mask.IsEmpty() {
-		return &connectorPB.UpdateConnectorResourceResponse{
+		return &connectorPB.UpdateUserConnectorResourceResponse{
 			ConnectorResource: getResp.GetConnectorResource(),
 		}, nil
 	}
@@ -799,8 +909,6 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 		return nil, st.Err()
 	}
 
-	connID = getResp.GetConnectorResource().GetId()
-
 	dbConnDefID, err := resource.GetRscNameID(getResp.GetConnectorResource().GetConnectorDefinitionName())
 	if err != nil {
 		span.SetStatus(1, err.Error())
@@ -814,11 +922,6 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 	}
 
 	connDefRscName = fmt.Sprintf("connector-definitions/%s", dbConnDef.GetId())
-
-	if ownerErr != nil {
-		span.SetStatus(1, err.Error())
-		return resp, ownerErr
-	}
 
 	configuration := &structpb.Struct{}
 	proto.Merge(configuration, pbConnectorToUpdate.Configuration)
@@ -834,32 +937,38 @@ func (h *PublicHandler) UpdateConnectorResource(ctx context.Context, req *connec
 	proto.Merge(configuration, req.ConnectorResource.Configuration)
 	pbConnectorToUpdate.Configuration = configuration
 
-	dbConnector, err := h.service.UpdateConnectorResource(ctx, connID, owner, PBToDBConnector(ctx, pbConnectorToUpdate, owner.GetName(), dbConnDef))
+	dbConnector, err := h.service.PBToDBConnector(ctx, pbConnectorToUpdate, dbConnDef)
+	if err != nil {
+		return nil, err
+	}
+	dbConnector, err = h.service.UpdateUserConnectorResourceByID(ctx, *ns, userUid, connID, dbConnector)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	resp.ConnectorResource = DBToPBConnector(
+	resp.ConnectorResource, err = h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		service.GenOwnerPermalink(owner),
 		connDefRscName)
 
+	if err != nil {
+		return nil, err
+	}
 	connector.MaskCredentialFields(h.connectors, dbConnDef.Id, resp.ConnectorResource.Configuration)
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 	return resp, nil
 }
 
-func (h *PublicHandler) DeleteConnectorResource(ctx context.Context, req *connectorPB.DeleteConnectorResourceRequest) (resp *connectorPB.DeleteConnectorResourceResponse, err error) {
+func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *connectorPB.DeleteUserConnectorResourceRequest) (resp *connectorPB.DeleteUserConnectorResourceResponse, err error) {
 
-	eventName := "DeleteConnectorResource"
+	eventName := "DeleteUserConnectorResourceByID"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -873,24 +982,26 @@ func (h *PublicHandler) DeleteConnectorResource(ctx context.Context, req *connec
 
 	// Cast all used types and data
 
-	resp = &connectorPB.DeleteConnectorResourceResponse{}
-	if connID, err = resource.GetRscNameID(req.GetName()); err != nil {
+	resp = &connectorPB.DeleteUserConnectorResourceResponse{}
+
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	if err := h.service.DeleteConnectorResource(ctx, connID, owner); err != nil {
+	if err := h.service.DeleteUserConnectorResourceByID(ctx, *ns, userUid, connID); err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
@@ -898,7 +1009,7 @@ func (h *PublicHandler) DeleteConnectorResource(ctx context.Context, req *connec
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -909,9 +1020,9 @@ func (h *PublicHandler) DeleteConnectorResource(ctx context.Context, req *connec
 	return resp, nil
 }
 
-func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connectorPB.LookUpConnectorResourceRequest) (resp *connectorPB.LookUpConnectorResourceResponse, err error) {
+func (h *PublicHandler) LookUpUserConnectorResource(ctx context.Context, req *connectorPB.LookUpUserConnectorResourceRequest) (resp *connectorPB.LookUpUserConnectorResourceResponse, err error) {
 
-	eventName := "LookUpConnectorResource"
+	eventName := "LookUpUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -922,12 +1033,20 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 	logger, _ := logger.GetZapLogger(ctx)
 
 	var isBasicView bool
-
-	var connUID uuid.UUID
-
 	var connDefColID string
 
-	resp = &connectorPB.LookUpConnectorResourceResponse{}
+	resp = &connectorPB.LookUpUserConnectorResourceResponse{}
+
+	ns, connUID, err := h.service.GetRscNamespaceAndPermalinkUID(req.Permalink)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, lookUpRequiredFields); err != nil {
@@ -947,26 +1066,10 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	connUIDStr, err := resource.GetPermalinkUID(req.GetPermalink())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-	connUID, err = uuid.FromString(connUIDStr)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	connDefColID = "connector-definitions"
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	dbConnector, err := h.service.GetConnectorResourceByUID(ctx, connUID, owner, isBasicView)
+	dbConnector, err := h.service.GetUserConnectorResourceByUID(ctx, *ns, userUid, connUID, isBasicView)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -981,17 +1084,19 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
-	pbConnector := DBToPBConnector(
+	pbConnector, err := h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+	if err != nil {
+		return nil, err
+	}
 	if !isBasicView {
 		pbConnector.ConnectorDefinition = dbConnDef
 	}
@@ -1001,9 +1106,9 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 	return resp, nil
 }
 
-func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *connectorPB.ConnectConnectorResourceRequest) (resp *connectorPB.ConnectConnectorResourceResponse, err error) {
+func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *connectorPB.ConnectUserConnectorResourceRequest) (resp *connectorPB.ConnectUserConnectorResourceResponse, err error) {
 
-	eventName := "ConnectConnectorResource"
+	eventName := "ConnectUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1017,7 +1122,7 @@ func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *conne
 
 	var connDefRscName string
 
-	resp = &connectorPB.ConnectConnectorResourceResponse{}
+	resp = &connectorPB.ConnectUserConnectorResourceResponse{}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, connectRequiredFields); err != nil {
@@ -1037,15 +1142,20 @@ func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *conne
 		return resp, st.Err()
 	}
 
-	connID, err = resource.GetRscNameID(req.GetName())
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	getResp, err := h.GetConnectorResource(
+	getResp, err := h.GetUserConnectorResource(
 		ctx,
-		&connectorPB.GetConnectorResourceRequest{
+		&connectorPB.GetUserConnectorResourceRequest{
 			Name: req.GetName(),
 			View: connectorPB.View_VIEW_BASIC.Enum(),
 		})
@@ -1068,13 +1178,7 @@ func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *conne
 
 	connDefRscName = fmt.Sprintf("connector-definitions/%s", dbConnDef.GetId())
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	dbConnector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1099,7 +1203,7 @@ func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *conne
 		return resp, st.Err()
 	}
 
-	dbConnector, err = h.service.UpdateConnectorResourceState(ctx, connID, service.GenOwnerPermalink(owner), datamodel.ConnectorResourceState(*state))
+	dbConnector, err = h.service.UpdateUserConnectorResourceStateByID(ctx, *ns, userUid, connID, datamodel.ConnectorResourceState(*state))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1108,26 +1212,29 @@ func (h *PublicHandler) ConnectConnectorResource(ctx context.Context, req *conne
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
-	pbConnector := DBToPBConnector(
+	pbConnector, err := h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		connDefRscName,
 	)
+	if err != nil {
+		return nil, err
+	}
+	connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), pbConnector.Configuration)
 
 	resp.ConnectorResource = pbConnector
 
 	return resp, nil
 }
 
-func (h *PublicHandler) DisconnectConnectorResource(ctx context.Context, req *connectorPB.DisconnectConnectorResourceRequest) (resp *connectorPB.DisconnectConnectorResourceResponse, err error) {
+func (h *PublicHandler) DisconnectUserConnectorResource(ctx context.Context, req *connectorPB.DisconnectUserConnectorResourceRequest) (resp *connectorPB.DisconnectUserConnectorResourceResponse, err error) {
 
-	eventName := "DisconnectConnectorResource"
+	eventName := "DisconnectUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1141,7 +1248,7 @@ func (h *PublicHandler) DisconnectConnectorResource(ctx context.Context, req *co
 
 	var connDefRscName string
 
-	resp = &connectorPB.DisconnectConnectorResourceResponse{}
+	resp = &connectorPB.DisconnectUserConnectorResourceResponse{}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, disconnectRequiredFields); err != nil {
@@ -1161,15 +1268,20 @@ func (h *PublicHandler) DisconnectConnectorResource(ctx context.Context, req *co
 		return resp, st.Err()
 	}
 
-	connID, err = resource.GetRscNameID(req.GetName())
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	getResp, err := h.GetConnectorResource(
+	getResp, err := h.GetUserConnectorResource(
 		ctx,
-		&connectorPB.GetConnectorResourceRequest{
+		&connectorPB.GetUserConnectorResourceRequest{
 			Name: req.GetName(),
 			View: connectorPB.View_VIEW_BASIC.Enum(),
 		})
@@ -1192,13 +1304,7 @@ func (h *PublicHandler) DisconnectConnectorResource(ctx context.Context, req *co
 
 	connDefRscName = fmt.Sprintf("connector-definitions/%s", dbConnDef.GetId())
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	dbConnector, err := h.service.UpdateConnectorResourceState(ctx, connID, service.GenOwnerPermalink(owner), datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateUserConnectorResourceStateByID(ctx, *ns, userUid, connID, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1207,26 +1313,29 @@ func (h *PublicHandler) DisconnectConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
-	pbConnector := DBToPBConnector(
+	pbConnector, err := h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		connDefRscName,
 	)
+	if err != nil {
+		return nil, err
+	}
 
+	connector.MaskCredentialFields(h.connectors, dbConnDef.GetId(), pbConnector.Configuration)
 	resp.ConnectorResource = pbConnector
 
 	return resp, nil
 }
 
-func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connectorPB.RenameConnectorResourceRequest) (resp *connectorPB.RenameConnectorResourceResponse, err error) {
+func (h *PublicHandler) RenameUserConnectorResource(ctx context.Context, req *connectorPB.RenameUserConnectorResourceRequest) (resp *connectorPB.RenameUserConnectorResourceResponse, err error) {
 
-	eventName := "RenameConnectorResource"
+	eventName := "RenameUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1241,7 +1350,7 @@ func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connec
 
 	var connDefRscName string
 
-	resp = &connectorPB.RenameConnectorResourceResponse{}
+	resp = &connectorPB.RenameUserConnectorResourceResponse{}
 
 	// Return error if REQUIRED fields are not provided in the requested payload
 	if err := checkfield.CheckRequiredFields(req, renameRequiredFields); err != nil {
@@ -1261,8 +1370,14 @@ func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	connID, err = resource.GetRscNameID(req.GetName())
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
 	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 	connNewID = req.GetNewConnectorId()
@@ -1283,9 +1398,9 @@ func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	getResp, err := h.GetConnectorResource(
+	getResp, err := h.GetUserConnectorResource(
 		ctx,
-		&connectorPB.GetConnectorResourceRequest{
+		&connectorPB.GetUserConnectorResourceRequest{
 			Name: req.GetName(),
 			View: connectorPB.View_VIEW_BASIC.Enum(),
 		})
@@ -1326,13 +1441,7 @@ func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	dbConnector, err := h.service.UpdateConnectorResourceID(ctx, connID, owner, connNewID)
+	dbConnector, err := h.service.UpdateUserConnectorResourceIDByID(ctx, *ns, userUid, connID, connNewID)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1341,24 +1450,25 @@ func (h *PublicHandler) RenameConnectorResource(ctx context.Context, req *connec
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
 
-	resp.ConnectorResource = DBToPBConnector(
+	resp.ConnectorResource, err = h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		connDefRscName,
 	)
-
+	if err != nil {
+		return nil, err
+	}
 	return resp, nil
 }
 
-func (h *PublicHandler) WatchConnectorResource(ctx context.Context, req *connectorPB.WatchConnectorResourceRequest) (resp *connectorPB.WatchConnectorResourceResponse, err error) {
+func (h *PublicHandler) WatchUserConnectorResource(ctx context.Context, req *connectorPB.WatchUserConnectorResourceRequest) (resp *connectorPB.WatchUserConnectorResourceResponse, err error) {
 
-	eventName := "WatchConnectorResource"
+	eventName := "WatchUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1370,32 +1480,25 @@ func (h *PublicHandler) WatchConnectorResource(ctx context.Context, req *connect
 
 	var connID string
 
-	resp = &connectorPB.WatchConnectorResourceResponse{}
-	if connID, err = resource.GetRscNameID(req.GetName()); err != nil {
+	resp = &connectorPB.WatchUserConnectorResourceResponse{}
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
+	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			owner,
-			eventName,
-			custom_otel.SetErrorMessage(err.Error()),
-		)))
-		return resp, err
-	}
-
-	dbConnector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, true)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		logger.Info(string(custom_otel.NewLogMessage(
-			span,
-			logUUID.String(),
-			owner,
+			userUid.String(),
 			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 		)))
@@ -1409,7 +1512,7 @@ func (h *PublicHandler) WatchConnectorResource(ctx context.Context, req *connect
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			owner,
+			userUid.String(),
 			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 			custom_otel.SetEventResource(dbConnector),
@@ -1422,9 +1525,9 @@ func (h *PublicHandler) WatchConnectorResource(ctx context.Context, req *connect
 	return resp, nil
 }
 
-func (h *PublicHandler) TestConnectorResource(ctx context.Context, req *connectorPB.TestConnectorResourceRequest) (resp *connectorPB.TestConnectorResourceResponse, err error) {
+func (h *PublicHandler) TestUserConnectorResource(ctx context.Context, req *connectorPB.TestUserConnectorResourceRequest) (resp *connectorPB.TestUserConnectorResourceResponse, err error) {
 
-	eventName := "TestConnectorResource"
+	eventName := "TestUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1436,19 +1539,19 @@ func (h *PublicHandler) TestConnectorResource(ctx context.Context, req *connecto
 
 	var connID string
 
-	resp = &connectorPB.TestConnectorResourceResponse{}
-	if connID, err = resource.GetRscNameID(req.GetName()); err != nil {
+	resp = &connectorPB.TestUserConnectorResourceResponse{}
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1464,7 +1567,7 @@ func (h *PublicHandler) TestConnectorResource(ctx context.Context, req *connecto
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		owner,
+		userUid.String(),
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1474,10 +1577,10 @@ func (h *PublicHandler) TestConnectorResource(ctx context.Context, req *connecto
 	return resp, nil
 }
 
-func (h *PublicHandler) ExecuteConnectorResource(ctx context.Context, req *connectorPB.ExecuteConnectorResourceRequest) (resp *connectorPB.ExecuteConnectorResourceResponse, err error) {
+func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *connectorPB.ExecuteUserConnectorResourceRequest) (resp *connectorPB.ExecuteUserConnectorResourceResponse, err error) {
 
 	startTime := time.Now()
-	eventName := "ExecuteConnectorResource"
+	eventName := "ExecuteUserConnectorResource"
 
 	ctx, span := tracer.Start(ctx, eventName,
 		trace.WithSpanKind(trace.SpanKindServer))
@@ -1487,19 +1590,19 @@ func (h *PublicHandler) ExecuteConnectorResource(ctx context.Context, req *conne
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	resp = &connectorPB.ExecuteConnectorResourceResponse{}
-	connID, err := resource.GetRscNameID(req.GetName())
+	resp = &connectorPB.ExecuteUserConnectorResourceResponse{}
+	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+	userUid, err := h.getUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	owner, err := resource.GetOwner(ctx, h.service.GetMgmtPrivateServiceClient())
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-	connector, err := h.service.GetConnectorResourceByID(ctx, connID, owner, false)
+	connector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, false)
 	if err != nil {
 		return resp, err
 	}
@@ -1517,7 +1620,7 @@ func (h *PublicHandler) ExecuteConnectorResource(ctx context.Context, req *conne
 	}
 
 	dataPoint := utils.UsageMetricData{
-		OwnerUID:               *owner.Uid,
+		OwnerUID:               userUid.String(),
 		ConnectorID:            connector.ID,
 		ConnectorUID:           connector.UID.String(),
 		ConnectorExecuteUID:    logUUID.String(),
@@ -1537,7 +1640,7 @@ func (h *PublicHandler) ExecuteConnectorResource(ctx context.Context, req *conne
 		})
 	}
 
-	if outputs, err := h.service.Execute(ctx, connector, owner, req.GetInputs()); err != nil {
+	if outputs, err := h.service.Execute(ctx, *ns, userUid, connector, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED
@@ -1548,7 +1651,7 @@ func (h *PublicHandler) ExecuteConnectorResource(ctx context.Context, req *conne
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			owner,
+			userUid.String(),
 			eventName,
 		)))
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()

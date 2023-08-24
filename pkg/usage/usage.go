@@ -51,7 +51,7 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivat
 	}
 
 	var defaultOwnerUID string
-	if resp, err := ma.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultOwnerID}); err == nil {
+	if resp, err := ma.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultUserID}); err == nil {
 		defaultOwnerUID = resp.GetUser().GetUid()
 	} else {
 		logger.Error(err.Error())
@@ -159,7 +159,7 @@ func (u *usage) StartReporter(ctx context.Context) {
 	logger, _ := logger.GetZapLogger(ctx)
 
 	var defaultOwnerUID string
-	if resp, err := u.mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultOwnerID}); err == nil {
+	if resp, err := u.mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultUserID}); err == nil {
 		defaultOwnerUID = resp.GetUser().GetUid()
 	} else {
 		logger.Error(err.Error())
@@ -183,7 +183,7 @@ func (u *usage) TriggerSingleReporter(ctx context.Context) {
 	logger, _ := logger.GetZapLogger(ctx)
 
 	var defaultOwnerUID string
-	if resp, err := u.mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultOwnerID}); err == nil {
+	if resp, err := u.mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: constant.DefaultUserID}); err == nil {
 		defaultOwnerUID = resp.GetUser().GetUid()
 	} else {
 		logger.Error(err.Error())

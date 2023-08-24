@@ -1,4 +1,4 @@
-package handler
+package service
 
 import (
 	"context"
@@ -19,11 +19,10 @@ import (
 )
 
 // PBToDBConnector converts protobuf data model to db data model
-func PBToDBConnector(
+func (s *service) PBToDBConnector(
 	ctx context.Context,
 	pbConnector *connectorPB.ConnectorResource,
-	ownerRscName string,
-	connectorDefinition *connectorPB.ConnectorDefinition) *datamodel.ConnectorResource {
+	connectorDefinition *connectorPB.ConnectorDefinition) (*datamodel.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -54,8 +53,20 @@ func PBToDBConnector(
 		Valid:  true,
 	}
 
+	var owner string
+
+	switch pbConnector.Owner.(type) {
+	case *connectorPB.ConnectorResource_User:
+		owner, err = s.ConvertOwnerNameToPermalink(pbConnector.GetUser())
+		if err != nil {
+			return nil, err
+		}
+	case *connectorPB.ConnectorResource_Org:
+		return nil, fmt.Errorf("org not supported")
+	}
+
 	return &datamodel.ConnectorResource{
-		Owner:                  ownerRscName,
+		Owner:                  owner,
 		ID:                     id,
 		ConnectorType:          datamodel.ConnectorResourceType(connectorDefinition.ConnectorType),
 		Description:            description,
@@ -81,21 +92,24 @@ func PBToDBConnector(
 			CreateTime: createTime,
 			UpdateTime: updateTime,
 		},
-	}
+	}, nil
 }
 
 // DBToPBConnector converts db data model to protobuf data model
-func DBToPBConnector(
+func (s *service) DBToPBConnector(
 	ctx context.Context,
 	dbConnector *datamodel.ConnectorResource,
-	owner string,
-	connectorDefinitionName string) *connectorPB.ConnectorResource {
+	connectorDefinitionName string) (*connectorPB.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
+	owner, err := s.ConvertOwnerPermalinkToName(dbConnector.Owner)
+	if err != nil {
+		return nil, err
+	}
 	pbConnector := &connectorPB.ConnectorResource{
 		Uid:                     dbConnector.UID.String(),
-		Name:                    fmt.Sprintf("connector-resources/%s", dbConnector.ID),
+		Name:                    fmt.Sprintf("%s/connector-resources/%s", owner, dbConnector.ID),
 		Id:                      dbConnector.ID,
 		ConnectorDefinitionName: connectorDefinitionName,
 		ConnectorType:           connectorPB.ConnectorType(dbConnector.ConnectorType),
@@ -125,6 +139,6 @@ func DBToPBConnector(
 	} else if strings.HasPrefix(owner, "organizations/") {
 		pbConnector.Owner = &connectorPB.ConnectorResource_Org{Org: owner}
 	}
-	return pbConnector
+	return pbConnector, nil
 
 }
