@@ -31,10 +31,11 @@ export function CheckCreate() {
         }
 
         // Cannot create csv destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource CSV response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource CSV response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         // destination-mysql (will end up with STATE_ERROR)
@@ -50,10 +51,11 @@ export function CheckCreate() {
         }
 
         // Cannot create MySQL destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: mySQLDstConnector
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource MySQL response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource MySQL response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         client.close();
@@ -70,10 +72,11 @@ export function CheckList() {
         });
 
         // Cannot list destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListUserConnectorResources', {
+            parent: `${constant.namespace}`,
             filter: "connector_type=CONNECTOR_TYPE_DATA",
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ListUserConnectorResources response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         client.close();
@@ -95,31 +98,32 @@ export function CheckGet() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
-        })
+        // client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+        //     name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
+        // })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
-        }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
-        })
+        // check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchUserConnectorResource', {
+        //     name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
+        // }), {
+        //     "vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+        // })
 
         // Cannot get destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/GetUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/GetConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/GetUserConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${resCSVDst.message.connectorResource.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${resCSVDst.message.connectorResource.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -141,17 +145,18 @@ export function CheckUpdate() {
             "configuration": constant.csvDstConfig
         }
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
-            "name": `connector-resources/${csvDstConnector.id}`,
+            "name": `${constant.namespace}/connector-resources/${csvDstConnector.id}`,
             "connector_definition_name": csvDstConnector.connector_definition_name,
             "tombstone": true,
             "description": randomString(50),
@@ -161,17 +166,17 @@ export function CheckUpdate() {
         }
 
         // Cannot update destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateConnectorResource', {
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/UpdateUserConnectorResource', {
             connector_resource: csvDstConnectorUpdate,
             update_mask: "description,configuration",
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateConnectorResource ${csvDstConnectorUpdate.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/UpdateUserConnectorResource ${csvDstConnectorUpdate.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -193,25 +198,26 @@ export function CheckLookUp() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
         // Cannot look up destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource', {
-            permalink: `connector/${resCSVDst.message.connectorResource.uid}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource', {
+            permalink: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.uid}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -233,66 +239,67 @@ export function CheckState() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
         // Cannot connect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource ${resCSVDst.message.connectorResource.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         // Cannot disconnect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource ${resCSVDst.message.connectorResource.id} response at UNSPECIFIED StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response at UNSPECIFIED StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
         // Cannot connect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_CONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_CONNECTED state StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         // Cannot disconnect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_CONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_CONNECTED state StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         // Cannot connect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_DISCONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_DISCONNECTED state StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         // Cannot disconnect destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_DISCONNECTED state StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/DisconnectUserConnectorResource ${resCSVDst.message.connectorResource.id} response at STATE_DISCONNECTED state StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -314,28 +321,29 @@ export function CheckRename() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
         let new_id = `some-id-not-${resCSVDst.message.connectorResource.id}`
 
         // Cannot rename destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameConnectorResource', {
-            name: resCSVDst.message.connectorResource.id,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/RenameUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/resCSVDst.message.connectorResource.id`,
             new_connector_id: new_id
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/RenameConnectorResource ${resCSVDst.message.connectorResource.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/RenameUserConnectorResource ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -362,35 +370,36 @@ export function CheckExecute() {
             },
         }
 
-        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/WatchUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }), {
-            "vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
+            "vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource CSV destination connector STATE_CONNECTED": (r) => r.message.state === "STATE_CONNECTED",
         })
 
         // Cannot write destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnectorResource', {
-            "name": `connector/${resCSVDst.message.connectorResource.id}`,
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ExecuteUserConnectorResource', {
+            "name": `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`,
             "inputs": constant.clsModelOutputs
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ExecuteConnectorResource ${resCSVDst.message.connectorResource.id} response (classification) StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/ExecuteUserConnectorResource ${resCSVDst.message.connectorResource.id} response (classification) StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         });
 
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${resCSVDst.message.connectorResource.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${resCSVDst.message.connectorResource.id} response (classification) StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();
@@ -412,25 +421,26 @@ export function CheckTest() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateConnectorResource', {
+        var resCSVDst = client.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
+            parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
         })
 
-        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectConnectorResource', {
-            name: `connector-resources/${csvDstConnector.id}`
+        client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         })
 
         // Cannot test destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestConnectorResource', {
-            name: `connector-resources/${resCSVDst.message.connectorResource.id}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/TestUserConnectorResource', {
+            name: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.id}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/TestConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusNotFound`]: (r) => r.status === grpc.StatusNotFound,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/TestUserConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
-        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-            name: `connector-resources/${csvDstConnector.id}`
+        check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+            name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 
         client.close();

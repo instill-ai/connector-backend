@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/gogo/status"
 	"github.com/iancoleman/strcase"
 	"go.einride.tech/aip/filtering"
 	"go.opentelemetry.io/otel"
@@ -28,7 +27,6 @@ import (
 
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/connector"
-	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -50,19 +48,17 @@ var tracer = otel.Tracer("connector-backend.public-handler.tracer")
 
 type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
-	service        service.Service
-	connectors     connectorBase.IConnector
-	defaultUserUid uuid.UUID
+	service    service.Service
+	connectors connectorBase.IConnector
 }
 
 // NewPublicHandler initiates a handler instance
-func NewPublicHandler(ctx context.Context, s service.Service, defaultUserUid uuid.UUID) connectorPB.ConnectorPublicServiceServer {
+func NewPublicHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPublicServiceServer {
 
 	logger, _ := logger.GetZapLogger(ctx)
 	return &PublicHandler{
-		service:        s,
-		connectors:     connector.InitConnectorAll(logger),
-		defaultUserUid: defaultUserUid,
+		service:    s,
+		connectors: connector.InitConnectorAll(logger),
 	}
 }
 
@@ -90,22 +86,6 @@ func (h *PublicHandler) Readiness(ctx context.Context, in *connectorPB.Readiness
 			Status: healthcheckPB.HealthCheckResponse_SERVING_STATUS_SERVING,
 		},
 	}, nil
-}
-
-// GetUserPermalink returns the api user
-func (h *PublicHandler) getUserUid(ctx context.Context) (uuid.UUID, error) {
-	// Verify if "jwt-sub" is in the header
-	headerUserUId := resource.GetRequestSingleHeader(ctx, constant.HeaderUserUIDKey)
-	if headerUserUId != "" {
-		_, err := uuid.FromString(headerUserUId)
-		if err != nil {
-			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
-		}
-
-		return uuid.FromStringOrNil(headerUserUId), nil
-	}
-
-	return h.defaultUserUid, nil
 }
 
 func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *connectorPB.ListConnectorDefinitionsRequest) (resp *connectorPB.ListConnectorDefinitionsResponse, err error) {
@@ -308,7 +288,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 		return resp, err
 	}
 
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -386,7 +366,7 @@ func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *co
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -632,7 +612,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -714,11 +694,12 @@ func (h *PublicHandler) getUserConnectorResource(ctx context.Context, req *conne
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+	fmt.Println("aaa", userUid)
 
 	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, isBasicView)
 	if err != nil {
@@ -782,7 +763,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -987,7 +968,7 @@ func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *co
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1040,7 +1021,7 @@ func (h *PublicHandler) LookUpUserConnectorResource(ctx context.Context, req *co
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1145,7 +1126,7 @@ func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *c
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1271,7 +1252,7 @@ func (h *PublicHandler) DisconnectUserConnectorResource(ctx context.Context, req
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1373,7 +1354,7 @@ func (h *PublicHandler) RenameUserConnectorResource(ctx context.Context, req *co
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1484,7 +1465,7 @@ func (h *PublicHandler) WatchUserConnectorResource(ctx context.Context, req *con
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1543,7 +1524,7 @@ func (h *PublicHandler) TestUserConnectorResource(ctx context.Context, req *conn
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1594,7 +1575,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	userUid, err := h.getUserUid(ctx)
+	userUid, err := h.service.GetUserUid(ctx)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err

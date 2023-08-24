@@ -28,11 +28,11 @@ export function setup() {
   });
 
   group("Connector API: Pre delete all connector", () => {
-    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources', {}, {}).message.connectorResources) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-        name: `connector-resources/${connector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListUserConnectorResources', {}, {}).message.connectorResources) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+        name: `${constant.namespace}/connector-resources/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });
@@ -117,11 +117,11 @@ export function teardown(data) {
     plaintext: true
   });
   group("Connector API: Delete all connector created by this test", () => {
-    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListConnectorResources', {}, {}).message.connectorResources) {
-      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource`, {
-        name: `connector-resources/${connector.id}`
+    for (const connector of client.invoke('vdp.connector.v1alpha.ConnectorPublicService/ListUserConnectorResources', {}, {}).message.connectorResources) {
+      check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
+        name: `${constant.namespace}/connector-resources/${connector.id}`
       }), {
-        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${connector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
   });

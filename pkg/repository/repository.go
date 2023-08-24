@@ -70,8 +70,13 @@ func (r *repository) listConnectorResources(ctx context.Context, where string, w
 		return nil, 0, "", status.Errorf(codes.Internal, err.Error())
 	}
 	if expr != nil {
-		where = fmt.Sprintf("((%s) AND ?)", where)
-		whereArgs = append(whereArgs, expr)
+		if len(whereArgs) == 0 {
+			where = "(?)"
+			whereArgs = append(whereArgs, expr)
+		} else {
+			where = fmt.Sprintf("((%s) AND ?)", where)
+			whereArgs = append(whereArgs, expr)
+		}
 	}
 
 	logger, _ := logger.GetZapLogger(ctx)

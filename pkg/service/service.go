@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofrs/uuid"
+	"github.com/gogo/status"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/redis/go-redis/v9"
 	"go.einride.tech/aip/filtering"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"github.com/instill-ai/connector-backend/pkg/connector"
+	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -66,6 +68,7 @@ type Service interface {
 
 	DBToPBConnector(ctx context.Context, dbConnector *datamodel.ConnectorResource, connectorDefinitionName string) (*connectorPB.ConnectorResource, error)
 	PBToDBConnector(ctx context.Context, pbConnector *connectorPB.ConnectorResource, connectorDefinition *connectorPB.ConnectorDefinition) (*datamodel.ConnectorResource, error)
+	GetUserUid(ctx context.Context) (uuid.UUID, error)
 }
 
 type service struct {
@@ -76,6 +79,7 @@ type service struct {
 	connectorAll                connectorBase.IConnector
 	influxDBWriteClient         api.WriteAPI
 	redisClient                 *redis.Client
+	defaultUserUid              uuid.UUID
 }
 
 // NewService initiates a service instance
@@ -87,6 +91,7 @@ func NewService(
 	c controllerPB.ControllerPrivateServiceClient,
 	rc *redis.Client,
 	i api.WriteAPI,
+	defaultUserUid uuid.UUID,
 ) Service {
 	logger, _ := logger.GetZapLogger(t)
 	return &service{
@@ -97,7 +102,29 @@ func NewService(
 		connectorAll:                connector.InitConnectorAll(logger),
 		redisClient:                 rc,
 		influxDBWriteClient:         i,
+		defaultUserUid:              defaultUserUid,
 	}
+}
+
+// GetUserPermalink returns the api user
+func (s *service) GetUserUid(ctx context.Context) (uuid.UUID, error) {
+	// Verify if "jwt-sub" is in the header
+	headerUserUId := resource.GetRequestSingleHeader(ctx, constant.HeaderUserUIDKey)
+	fmt.Println("headerUserUId", headerUserUId)
+	if headerUserUId != "" {
+		_, err := uuid.FromString(headerUserUId)
+		if err != nil {
+			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+		}
+		_, err = s.mgmtPrivateServiceClient.LookUpUserAdmin(context.Background(), &mgmtPB.LookUpUserAdminRequest{Permalink: "users/" + headerUserUId})
+		if err != nil {
+			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+		}
+
+		return uuid.FromStringOrNil(headerUserUId), nil
+	}
+
+	return s.defaultUserUid, nil
 }
 
 func (s *service) injectUserToContext(ctx context.Context, userPermalink string) context.Context {

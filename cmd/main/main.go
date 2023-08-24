@@ -186,6 +186,7 @@ func main() {
 		controllerClient,
 		redisClient,
 		influxDBWriteClient,
+		defaultUserUID,
 	)
 	connectorPB.RegisterConnectorPrivateServiceServer(
 		privateGrpcS,
@@ -194,7 +195,7 @@ func main() {
 
 	connectorPB.RegisterConnectorPublicServiceServer(
 		publicGrpcS,
-		handler.NewPublicHandler(ctx, service, defaultUserUID),
+		handler.NewPublicHandler(ctx, service),
 	)
 
 	privateServeMux := runtime.NewServeMux(

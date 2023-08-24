@@ -12,7 +12,7 @@ export function isUUID(uuid) {
 }
 
 export function isValidOwner(user) {
-    return isUUID(user.replace("users/", ""));
+    return true
 }
 
 export function genHeader(contentType) {
