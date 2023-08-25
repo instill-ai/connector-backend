@@ -48,7 +48,7 @@ type ConnectorResource struct {
 	Description            sql.NullString
 	Tombstone              bool
 	Configuration          datatypes.JSON              `gorm:"type:jsonb"`
-	Type                   ConnectorResourceType       `sql:"type:valid_connector_type"`
+	ConnectorType          ConnectorResourceType       `sql:"type:valid_connector_type"`
 	State                  ConnectorResourceState      `sql:"type:valid_state_type"`
 	Visibility             ConnectorResourceVisibility `sql:"type:valid_visibility"`
 }

@@ -527,7 +527,7 @@ func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *co
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
-		Type:                   datamodel.ConnectorResourceType(connDefResp.ConnectorDefinition.GetType()),
+		ConnectorType:          datamodel.ConnectorResourceType(connDefResp.ConnectorDefinition.GetType()),
 		Description:            connDesc,
 		Visibility:             datamodel.ConnectorResourceVisibility(req.ConnectorResource.Visibility),
 	}

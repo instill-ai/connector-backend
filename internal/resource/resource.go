@@ -62,8 +62,6 @@ func (ns Namespace) String() string {
 }
 
 func UserUidToUserPermalink(userUid uuid.UUID) string {
-	fmt.Println("")
-	fmt.Println("userUid", userUid)
 	return fmt.Sprintf("users/%s", userUid.String())
 }
 

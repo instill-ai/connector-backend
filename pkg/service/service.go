@@ -152,7 +152,7 @@ func (s *service) GetRscNamespaceAndNameID(path string) (resource.Namespace, str
 	if len(splits) < 2 {
 		return resource.Namespace{}, "", fmt.Errorf("namespace error")
 	}
-	uidStr, err := s.ConvertOwnerNameToPermalink(splits[1])
+	uidStr, err := s.ConvertOwnerNameToPermalink(fmt.Sprintf("%s/%s", splits[0], splits[1]))
 	if err != nil {
 		return resource.Namespace{}, "", fmt.Errorf("namespace error")
 	}
@@ -173,7 +173,7 @@ func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespac
 	if len(splits) < 2 {
 		return resource.Namespace{}, uuid.Nil, fmt.Errorf("namespace error")
 	}
-	uidStr, err := s.ConvertOwnerNameToPermalink(splits[1])
+	uidStr, err := s.ConvertOwnerNameToPermalink(fmt.Sprintf("%s/%s", splits[0], splits[1]))
 	if err != nil {
 		return resource.Namespace{}, uuid.Nil, fmt.Errorf("namespace error")
 	}
