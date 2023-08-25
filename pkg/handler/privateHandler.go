@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gofrs/uuid"
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	proto "google.golang.org/protobuf/proto"
@@ -86,12 +85,15 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 		if err != nil {
 			return resp, err
 		}
-		pbConnector := DBToPBConnector(
+		pbConnector, err := h.service.DBToPBConnector(
 			ctx,
 			dbConnectors[idx],
-			dbConnectors[idx].Owner,
 			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 		)
+		if err != nil {
+			return resp, err
+		}
+
 		if !isBasicView {
 			pbConnector.ConnectorDefinition = dbConnDef
 		}
@@ -116,8 +118,6 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 
 	var isBasicView bool
 
-	var connUID uuid.UUID
-
 	var connDefColID string
 
 	resp = &connectorPB.LookUpConnectorResourceAdminResponse{}
@@ -139,11 +139,7 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 		return resp, st.Err()
 	}
 
-	connUIDStr, err := resource.GetPermalinkUID(req.GetPermalink())
-	if err != nil {
-		return resp, err
-	}
-	connUID, err = uuid.FromString(connUIDStr)
+	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
 	if err != nil {
 		return resp, err
 	}
@@ -161,12 +157,14 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 		return resp, err
 	}
 
-	pbConnector := DBToPBConnector(
+	pbConnector, err := h.service.DBToPBConnector(
 		ctx,
 		dbConnector,
-		dbConnector.Owner,
 		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
 	)
+	if err != nil {
+		return resp, err
+	}
 
 	if !isBasicView {
 		connector.MaskCredentialFields(h.connectors, dbConnDef.Id, pbConnector.Configuration)
@@ -181,14 +179,13 @@ func (h *PrivateHandler) CheckConnectorResource(ctx context.Context, req *connec
 
 	var isBasicView = true
 
-	var connUID string
-
 	resp = &connectorPB.CheckConnectorResourceResponse{}
-	if connUID, err = resource.GetPermalinkUID(req.GetPermalink()); err != nil {
+	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
+	if err != nil {
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, uuid.FromStringOrNil(connUID), isBasicView)
+	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
 		return resp, err
 	}
@@ -224,14 +221,13 @@ func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req
 
 	resp = &connectorPB.LookUpConnectorDefinitionAdminResponse{}
 
-	var connUID string
-
-	if connUID, err = resource.GetRscNameID(req.GetPermalink()); err != nil {
+	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
+	if err != nil {
 		return resp, err
 	}
 	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
-	dbDef, err := h.connectors.GetConnectorDefinitionByUid(uuid.FromStringOrNil(connUID))
+	dbDef, err := h.connectors.GetConnectorDefinitionByUid(connUID)
 	if err != nil {
 		return resp, err
 	}

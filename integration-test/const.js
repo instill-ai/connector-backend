@@ -53,6 +53,8 @@ export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a
 export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
 export const mySQLDstDefRscPermalink = "connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
+export const namespace = "users/instill-ai"
+
 export const csvDstConfig = {
   "destination_path": "/local/test"
 };

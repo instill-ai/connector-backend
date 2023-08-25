@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/propagators/b3"
@@ -30,6 +31,7 @@ import (
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 
 	"github.com/instill-ai/connector-backend/config"
+	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/external"
 	"github.com/instill-ai/connector-backend/pkg/handler"
 	"github.com/instill-ai/connector-backend/pkg/logger"
@@ -40,6 +42,7 @@ import (
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
+	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -169,33 +172,31 @@ func main() {
 	publicGrpcS := grpc.NewServer(grpcServerOpts...)
 	reflection.Register(publicGrpcS)
 
+	resp, err := mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: "users/" + constant.DefaultUserID})
+	if err != nil {
+		panic(err)
+	}
+	defaultUserUID := uuid.FromStringOrNil(*resp.User.Uid)
+
+	service := service.NewService(
+		ctx,
+		repository,
+		mgmtPrivateServiceClient,
+		pipelinePublicServiceClient,
+		controllerClient,
+		redisClient,
+		influxDBWriteClient,
+		defaultUserUID,
+	)
 	connectorPB.RegisterConnectorPrivateServiceServer(
 		privateGrpcS,
-		handler.NewPrivateHandler(
-			ctx,
-			service.NewService(
-				ctx,
-				repository,
-				mgmtPrivateServiceClient,
-				pipelinePublicServiceClient,
-				controllerClient,
-				redisClient,
-				influxDBWriteClient,
-			)))
+		handler.NewPrivateHandler(ctx, service),
+	)
 
 	connectorPB.RegisterConnectorPublicServiceServer(
 		publicGrpcS,
-		handler.NewPublicHandler(
-			ctx,
-			service.NewService(
-				ctx,
-				repository,
-				mgmtPrivateServiceClient,
-				pipelinePublicServiceClient,
-				controllerClient,
-				redisClient,
-				influxDBWriteClient,
-			)))
+		handler.NewPublicHandler(ctx, service),
+	)
 
 	privateServeMux := runtime.NewServeMux(
 		runtime.WithForwardResponseOption(middleware.HttpResponseModifier),

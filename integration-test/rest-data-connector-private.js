@@ -40,10 +40,10 @@ export function CheckList() {
 
         // Create connectors
         for (const reqBody of reqBodies) {
-            var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
+            var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
                 JSON.stringify(reqBody), constant.params)
             check(resCSVDst, {
-                [`POST /v1alpha/connector-resources x${reqBodies.length} response status 201`]: (r) => r.status === 201,
+                [`POST /v1alpha/${constant.namespace}/connector-resources x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
         }
 
@@ -96,7 +96,7 @@ export function CheckList() {
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${reqBody.id}`), {
+            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${reqBody.id}`), {
                 [`DELETE /v1alpha/admin/connector-resources x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
@@ -114,7 +114,7 @@ export function CheckLookUp() {
             "configuration": constant.csvDstConfig
         }
 
-        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/connector-resources`,
+        var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`), {
@@ -124,7 +124,7 @@ export function CheckLookUp() {
             [`GET /v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector_resource.user),
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
             [`DELETE /v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 

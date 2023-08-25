@@ -51,7 +51,6 @@ type ConnectorResource struct {
 	ConnectorType          ConnectorResourceType       `sql:"type:valid_connector_type"`
 	State                  ConnectorResourceState      `sql:"type:valid_state_type"`
 	Visibility             ConnectorResourceVisibility `sql:"type:valid_visibility"`
-	Task                   Task                        `sql:"type:valid_task"`
 }
 
 func (ConnectorResource) TableName() string {
