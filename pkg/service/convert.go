@@ -67,7 +67,7 @@ func (s *service) PBToDBConnector(
 	return &datamodel.ConnectorResource{
 		Owner:                  owner,
 		ID:                     id,
-		ConnectorType:          datamodel.ConnectorResourceType(connectorDefinition.ConnectorType),
+		Type:                   datamodel.ConnectorResourceType(connectorDefinition.Type),
 		Description:            description,
 		State:                  state,
 		Tombstone:              tombstone,
@@ -110,7 +110,7 @@ func (s *service) DBToPBConnector(
 		Name:                    fmt.Sprintf("%s/connector-resources/%s", owner, dbConnector.ID),
 		Id:                      dbConnector.ID,
 		ConnectorDefinitionName: connectorDefinitionName,
-		ConnectorType:           connectorPB.ConnectorType(dbConnector.ConnectorType),
+		Type:                    connectorPB.ConnectorType(dbConnector.Type),
 		Description:             &dbConnector.Description.String,
 		State:                   connectorPB.ConnectorResource_State(dbConnector.State),
 		Tombstone:               dbConnector.Tombstone,

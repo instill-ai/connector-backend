@@ -61,8 +61,8 @@ type Service interface {
 	// Influx API
 	WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) error
 
-	GetRscNamespaceAndNameID(path string) (*resource.Namespace, string, error)
-	GetRscNamespaceAndPermalinkUID(path string) (*resource.Namespace, uuid.UUID, error)
+	GetRscNamespaceAndNameID(path string) (resource.Namespace, string, error)
+	GetRscNamespaceAndPermalinkUID(path string) (resource.Namespace, uuid.UUID, error)
 	ConvertOwnerPermalinkToName(permalink string) (string, error)
 	ConvertOwnerNameToPermalink(name string) (string, error)
 
@@ -147,43 +147,43 @@ func (s *service) ConvertOwnerNameToPermalink(name string) (string, error) {
 	return fmt.Sprintf("users/%s", *userResp.User.Uid), nil
 }
 
-func (s *service) GetRscNamespaceAndNameID(path string) (*resource.Namespace, string, error) {
+func (s *service) GetRscNamespaceAndNameID(path string) (resource.Namespace, string, error) {
 	splits := strings.Split(path, "/")
 	if len(splits) < 2 {
-		return nil, "", fmt.Errorf("namespace error")
+		return resource.Namespace{}, "", fmt.Errorf("namespace error")
 	}
 	uidStr, err := s.ConvertOwnerNameToPermalink(splits[1])
 	if err != nil {
-		return nil, "", fmt.Errorf("namespace error")
+		return resource.Namespace{}, "", fmt.Errorf("namespace error")
 	}
 	if len(splits) < 4 {
-		return &resource.Namespace{
+		return resource.Namespace{
 			NsType: resource.NamespaceType(splits[0]),
 			NsUid:  uuid.FromStringOrNil(strings.Split(uidStr, "/")[1]),
 		}, "", nil
 	}
-	return &resource.Namespace{
+	return resource.Namespace{
 		NsType: resource.NamespaceType(splits[0]),
 		NsUid:  uuid.FromStringOrNil(strings.Split(uidStr, "/")[1]),
 	}, splits[3], nil
 }
 
-func (s *service) GetRscNamespaceAndPermalinkUID(path string) (*resource.Namespace, uuid.UUID, error) {
+func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespace, uuid.UUID, error) {
 	splits := strings.Split(path, "/")
 	if len(splits) < 2 {
-		return nil, uuid.Nil, fmt.Errorf("namespace error")
+		return resource.Namespace{}, uuid.Nil, fmt.Errorf("namespace error")
 	}
 	uidStr, err := s.ConvertOwnerNameToPermalink(splits[1])
 	if err != nil {
-		return nil, uuid.Nil, fmt.Errorf("namespace error")
+		return resource.Namespace{}, uuid.Nil, fmt.Errorf("namespace error")
 	}
 	if len(splits) < 4 {
-		return &resource.Namespace{
+		return resource.Namespace{
 			NsType: resource.NamespaceType(splits[0]),
 			NsUid:  uuid.FromStringOrNil(strings.Split(uidStr, "/")[1]),
 		}, uuid.Nil, nil
 	}
-	return &resource.Namespace{
+	return resource.Namespace{
 		NsType: resource.NamespaceType(splits[0]),
 		NsUid:  uuid.FromStringOrNil(strings.Split(uidStr, "/")[1]),
 	}, uuid.FromStringOrNil(splits[3]), nil

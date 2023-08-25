@@ -167,7 +167,7 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 
 		}
 		for idx := range unfilteredDefs {
-			if _, ok := typeMap[unfilteredDefs[idx].ConnectorType.String()]; ok {
+			if _, ok := typeMap[unfilteredDefs[idx].Type.String()]; ok {
 				defs = append(defs, unfilteredDefs[idx])
 			}
 		}
@@ -328,7 +328,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 	)))
 
@@ -527,12 +527,12 @@ func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *co
 		ConnectorDefinitionUID: connDefUID,
 		Tombstone:              false,
 		Configuration:          connConfig,
-		ConnectorType:          datamodel.ConnectorResourceType(connDefResp.ConnectorDefinition.GetConnectorType()),
+		Type:                   datamodel.ConnectorResourceType(connDefResp.ConnectorDefinition.GetType()),
 		Description:            connDesc,
 		Visibility:             datamodel.ConnectorResourceVisibility(req.ConnectorResource.Visibility),
 	}
 
-	dbConnector, err = h.service.CreateUserConnectorResource(ctx, *ns, userUid, dbConnector)
+	dbConnector, err = h.service.CreateUserConnectorResource(ctx, ns, userUid, dbConnector)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -541,7 +541,7 @@ func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -618,7 +618,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 		return resp, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, *ns, userUid, pageSize, pageToken, isBasicView, filter)
+	dbConnectors, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, ns, userUid, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -652,7 +652,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 	)))
 
@@ -699,9 +699,8 @@ func (h *PublicHandler) getUserConnectorResource(ctx context.Context, req *conne
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	fmt.Println("aaa", userUid)
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, isBasicView)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, isBasicView)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -734,7 +733,7 @@ func (h *PublicHandler) getUserConnectorResource(ctx context.Context, req *conne
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -920,7 +919,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 	if err != nil {
 		return nil, err
 	}
-	dbConnector, err = h.service.UpdateUserConnectorResourceByID(ctx, *ns, userUid, connID, dbConnector)
+	dbConnector, err = h.service.UpdateUserConnectorResourceByID(ctx, ns, userUid, connID, dbConnector)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -938,7 +937,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -974,13 +973,13 @@ func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *co
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
 
-	if err := h.service.DeleteUserConnectorResourceByID(ctx, *ns, userUid, connID); err != nil {
+	if err := h.service.DeleteUserConnectorResourceByID(ctx, ns, userUid, connID); err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
@@ -988,7 +987,7 @@ func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1048,7 +1047,7 @@ func (h *PublicHandler) LookUpUserConnectorResource(ctx context.Context, req *co
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 	connDefColID = "connector-definitions"
 
-	dbConnector, err := h.service.GetUserConnectorResourceByUID(ctx, *ns, userUid, connUID, isBasicView)
+	dbConnector, err := h.service.GetUserConnectorResourceByUID(ctx, ns, userUid, connUID, isBasicView)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1063,7 +1062,7 @@ func (h *PublicHandler) LookUpUserConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1157,7 +1156,7 @@ func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *c
 
 	connDefRscName = fmt.Sprintf("connector-definitions/%s", dbConnDef.GetId())
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1182,7 +1181,7 @@ func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *c
 		return resp, st.Err()
 	}
 
-	dbConnector, err = h.service.UpdateUserConnectorResourceStateByID(ctx, *ns, userUid, connID, datamodel.ConnectorResourceState(*state))
+	dbConnector, err = h.service.UpdateUserConnectorResourceStateByID(ctx, ns, userUid, connID, datamodel.ConnectorResourceState(*state))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1191,7 +1190,7 @@ func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *c
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1283,7 +1282,7 @@ func (h *PublicHandler) DisconnectUserConnectorResource(ctx context.Context, req
 
 	connDefRscName = fmt.Sprintf("connector-definitions/%s", dbConnDef.GetId())
 
-	dbConnector, err := h.service.UpdateUserConnectorResourceStateByID(ctx, *ns, userUid, connID, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED))
+	dbConnector, err := h.service.UpdateUserConnectorResourceStateByID(ctx, ns, userUid, connID, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1292,7 +1291,7 @@ func (h *PublicHandler) DisconnectUserConnectorResource(ctx context.Context, req
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1420,7 +1419,7 @@ func (h *PublicHandler) RenameUserConnectorResource(ctx context.Context, req *co
 		return resp, st.Err()
 	}
 
-	dbConnector, err := h.service.UpdateUserConnectorResourceIDByID(ctx, *ns, userUid, connID, connNewID)
+	dbConnector, err := h.service.UpdateUserConnectorResourceIDByID(ctx, ns, userUid, connID, connNewID)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1429,7 +1428,7 @@ func (h *PublicHandler) RenameUserConnectorResource(ctx context.Context, req *co
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1471,13 +1470,13 @@ func (h *PublicHandler) WatchUserConnectorResource(ctx context.Context, req *con
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			userUid.String(),
+			userUid,
 			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 		)))
@@ -1491,7 +1490,7 @@ func (h *PublicHandler) WatchUserConnectorResource(ctx context.Context, req *con
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			userUid.String(),
+			userUid,
 			eventName,
 			custom_otel.SetErrorMessage(err.Error()),
 			custom_otel.SetEventResource(dbConnector),
@@ -1530,7 +1529,7 @@ func (h *PublicHandler) TestUserConnectorResource(ctx context.Context, req *conn
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1546,7 +1545,7 @@ func (h *PublicHandler) TestUserConnectorResource(ctx context.Context, req *conn
 	logger.Info(string(custom_otel.NewLogMessage(
 		span,
 		logUUID.String(),
-		userUid.String(),
+		userUid,
 		eventName,
 		custom_otel.SetEventResource(dbConnector),
 	)))
@@ -1581,7 +1580,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		return resp, err
 	}
 
-	connector, err := h.service.GetUserConnectorResourceByID(ctx, *ns, userUid, connID, false)
+	connector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, false)
 	if err != nil {
 		return resp, err
 	}
@@ -1619,7 +1618,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		})
 	}
 
-	if outputs, err := h.service.Execute(ctx, *ns, userUid, connector, req.GetInputs()); err != nil {
+	if outputs, err := h.service.Execute(ctx, ns, userUid, connector, req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED
@@ -1630,7 +1629,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		logger.Info(string(custom_otel.NewLogMessage(
 			span,
 			logUUID.String(),
-			userUid.String(),
+			userUid,
 			eventName,
 		)))
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()

@@ -5,6 +5,7 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/pkg/utils"
 )
 
@@ -72,7 +73,7 @@ func SetMetadata(m string) Option {
 func NewLogMessage(
 	span trace.Span,
 	logID string,
-	userUid string,
+	userUid uuid.UUID,
 	eventName string,
 	options ...Option,
 ) []byte {
@@ -89,7 +90,7 @@ func NewLogMessage(
 	logMessage.UserInfo = struct {
 		UserUUID string "json:\"userUUID\""
 	}{
-		UserUUID: userUid,
+		UserUUID: userUid.String(),
 	}
 	logMessage.Event = struct {
 		IsAuditEvent bool "json:\"isAuditEvent\""
