@@ -16,24 +16,19 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	fieldmask_utils "github.com/mennanov/fieldmask-utils"
 	proto "google.golang.org/protobuf/proto"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/logger"
-	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/connector-backend/pkg/utils"
 	"github.com/instill-ai/x/checkfield"
-	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
-	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
@@ -44,17 +39,13 @@ var tracer = otel.Tracer("connector-backend.public-handler.tracer")
 
 type PublicHandler struct {
 	connectorPB.UnimplementedConnectorPublicServiceServer
-	service    service.Service
-	connectors connectorBase.IConnector
+	service service.Service
 }
 
 // NewPublicHandler initiates a handler instance
 func NewPublicHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPublicServiceServer {
-
-	logger, _ := logger.GetZapLogger(ctx)
 	return &PublicHandler{
-		service:    s,
-		connectors: connector.InitConnectorAll(logger),
+		service: s,
 	}
 }
 
@@ -100,101 +91,15 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
+	defs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(ctx, pageSize, pageToken, isBasicView, filter)
 
-	prevLastUid := ""
-
-	if pageToken != "" {
-		_, prevLastUid, err = paginate.DecodeToken(pageToken)
-		if err != nil {
-			st, err := sterr.CreateErrorBadRequest(
-				fmt.Sprintf("[db] list connector error: %s", err.Error()),
-				[]*errdetails.BadRequest_FieldViolation{
-					{
-						Field:       "page_token",
-						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
-					},
-				},
-			)
-			if err != nil {
-				logger.Error(err.Error())
-			}
-			return nil, st.Err()
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	if pageSize == 0 {
-		pageSize = repository.DefaultPageSize
-	} else if pageSize > repository.MaxPageSize {
-		pageSize = repository.MaxPageSize
-	}
-
-	unfilteredDefs := h.connectors.ListConnectorDefinitions()
-
-	// don't return definition with tombstone = true
-	unfilteredDefsRemoveTombstone := []*connectorPB.ConnectorDefinition{}
-	for idx := range unfilteredDefs {
-		if !unfilteredDefs[idx].Tombstone {
-			unfilteredDefsRemoveTombstone = append(unfilteredDefsRemoveTombstone, unfilteredDefs[idx])
-		}
-	}
-	unfilteredDefs = unfilteredDefsRemoveTombstone
-
-	var defs []*connectorPB.ConnectorDefinition
-	if filter.CheckedExpr != nil {
-		trans := repository.NewTranspiler(filter)
-		expr, _ := trans.Transpile()
-		typeMap := map[string]bool{}
-		for idx := range expr.Vars {
-			if idx == 0 {
-				typeMap[string(expr.Vars[idx].(protoreflect.Name))] = true
-			} else {
-				typeMap[string(expr.Vars[idx].([]interface{})[0].(protoreflect.Name))] = true
-			}
-
-		}
-		for idx := range unfilteredDefs {
-			if _, ok := typeMap[unfilteredDefs[idx].Type.String()]; ok {
-				defs = append(defs, unfilteredDefs[idx])
-			}
-		}
-
-	} else {
-		defs = unfilteredDefs
-	}
-
-	startIdx := 0
-	lastUid := ""
-	for idx, def := range defs {
-		if def.Uid == prevLastUid {
-			startIdx = idx + 1
-			break
-		}
-	}
-
-	page := []*connectorPB.ConnectorDefinition{}
-	for i := 0; i < int(pageSize) && startIdx+i < len(defs); i++ {
-		def := proto.Clone(defs[startIdx+i]).(*connectorPB.ConnectorDefinition)
-		page = append(page, def)
-		lastUid = def.Uid
-	}
-
-	nextPageToken := ""
-
-	if startIdx+len(page) < len(defs) {
-		nextPageToken = paginate.EncodeToken(time.Time{}, lastUid)
-	}
-	for _, def := range page {
-		def.Name = fmt.Sprintf("connector-definitions/%s", def.Id)
-		if isBasicView {
-			def.Spec = nil
-		}
-		def.VendorAttributes = nil
-		resp.ConnectorDefinitions = append(
-			resp.ConnectorDefinitions,
-			def)
-	}
+	resp.ConnectorDefinitions = defs
 	resp.NextPageToken = nextPageToken
-	resp.TotalSize = int64(len(defs))
+	resp.TotalSize = totalSize
 
 	logger.Info("ListConnectorDefinitions")
 
@@ -218,17 +123,12 @@ func (h *PublicHandler) GetConnectorDefinition(ctx context.Context, req *connect
 	}
 	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
-	dbDef, err := h.connectors.GetConnectorDefinitionById(connID)
+	dbDef, err := h.service.GetConnectorDefinitionByID(ctx, connID, isBasicView)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	resp.ConnectorDefinition = proto.Clone(dbDef).(*connectorPB.ConnectorDefinition)
-	if isBasicView {
-		resp.ConnectorDefinition.Spec = nil
-	}
-	resp.ConnectorDefinition.VendorAttributes = nil
-	resp.ConnectorDefinition.Name = fmt.Sprintf("connector-definitions/%s", resp.ConnectorDefinition.GetId())
+	resp.ConnectorDefinition = dbDef
 
 	logger.Info("GetConnectorDefinition")
 	return resp, nil
@@ -736,7 +636,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 		return resp, err
 	}
 
-	connector.RemoveCredentialFieldsWithMaskString(h.connectors, dbConnDefID, req.ConnectorResource.Configuration)
+	h.service.RemoveCredentialFieldsWithMaskString(dbConnDefID, req.ConnectorResource.Configuration)
 	proto.Merge(configuration, req.ConnectorResource.Configuration)
 	pbConnectorToUpdate.Configuration = configuration
 

@@ -2,36 +2,29 @@ package handler
 
 import (
 	"context"
-	"fmt"
 
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
-	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 type PrivateHandler struct {
 	connectorPB.UnimplementedConnectorPrivateServiceServer
-	service    service.Service
-	connectors connectorBase.IConnector
+	service service.Service
 }
 
 // NewPrivateHandler initiates a handler instance
 func NewPrivateHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPrivateServiceServer {
-	logger, _ := logger.GetZapLogger(ctx)
-
 	return &PrivateHandler{
-		service:    s,
-		connectors: connector.InitConnectorAll(logger),
+		service: s,
 	}
 }
 
@@ -168,16 +161,11 @@ func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req
 	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	// TODO add a service wrapper
-	def, err := h.connectors.GetConnectorDefinitionByUid(connUID)
+	def, err := h.service.GetConnectorDefinitionByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
 		return resp, err
 	}
 	resp.ConnectorDefinition = def
-	if isBasicView {
-		resp.ConnectorDefinition.Spec = nil
-	}
-	resp.ConnectorDefinition.VendorAttributes = nil
-	resp.ConnectorDefinition.Name = fmt.Sprintf("connector-definitions/%s", resp.ConnectorDefinition.GetId())
 
 	logger.Info("GetConnectorDefinitionAdmin")
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/gogo/status"
@@ -14,6 +15,8 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
@@ -23,6 +26,7 @@ import (
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
 	"github.com/instill-ai/connector-backend/pkg/utils"
+	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
 	connectorBase "github.com/instill-ai/connector/pkg/base"
@@ -34,6 +38,10 @@ import (
 
 // Service interface
 type Service interface {
+	ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error)
+	GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
+	GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
+
 	// Connector common
 	ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
 	CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
@@ -62,11 +70,12 @@ type Service interface {
 	// Influx API
 	WriteNewDataPoint(ctx context.Context, data utils.UsageMetricData, pipelineMetadata *structpb.Value) error
 
+	// Helper functions
 	GetRscNamespaceAndNameID(path string) (resource.Namespace, string, error)
 	GetRscNamespaceAndPermalinkUID(path string) (resource.Namespace, uuid.UUID, error)
 	ConvertOwnerPermalinkToName(permalink string) (string, error)
 	ConvertOwnerNameToPermalink(name string) (string, error)
-
+	RemoveCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct)
 	GetUser(ctx context.Context) (string, uuid.UUID, error)
 }
 
@@ -187,6 +196,141 @@ func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespac
 		NsType: resource.NamespaceType(splits[0]),
 		NsUid:  uuid.FromStringOrNil(strings.Split(uidStr, "/")[1]),
 	}, uuid.FromStringOrNil(splits[3]), nil
+}
+
+func (s *service) RemoveCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct) {
+	connector.RemoveCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
+}
+
+func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error) {
+
+	logger, _ := logger.GetZapLogger(ctx)
+
+	var err error
+	prevLastUid := ""
+
+	if pageToken != "" {
+		_, prevLastUid, err = paginate.DecodeToken(pageToken)
+		if err != nil {
+			st, err := sterr.CreateErrorBadRequest(
+				fmt.Sprintf("[db] list connector error: %s", err.Error()),
+				[]*errdetails.BadRequest_FieldViolation{
+					{
+						Field:       "page_token",
+						Description: fmt.Sprintf("Invalid page token: %s", err.Error()),
+					},
+				},
+			)
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			return nil, 0, "", st.Err()
+		}
+	}
+
+	if pageSize == 0 {
+		pageSize = repository.DefaultPageSize
+	} else if pageSize > repository.MaxPageSize {
+		pageSize = repository.MaxPageSize
+	}
+
+	unfilteredDefs := s.connectors.ListConnectorDefinitions()
+
+	// don't return definition with tombstone = true
+	unfilteredDefsRemoveTombstone := []*connectorPB.ConnectorDefinition{}
+	for idx := range unfilteredDefs {
+		if !unfilteredDefs[idx].Tombstone {
+			unfilteredDefsRemoveTombstone = append(unfilteredDefsRemoveTombstone, unfilteredDefs[idx])
+		}
+	}
+	unfilteredDefs = unfilteredDefsRemoveTombstone
+
+	var defs []*connectorPB.ConnectorDefinition
+	if filter.CheckedExpr != nil {
+		trans := repository.NewTranspiler(filter)
+		expr, _ := trans.Transpile()
+		typeMap := map[string]bool{}
+		for idx := range expr.Vars {
+			if idx == 0 {
+				typeMap[string(expr.Vars[idx].(protoreflect.Name))] = true
+			} else {
+				typeMap[string(expr.Vars[idx].([]interface{})[0].(protoreflect.Name))] = true
+			}
+
+		}
+		for idx := range unfilteredDefs {
+			if _, ok := typeMap[unfilteredDefs[idx].Type.String()]; ok {
+				defs = append(defs, unfilteredDefs[idx])
+			}
+		}
+
+	} else {
+		defs = unfilteredDefs
+	}
+
+	startIdx := 0
+	lastUid := ""
+	for idx, def := range defs {
+		if def.Uid == prevLastUid {
+			startIdx = idx + 1
+			break
+		}
+	}
+
+	page := []*connectorPB.ConnectorDefinition{}
+	for i := 0; i < int(pageSize) && startIdx+i < len(defs); i++ {
+		def := proto.Clone(defs[startIdx+i]).(*connectorPB.ConnectorDefinition)
+		page = append(page, def)
+		lastUid = def.Uid
+	}
+
+	nextPageToken := ""
+
+	if startIdx+len(page) < len(defs) {
+		nextPageToken = paginate.EncodeToken(time.Time{}, lastUid)
+	}
+
+	pageDefs := []*connectorPB.ConnectorDefinition{}
+
+	for _, def := range page {
+		def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
+		if isBasicView {
+			def.Spec = nil
+		}
+		def.VendorAttributes = nil
+		pageDefs = append(pageDefs, def)
+	}
+	return pageDefs, int64(len(defs)), nextPageToken, err
+
+}
+
+func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error) {
+
+	def, err := s.connectors.GetConnectorDefinitionById(id)
+	if err != nil {
+		return nil, err
+	}
+	def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
+	if isBasicView {
+		def.Spec = nil
+	}
+	def.VendorAttributes = nil
+
+	return def, nil
+}
+func (s *service) GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorDefinition, error) {
+
+	def, err := s.connectors.GetConnectorDefinitionByUid(uid)
+	if err != nil {
+		return nil, err
+	}
+	def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
+	if isBasicView {
+		def.Spec = nil
+	}
+	def.VendorAttributes = nil
+
+	return def, nil
 }
 
 func (s *service) ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
