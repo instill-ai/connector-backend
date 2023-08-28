@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -34,21 +35,21 @@ import (
 // Service interface
 type Service interface {
 	// Connector common
-	ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
-	CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connector *datamodel.ConnectorResource) (*datamodel.ConnectorResource, error)
-	ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
-	GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool) (*datamodel.ConnectorResource, error)
-	GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
-	UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, updatedConnector *datamodel.ConnectorResource) (*datamodel.ConnectorResource, error)
-	UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*datamodel.ConnectorResource, error)
-	UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state datamodel.ConnectorResourceState) (*datamodel.ConnectorResource, error)
+	ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
+	ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
+	GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
+	UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
+	UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*connectorPB.ConnectorResource, error)
+	UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state connectorPB.ConnectorResource_State) (*connectorPB.ConnectorResource, error)
 	DeleteUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string) error
 
-	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
-	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
+	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorResource, error)
 
 	// Execute connector
-	Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, conn *datamodel.ConnectorResource, inputs []*structpb.Struct) ([]*structpb.Struct, error)
+	Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, inputs []*structpb.Struct) ([]*structpb.Struct, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorResourceByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.ConnectorResource_State, error)
@@ -66,9 +67,7 @@ type Service interface {
 	ConvertOwnerPermalinkToName(permalink string) (string, error)
 	ConvertOwnerNameToPermalink(name string) (string, error)
 
-	DBToPBConnector(ctx context.Context, dbConnector *datamodel.ConnectorResource, connectorDefinitionName string) (*connectorPB.ConnectorResource, error)
-	PBToDBConnector(ctx context.Context, pbConnector *connectorPB.ConnectorResource, connectorDefinition *connectorPB.ConnectorDefinition) (*datamodel.ConnectorResource, error)
-	GetUserUid(ctx context.Context) (uuid.UUID, error)
+	GetUser(ctx context.Context) (string, uuid.UUID, error)
 }
 
 type service struct {
@@ -80,6 +79,7 @@ type service struct {
 	influxDBWriteClient         api.WriteAPI
 	redisClient                 *redis.Client
 	defaultUserUid              uuid.UUID
+	connectors                  connectorBase.IConnector
 }
 
 // NewService initiates a service instance
@@ -103,28 +103,28 @@ func NewService(
 		redisClient:                 rc,
 		influxDBWriteClient:         i,
 		defaultUserUid:              defaultUserUid,
+		connectors:                  connector.InitConnectorAll(logger),
 	}
 }
 
-// GetUserPermalink returns the api user
-func (s *service) GetUserUid(ctx context.Context) (uuid.UUID, error) {
+// GetUser returns the api user
+func (s *service) GetUser(ctx context.Context) (string, uuid.UUID, error) {
 	// Verify if "jwt-sub" is in the header
 	headerUserUId := resource.GetRequestSingleHeader(ctx, constant.HeaderUserUIDKey)
-	fmt.Println("headerUserUId", headerUserUId)
 	if headerUserUId != "" {
 		_, err := uuid.FromString(headerUserUId)
 		if err != nil {
-			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+			return "", uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 		}
-		_, err = s.mgmtPrivateServiceClient.LookUpUserAdmin(context.Background(), &mgmtPB.LookUpUserAdminRequest{Permalink: "users/" + headerUserUId})
+		userResp, err := s.mgmtPrivateServiceClient.LookUpUserAdmin(context.Background(), &mgmtPB.LookUpUserAdminRequest{Permalink: "users/" + headerUserUId})
 		if err != nil {
-			return uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
+			return "", uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 		}
 
-		return uuid.FromStringOrNil(headerUserUId), nil
+		return *userResp.User.Uid, uuid.FromStringOrNil(headerUserUId), nil
 	}
 
-	return s.defaultUserUid, nil
+	return constant.DefaultUserID, s.defaultUserUid, nil
 }
 
 func (s *service) injectUserToContext(ctx context.Context, userPermalink string) context.Context {
@@ -189,28 +189,66 @@ func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespac
 	}, uuid.FromStringOrNil(splits[3]), nil
 }
 
-func (s *service) ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error) {
+func (s *service) ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	return s.repository.ListConnectorResources(ctx, userPermalink, pageSize, pageToken, isBasicView, filter)
+
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResources(ctx, userPermalink, pageSize, pageToken, isBasicView, filter)
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	return pbConnectorResources, totalSize, nextPageToken, err
 
 }
 
-func (s *service) CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connector *datamodel.ConnectorResource) (*datamodel.ConnectorResource, error) {
+func (s *service) CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	connector.Owner = userPermalink
 
-	if existingConnector, _ := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, connector.ID, true); existingConnector != nil {
+	connDefResp, err := s.connectors.GetConnectorDefinitionById(strings.Split(connectorResource.ConnectorDefinitionName, "/")[1])
+	if err != nil {
+		return nil, err
+	}
+
+	connDefUID, err := uuid.FromString(connDefResp.GetUid())
+	if err != nil {
+		return nil, err
+	}
+
+	connConfig, err := connectorResource.GetConfiguration().MarshalJSON()
+	if err != nil {
+
+		return nil, err
+	}
+
+	connDesc := sql.NullString{
+		String: connectorResource.GetDescription(),
+		Valid:  len(connectorResource.GetDescription()) > 0,
+	}
+
+	dbConnectorResourceToCreate := &datamodel.ConnectorResource{
+		ID:                     connectorResource.Id,
+		Owner:                  resource.UserUidToUserPermalink(userUid),
+		ConnectorDefinitionUID: connDefUID,
+		Tombstone:              false,
+		Configuration:          connConfig,
+		ConnectorType:          datamodel.ConnectorResourceType(connDefResp.GetType()),
+		Description:            connDesc,
+		Visibility:             datamodel.ConnectorResourceVisibility(connectorResource.Visibility),
+	}
+
+	if existingConnector, _ := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, dbConnectorResourceToCreate.ID, true); existingConnector != nil {
 		st, err := sterr.CreateErrorResourceInfo(
 			codes.AlreadyExists,
 			"[service] create connector",
 			"connectors",
-			fmt.Sprintf("Connector id %s", connector.ID),
-			connector.Owner,
+			fmt.Sprintf("Connector id %s", dbConnectorResourceToCreate.ID),
+			dbConnectorResourceToCreate.Owner,
 			"Already exists",
 		)
 		if err != nil {
@@ -219,80 +257,113 @@ func (s *service) CreateUserConnectorResource(ctx context.Context, ns resource.N
 		return nil, st.Err()
 	}
 
-	if err := s.repository.CreateUserConnectorResource(ctx, ownerPermalink, userPermalink, connector); err != nil {
+	if err := s.repository.CreateUserConnectorResource(ctx, ownerPermalink, userPermalink, dbConnectorResourceToCreate); err != nil {
 		return nil, err
 	}
 
 	// User desire state = DISCONNECTED
-	if err := s.repository.UpdateUserConnectorResourceStateByID(ctx, ownerPermalink, userPermalink, connector.ID, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED)); err != nil {
+	if err := s.repository.UpdateUserConnectorResourceStateByID(ctx, ownerPermalink, userPermalink, dbConnectorResourceToCreate.ID, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED)); err != nil {
 		return nil, err
 	}
-	if err := s.UpdateResourceState(connector.UID, connectorPB.ConnectorResource_STATE_DISCONNECTED, nil); err != nil {
+	if err := s.UpdateResourceState(dbConnectorResourceToCreate.UID, connectorPB.ConnectorResource_STATE_DISCONNECTED, nil); err != nil {
 		return nil, err
 	}
 
-	dbConnector, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, connector.ID, false)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, dbConnectorResourceToCreate.ID, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return dbConnector, nil
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
 
 }
 
-func (s *service) ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error) {
+func (s *service) ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	return s.repository.ListUserConnectorResources(ctx, ownerPermalink, userPermalink, pageSize, pageToken, isBasicView, filter)
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListUserConnectorResources(ctx, ownerPermalink, userPermalink, pageSize, pageToken, isBasicView, filter)
+
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	return pbConnectorResources, totalSize, nextPageToken, err
 
 }
 
-func (s *service) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error) {
+func (s *service) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
-	return s.repository.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	if err != nil {
+		return nil, 0, "", err
+	}
 
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	return pbConnectorResources, totalSize, nextPageToken, err
 }
 
-func (s *service) GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool) (*datamodel.ConnectorResource, error) {
+func (s *service) GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	return s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, isBasicView)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, isBasicView)
+	if err != nil {
+		return nil, err
+	}
 
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
 }
 
-func (s *service) GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error) {
+func (s *service) GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	return s.repository.GetUserConnectorResourceByUID(ctx, ownerPermalink, userPermalink, uid, isBasicView)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByUID(ctx, ownerPermalink, userPermalink, uid, isBasicView)
+	if err != nil {
+		return nil, err
+	}
 
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
 }
 
-func (s *service) GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error) {
+func (s *service) GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorResource, error) {
 
-	return s.repository.GetConnectorResourceByUIDAdmin(ctx, uid, isBasicView)
+	dbConnectorResource, err := s.repository.GetConnectorResourceByUIDAdmin(ctx, uid, isBasicView)
+	if err != nil {
+		return nil, err
+	}
 
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, true)
 }
 
-func (s *service) UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, updatedConnector *datamodel.ConnectorResource) (*datamodel.ConnectorResource, error) {
+func (s *service) UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
 
-	updatedConnector.Owner = ownerPermalink
+	dbConnectorResourceToUpdate, err := s.convertProtoToDatamodel(ctx, connectorResource)
+	if err != nil {
+		return nil, err
+	}
+	dbConnectorResourceToUpdate.Owner = ownerPermalink
 
-	if err := s.repository.UpdateUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, updatedConnector); err != nil {
+	if err := s.repository.UpdateUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, dbConnectorResourceToUpdate); err != nil {
 		return nil, err
 	}
 
 	// Check connector state
-	if err := s.UpdateResourceState(updatedConnector.UID, connectorPB.ConnectorResource_STATE_DISCONNECTED, nil); err != nil {
+	if err := s.UpdateResourceState(dbConnectorResourceToUpdate.UID, connectorPB.ConnectorResource_STATE_DISCONNECTED, nil); err != nil {
 		return nil, err
 	}
 
-	return s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, updatedConnector.ID, false)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, dbConnectorResourceToUpdate.ID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
 
 }
 
@@ -343,7 +414,7 @@ func (s *service) DeleteUserConnectorResourceByID(ctx context.Context, ns resour
 	return s.repository.DeleteUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id)
 }
 
-func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state datamodel.ConnectorResourceState) (*datamodel.ConnectorResource, error) {
+func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state connectorPB.ConnectorResource_State) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
@@ -368,7 +439,7 @@ func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns r
 	}
 
 	switch state {
-	case datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_CONNECTED):
+	case connectorPB.ConnectorResource_STATE_CONNECTED:
 
 		// Set connector state to user desire state
 		if err := s.repository.UpdateUserConnectorResourceStateByID(ctx, ownerPermalink, userPermalink, id, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_CONNECTED)); err != nil {
@@ -379,7 +450,7 @@ func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns r
 			return nil, err
 		}
 
-	case datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED):
+	case connectorPB.ConnectorResource_STATE_DISCONNECTED:
 
 		if err := s.repository.UpdateUserConnectorResourceStateByID(ctx, ownerPermalink, userPermalink, id, datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_DISCONNECTED)); err != nil {
 			return nil, err
@@ -389,15 +460,19 @@ func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns r
 		}
 	}
 
-	dbConnector, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, false)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return dbConnector, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
 }
 
-func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*datamodel.ConnectorResource, error) {
+func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
@@ -406,18 +481,30 @@ func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns reso
 		return nil, err
 	}
 
-	return s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, newID, false)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, newID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
 
 }
 
-func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, conn *datamodel.ConnectorResource, inputs []*structpb.Struct) ([]*structpb.Struct, error) {
+func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, inputs []*structpb.Struct) ([]*structpb.Struct, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
+	ownerPermalink := ns.String()
+	userPermalink := resource.UserUidToUserPermalink(userUid)
+
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, false)
+	if err != nil {
+		return nil, err
+	}
 
 	configuration := func() *structpb.Struct {
-		if conn.Configuration != nil {
+		if dbConnectorResource.Configuration != nil {
 			str := structpb.Struct{}
-			err := str.UnmarshalJSON(conn.Configuration)
+			err := str.UnmarshalJSON(dbConnectorResource.Configuration)
 			if err != nil {
 				logger.Fatal(err.Error())
 			}
@@ -426,7 +513,7 @@ func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uu
 		return nil
 	}()
 
-	con, err := s.connectorAll.CreateConnection(conn.ConnectorDefinitionUID, configuration, logger)
+	con, err := s.connectorAll.CreateConnection(dbConnectorResource.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return nil, err
 	}

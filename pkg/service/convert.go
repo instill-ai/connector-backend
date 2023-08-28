@@ -11,17 +11,18 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
-// PBToDBConnector converts protobuf data model to db data model
-func (s *service) PBToDBConnector(
+// convertProtoToDatamodel converts protobuf data model to db data model
+func (s *service) convertProtoToDatamodel(
 	ctx context.Context,
-	pbConnector *connectorPB.ConnectorResource,
-	connectorDefinition *connectorPB.ConnectorDefinition) (*datamodel.ConnectorResource, error) {
+	pbConnectorResource *connectorPB.ConnectorResource,
+) (*datamodel.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -35,28 +36,33 @@ func (s *service) PBToDBConnector(
 	var updateTime time.Time
 	var err error
 
-	id = pbConnector.GetId()
-	state = datamodel.ConnectorResourceState(pbConnector.GetState())
-	tombstone = pbConnector.GetTombstone()
-	configuration = pbConnector.GetConfiguration()
-	createTime = pbConnector.GetCreateTime().AsTime()
-	updateTime = pbConnector.GetUpdateTime().AsTime()
+	id = pbConnectorResource.GetId()
+	state = datamodel.ConnectorResourceState(pbConnectorResource.GetState())
+	tombstone = pbConnectorResource.GetTombstone()
+	configuration = pbConnectorResource.GetConfiguration()
+	createTime = pbConnectorResource.GetCreateTime().AsTime()
+	updateTime = pbConnectorResource.GetUpdateTime().AsTime()
 
-	uid, err = uuid.FromString(pbConnector.GetUid())
+	connectorDefinition, err := s.connectors.GetConnectorDefinitionById(strings.Split(pbConnectorResource.ConnectorDefinitionName, "/")[1])
 	if err != nil {
-		logger.Fatal(err.Error())
+		return nil, err
+	}
+
+	uid = uuid.FromStringOrNil(pbConnectorResource.GetUid())
+	if err != nil {
+		return nil, err
 	}
 
 	description = sql.NullString{
-		String: pbConnector.GetDescription(),
+		String: pbConnectorResource.GetDescription(),
 		Valid:  true,
 	}
 
 	var owner string
 
-	switch pbConnector.Owner.(type) {
+	switch pbConnectorResource.Owner.(type) {
 	case *connectorPB.ConnectorResource_User:
-		owner, err = s.ConvertOwnerNameToPermalink(pbConnector.GetUser())
+		owner, err = s.ConvertOwnerNameToPermalink(pbConnectorResource.GetUser())
 		if err != nil {
 			return nil, err
 		}
@@ -72,7 +78,7 @@ func (s *service) PBToDBConnector(
 		State:                  state,
 		Tombstone:              tombstone,
 		ConnectorDefinitionUID: uuid.FromStringOrNil(connectorDefinition.Uid),
-		Visibility:             datamodel.ConnectorResourceVisibility(pbConnector.Visibility),
+		Visibility:             datamodel.ConnectorResourceVisibility(pbConnectorResource.Visibility),
 
 		Configuration: func() []byte {
 			if configuration != nil {
@@ -93,35 +99,42 @@ func (s *service) PBToDBConnector(
 	}, nil
 }
 
-// DBToPBConnector converts db data model to protobuf data model
-func (s *service) DBToPBConnector(
+// convertDatamodelToProto converts db data model to protobuf data model
+func (s *service) convertDatamodelToProto(
 	ctx context.Context,
-	dbConnector *datamodel.ConnectorResource,
-	connectorDefinitionName string) (*connectorPB.ConnectorResource, error) {
+	dbConnectorResource *datamodel.ConnectorResource,
+	isBasicView bool,
+	credentialMask bool,
+) (*connectorPB.ConnectorResource, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	owner, err := s.ConvertOwnerPermalinkToName(dbConnector.Owner)
+	owner, err := s.ConvertOwnerPermalinkToName(dbConnectorResource.Owner)
 	if err != nil {
 		return nil, err
 	}
-	pbConnector := &connectorPB.ConnectorResource{
-		Uid:                     dbConnector.UID.String(),
-		Name:                    fmt.Sprintf("%s/connector-resources/%s", owner, dbConnector.ID),
-		Id:                      dbConnector.ID,
-		ConnectorDefinitionName: connectorDefinitionName,
-		Type:                    connectorPB.ConnectorType(dbConnector.ConnectorType),
-		Description:             &dbConnector.Description.String,
-		State:                   connectorPB.ConnectorResource_State(dbConnector.State),
-		Tombstone:               dbConnector.Tombstone,
-		CreateTime:              timestamppb.New(dbConnector.CreateTime),
-		UpdateTime:              timestamppb.New(dbConnector.UpdateTime),
-		Visibility:              connectorPB.ConnectorResource_Visibility(dbConnector.Visibility),
+	dbConnDef, err := s.connectors.GetConnectorDefinitionByUid(dbConnectorResource.ConnectorDefinitionUID)
+	if err != nil {
+		return nil, err
+	}
+	pbConnectorResource := &connectorPB.ConnectorResource{
+		Uid:                     dbConnectorResource.UID.String(),
+		Name:                    fmt.Sprintf("%s/connector-resources/%s", owner, dbConnectorResource.ID),
+		Id:                      dbConnectorResource.ID,
+		ConnectorDefinitionName: dbConnDef.GetName(),
+
+		Type:        connectorPB.ConnectorType(dbConnectorResource.ConnectorType),
+		Description: &dbConnectorResource.Description.String,
+		State:       connectorPB.ConnectorResource_State(dbConnectorResource.State),
+		Tombstone:   dbConnectorResource.Tombstone,
+		CreateTime:  timestamppb.New(dbConnectorResource.CreateTime),
+		UpdateTime:  timestamppb.New(dbConnectorResource.UpdateTime),
+		Visibility:  connectorPB.ConnectorResource_Visibility(dbConnectorResource.Visibility),
 
 		Configuration: func() *structpb.Struct {
-			if dbConnector.Configuration != nil {
+			if dbConnectorResource.Configuration != nil {
 				str := structpb.Struct{}
-				err := str.UnmarshalJSON(dbConnector.Configuration)
+				err := str.UnmarshalJSON(dbConnectorResource.Configuration)
 				if err != nil {
 					logger.Fatal(err.Error())
 				}
@@ -132,10 +145,44 @@ func (s *service) DBToPBConnector(
 	}
 
 	if strings.HasPrefix(owner, "users/") {
-		pbConnector.Owner = &connectorPB.ConnectorResource_User{User: owner}
+		pbConnectorResource.Owner = &connectorPB.ConnectorResource_User{User: owner}
 	} else if strings.HasPrefix(owner, "organizations/") {
-		pbConnector.Owner = &connectorPB.ConnectorResource_Org{Org: owner}
+		pbConnectorResource.Owner = &connectorPB.ConnectorResource_Org{Org: owner}
 	}
-	return pbConnector, nil
+	if !isBasicView {
+		if credentialMask {
+			connector.MaskCredentialFields(s.connectors, dbConnDef.Id, pbConnectorResource.Configuration)
+		}
+
+		pbConnectorResource.ConnectorDefinition = dbConnDef
+	}
+
+	return pbConnectorResource, nil
+
+}
+
+func (s *service) convertDatamodelArrayToProtoArray(
+	ctx context.Context,
+	dbConnectorResources []*datamodel.ConnectorResource,
+	isBasicView bool,
+	credentialMask bool,
+) ([]*connectorPB.ConnectorResource, error) {
+
+	var err error
+	pbConnectorResources := make([]*connectorPB.ConnectorResource, len(dbConnectorResources))
+	for idx := range dbConnectorResources {
+		pbConnectorResources[idx], err = s.convertDatamodelToProto(
+			ctx,
+			dbConnectorResources[idx],
+			isBasicView,
+			credentialMask,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	return pbConnectorResources, nil
 
 }
