@@ -2,48 +2,30 @@ package handler
 
 import (
 	"context"
-	"fmt"
 
 	"go.einride.tech/aip/filtering"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	proto "google.golang.org/protobuf/proto"
 
+	"github.com/gofrs/uuid"
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/connector"
-	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/service"
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
-	connectorBase "github.com/instill-ai/connector/pkg/base"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 type PrivateHandler struct {
 	connectorPB.UnimplementedConnectorPrivateServiceServer
-	service    service.Service
-	connectors connectorBase.IConnector
+	service service.Service
 }
 
 // NewPrivateHandler initiates a handler instance
 func NewPrivateHandler(ctx context.Context, s service.Service) connectorPB.ConnectorPrivateServiceServer {
-	logger, _ := logger.GetZapLogger(ctx)
-
 	return &PrivateHandler{
-		service:    s,
-		connectors: connector.InitConnectorAll(logger),
+		service: s,
 	}
-}
-
-// GetService returns the service
-func (h *PrivateHandler) GetService() service.Service {
-	return h.service
-}
-
-// SetService sets the service
-func (h *PrivateHandler) SetService(s service.Service) {
-	h.service = s
 }
 
 func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *connectorPB.ListConnectorResourcesAdminRequest) (resp *connectorPB.ListConnectorResourcesAdminResponse, err error) {
@@ -52,14 +34,11 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 	var pageToken string
 	var isBasicView bool
 
-	var connDefColID string
-
 	resp = &connectorPB.ListConnectorResourcesAdminResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
 
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-	connDefColID = "connector-definitions"
 
 	var connType connectorPB.ConnectorType
 	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
@@ -67,44 +46,19 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 		filtering.DeclareEnumIdent("connector_type", connType.Type()),
 	}...)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 	filter, err := filtering.ParseFilter(req, declarations)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	dbConnectors, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	var pbConnectors []*connectorPB.ConnectorResource
-	for idx := range dbConnectors {
-		dbConnDef, err := h.connectors.GetConnectorDefinitionByUid(dbConnectors[idx].ConnectorDefinitionUID)
-		if err != nil {
-			return resp, err
-		}
-		pbConnector, err := h.service.DBToPBConnector(
-			ctx,
-			dbConnectors[idx],
-			fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
-		)
-		if err != nil {
-			return resp, err
-		}
-
-		if !isBasicView {
-			pbConnector.ConnectorDefinition = dbConnDef
-		}
-
-		pbConnectors = append(
-			pbConnectors,
-			pbConnector,
-		)
-	}
-
-	resp.ConnectorResources = pbConnectors
+	resp.ConnectorResources = connectorResources
 	resp.NextPageToken = nextPageToken
 	resp.TotalSize = totalSize
 
@@ -117,8 +71,6 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 	logger, _ := logger.GetZapLogger(ctx)
 
 	var isBasicView bool
-
-	var connDefColID string
 
 	resp = &connectorPB.LookUpConnectorResourceAdminResponse{}
 
@@ -136,41 +88,22 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 		if err != nil {
 			logger.Error(err.Error())
 		}
-		return resp, st.Err()
+		return nil, st.Err()
 	}
 
 	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-	connDefColID = "connector-definitions"
 
-	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
+	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	dbConnDef, err := h.connectors.GetConnectorDefinitionByUid(dbConnector.ConnectorDefinitionUID)
-	if err != nil {
-		return resp, err
-	}
-
-	pbConnector, err := h.service.DBToPBConnector(
-		ctx,
-		dbConnector,
-		fmt.Sprintf("%s/%s", connDefColID, dbConnDef.GetId()),
-	)
-	if err != nil {
-		return resp, err
-	}
-
-	if !isBasicView {
-		connector.MaskCredentialFields(h.connectors, dbConnDef.Id, pbConnector.Configuration)
-		pbConnector.ConnectorDefinition = dbConnDef
-	}
-	resp.ConnectorResource = pbConnector
+	resp.ConnectorResource = connectorResource
 
 	return resp, nil
 }
@@ -185,22 +118,22 @@ func (h *PrivateHandler) CheckConnectorResource(ctx context.Context, req *connec
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
+	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
-	if dbConnector.Tombstone {
+	if connectorResource.Tombstone {
 		resp.State = connectorPB.ConnectorResource_STATE_ERROR
 		return resp, nil
 	}
 
-	if dbConnector.State == datamodel.ConnectorResourceState(connectorPB.ConnectorResource_STATE_CONNECTED) {
-		state, err := h.service.CheckConnectorResourceByUID(ctx, dbConnector.UID)
+	if connectorResource.State == connectorPB.ConnectorResource_STATE_CONNECTED {
+		state, err := h.service.CheckConnectorResourceByUID(ctx, uuid.FromStringOrNil(connectorResource.Uid))
 		if err != nil {
 			return resp, err
 		}
@@ -227,16 +160,12 @@ func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req
 	}
 	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
-	dbDef, err := h.connectors.GetConnectorDefinitionByUid(connUID)
+	// TODO add a service wrapper
+	def, err := h.service.GetConnectorDefinitionByUIDAdmin(ctx, connUID, isBasicView)
 	if err != nil {
 		return resp, err
 	}
-	resp.ConnectorDefinition = proto.Clone(dbDef).(*connectorPB.ConnectorDefinition)
-	if isBasicView {
-		resp.ConnectorDefinition.Spec = nil
-	}
-	resp.ConnectorDefinition.VendorAttributes = nil
-	resp.ConnectorDefinition.Name = fmt.Sprintf("connector-definitions/%s", resp.ConnectorDefinition.GetId())
+	resp.ConnectorDefinition = def
 
 	logger.Info("GetConnectorDefinitionAdmin")
 
