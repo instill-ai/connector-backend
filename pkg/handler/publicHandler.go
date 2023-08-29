@@ -198,6 +198,72 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 
 }
 
+func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connectorPB.LookUpConnectorResourceRequest) (resp *connectorPB.LookUpConnectorResourceResponse, err error) {
+
+	eventName := "LookUpConnectorResource"
+
+	ctx, span := tracer.Start(ctx, eventName,
+		trace.WithSpanKind(trace.SpanKindServer))
+	defer span.End()
+
+	logUUID, _ := uuid.NewV4()
+
+	logger, _ := logger.GetZapLogger(ctx)
+
+	var isBasicView bool
+
+	resp = &connectorPB.LookUpConnectorResourceResponse{}
+
+	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
+	if err != nil {
+		return nil, err
+	}
+
+	_, userUid, err := h.service.GetUser(ctx)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	// Return error if REQUIRED fields are not provided in the requested payload
+	if err := checkfield.CheckRequiredFields(req, lookUpRequiredFields); err != nil {
+		st, err := sterr.CreateErrorBadRequest(
+			"[handler] lookup connector error",
+			[]*errdetails.BadRequest_FieldViolation{
+				{
+					Field:       "REQUIRED fields",
+					Description: err.Error(),
+				},
+			},
+		)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+		span.SetStatus(1, st.Err().Error())
+		return resp, st.Err()
+	}
+
+	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
+
+	connectorResource, err := h.service.GetConnectorResourceByUID(ctx, userUid, connUID, isBasicView, true)
+	if err != nil {
+		span.SetStatus(1, err.Error())
+		return resp, err
+	}
+
+	logger.Info(string(custom_otel.NewLogMessage(
+		span,
+		logUUID.String(),
+		userUid,
+		eventName,
+		custom_otel.SetEventResource(connectorResource),
+	)))
+
+	resp.ConnectorResource = connectorResource
+
+	return resp, nil
+}
+
 func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *connectorPB.CreateUserConnectorResourceRequest) (resp *connectorPB.CreateUserConnectorResourceResponse, err error) {
 
 	eventName := "CreateUserConnectorResource"
@@ -709,72 +775,6 @@ func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *co
 	if err := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusNoContent))); err != nil {
 		return resp, err
 	}
-	return resp, nil
-}
-
-func (h *PublicHandler) LookUpUserConnectorResource(ctx context.Context, req *connectorPB.LookUpUserConnectorResourceRequest) (resp *connectorPB.LookUpUserConnectorResourceResponse, err error) {
-
-	eventName := "LookUpUserConnectorResource"
-
-	ctx, span := tracer.Start(ctx, eventName,
-		trace.WithSpanKind(trace.SpanKindServer))
-	defer span.End()
-
-	logUUID, _ := uuid.NewV4()
-
-	logger, _ := logger.GetZapLogger(ctx)
-
-	var isBasicView bool
-
-	resp = &connectorPB.LookUpUserConnectorResourceResponse{}
-
-	ns, connUID, err := h.service.GetRscNamespaceAndPermalinkUID(req.Permalink)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-	_, userUid, err := h.service.GetUser(ctx)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	// Return error if REQUIRED fields are not provided in the requested payload
-	if err := checkfield.CheckRequiredFields(req, lookUpRequiredFields); err != nil {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] lookup connector error",
-			[]*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "REQUIRED fields",
-					Description: err.Error(),
-				},
-			},
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		span.SetStatus(1, st.Err().Error())
-		return resp, st.Err()
-	}
-
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-
-	connectorResource, err := h.service.GetUserConnectorResourceByUID(ctx, ns, userUid, connUID, isBasicView, true)
-	if err != nil {
-		span.SetStatus(1, err.Error())
-		return resp, err
-	}
-
-	logger.Info(string(custom_otel.NewLogMessage(
-		span,
-		logUUID.String(),
-		userUid,
-		eventName,
-		custom_otel.SetEventResource(connectorResource),
-	)))
-
-	resp.ConnectorResource = connectorResource
-
 	return resp, nil
 }
 

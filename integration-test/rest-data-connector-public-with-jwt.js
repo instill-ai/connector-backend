@@ -127,8 +127,8 @@ export function CheckLookUp() {
             JSON.stringify(csvDstConnector), constant.params)
 
         // Cannot look up a destination connector of a non-exist user
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
-            [`[with random "jwt-sub" header] GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 401`]: (r) => r.status === 401,
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
+            [`[with random "jwt-sub" header] GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 401`]: (r) => r.status === 401,
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {

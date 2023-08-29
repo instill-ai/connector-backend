@@ -254,11 +254,11 @@ export function CheckLookUp() {
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
             JSON.stringify(csvDstConnector), constant.params)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`), {
-            [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 200`]: (r) => r.status === 200,
-            [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector uid`]: (r) => r.json().connector_resource.uid === resCSVDst.json().connector_resource.uid,
-            [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector_resource.connector_definition_name === constant.csvDstDefRscName,
-            [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector_resource.user),
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`), {
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 200`]: (r) => r.status === 200,
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector uid`]: (r) => r.json().connector_resource.uid === resCSVDst.json().connector_resource.uid,
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector connector_definition_name`]: (r) => r.json().connector_resource.connector_definition_name === constant.csvDstDefRscName,
+            [`GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector_resource.user),
         });
 
         check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {

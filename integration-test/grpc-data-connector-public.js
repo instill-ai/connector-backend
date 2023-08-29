@@ -449,13 +449,13 @@ export function CheckLookUp() {
             connector_resource: csvDstConnector
         })
 
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource', {
-            permalink: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.uid}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource', {
+            permalink: `connector-resources/${resCSVDst.message.connectorResource.uid}`
         }), {
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector id`]: (r) => r.message.connectorResource.uid === resCSVDst.message.connectorResource.uid,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector connectorDefinition permalink`]: (r) => r.message.connectorResource.connectorDefinitionName === constant.csvDstDefRscName,
-            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connectorResource.user),
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector id`]: (r) => r.message.connectorResource.uid === resCSVDst.message.connectorResource.uid,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector connectorDefinition permalink`]: (r) => r.message.connectorResource.connectorDefinitionName === constant.csvDstDefRscName,
+            [`vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.uid} response connector owner is UUID`]: (r) => helper.isValidOwner(r.message.connectorResource.user),
         });
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
