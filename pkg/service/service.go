@@ -39,6 +39,7 @@ import (
 // Service interface
 type Service interface {
 	ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error)
+	GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
 	GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
 	GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
 
@@ -47,7 +48,6 @@ type Service interface {
 	CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
 	ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
 	GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
-	GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state connectorPB.ConnectorResource_State) (*connectorPB.ConnectorResource, error)
@@ -304,6 +304,17 @@ func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, 
 
 }
 
+func (s *service) GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
+
+	userPermalink := resource.UserUidToUserPermalink(userUid)
+	dbConnectorResource, err := s.repository.GetConnectorResourceByUID(ctx, userPermalink, uid, isBasicView)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
+}
+
 func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error) {
 
 	def, err := s.connectors.GetConnectorDefinitionById(id)
@@ -453,18 +464,6 @@ func (s *service) GetUserConnectorResourceByID(ctx context.Context, ns resource.
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
 	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, isBasicView)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
-}
-
-func (s *service) GetUserConnectorResourceByUID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
-
-	ownerPermalink := ns.String()
-	userPermalink := resource.UserUidToUserPermalink(userUid)
-	dbConnectorResource, err := s.repository.GetUserConnectorResourceByUID(ctx, ownerPermalink, userPermalink, uid, isBasicView)
 	if err != nil {
 		return nil, err
 	}

@@ -36,12 +36,12 @@ type Repository interface {
 
 	// List all connector resources visible to the user
 	ListConnectorResources(ctx context.Context, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	GetConnectorResourceByUID(ctx context.Context, userPermalink string, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
 
 	// Operations for resources under {ownerPermalink} namespace, view by {userPermalink}
 	CreateUserConnectorResource(ctx context.Context, ownerPermalink string, userPermalink string, connector *datamodel.ConnectorResource) error
 	ListUserConnectorResources(ctx context.Context, ownerPermalink string, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
 	GetUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, isBasicView bool) (*datamodel.ConnectorResource, error)
-	GetUserConnectorResourceByUID(ctx context.Context, ownerPermalink string, userPermalink string, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
 	UpdateUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, connector *datamodel.ConnectorResource) error
 	DeleteUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string) error
 	UpdateUserConnectorResourceIDByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, newID string) error
@@ -271,11 +271,12 @@ func (r *repository) GetUserConnectorResourceByID(ctx context.Context, ownerPerm
 		isBasicView)
 }
 
-func (r *repository) GetUserConnectorResourceByUID(ctx context.Context, ownerPermalink string, userPermalink string, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error) {
+func (r *repository) GetConnectorResourceByUID(ctx context.Context, userPermalink string, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error) {
 
+	// TODO: ACL
 	return r.getUserConnectorResource(ctx,
-		"(uid = ? AND (owner = ? AND (visibility = ? OR ? = ?)))",
-		[]interface{}{uid, ownerPermalink, VisibilityPublic, ownerPermalink, userPermalink},
+		"(uid = ? AND (visibility = ? OR owner = ?))",
+		[]interface{}{uid, VisibilityPublic, userPermalink},
 		isBasicView)
 
 }

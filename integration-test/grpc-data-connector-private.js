@@ -172,7 +172,7 @@ export function CheckLookUp() {
         })
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorResourceAdmin', {
-            permalink: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.uid}`
+            permalink: `connector-resources/${resCSVDst.message.connectorResource.uid}`
         }), {
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorResourceAdmin CSV ${resCSVDst.message.connectorResource.uid} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             [`vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorResourceAdmin CSV ${resCSVDst.message.connectorResource.uid} response connector id`]: (r) => r.message.connectorResource.uid === resCSVDst.message.connectorResource.uid,

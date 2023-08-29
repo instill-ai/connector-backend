@@ -208,10 +208,10 @@ export function CheckLookUp() {
         })
 
         // Cannot look up destination connector of a non-exist user
-        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource', {
-            permalink: `${constant.namespace}/connector-resources/${resCSVDst.message.connectorResource.uid}`
+        check(client.invoke('vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource', {
+            permalink: `connector-resources/${resCSVDst.message.connectorResource.uid}`
         }, constant.paramsGRPCWithJwt), {
-            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpUserConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
+            [`[with random "jwt-sub" header] vdp.connector.v1alpha.ConnectorPublicService/LookUpConnectorResource CSV ${resCSVDst.message.connectorResource.id} response StatusUnauthenticated`]: (r) => r.status === grpc.StatusUnauthenticated,
         })
 
         check(client.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
