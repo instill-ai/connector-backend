@@ -103,7 +103,7 @@ func (s *service) convertProtoToDatamodel(
 func (s *service) convertDatamodelToProto(
 	ctx context.Context,
 	dbConnectorResource *datamodel.ConnectorResource,
-	isBasicView bool,
+	view connectorPB.View,
 	credentialMask bool,
 ) (*connectorPB.ConnectorResource, error) {
 
@@ -149,12 +149,13 @@ func (s *service) convertDatamodelToProto(
 	} else if strings.HasPrefix(owner, "organizations/") {
 		pbConnectorResource.Owner = &connectorPB.ConnectorResource_Org{Org: owner}
 	}
-	if !isBasicView {
+	if view != connectorPB.View_VIEW_BASIC {
 		if credentialMask {
 			connector.MaskCredentialFields(s.connectors, dbConnDef.Id, pbConnectorResource.Configuration)
 		}
-
-		pbConnectorResource.ConnectorDefinition = dbConnDef
+		if view == connectorPB.View_VIEW_FULL {
+			pbConnectorResource.ConnectorDefinition = dbConnDef
+		}
 	}
 
 	return pbConnectorResource, nil
@@ -164,7 +165,7 @@ func (s *service) convertDatamodelToProto(
 func (s *service) convertDatamodelArrayToProtoArray(
 	ctx context.Context,
 	dbConnectorResources []*datamodel.ConnectorResource,
-	isBasicView bool,
+	view connectorPB.View,
 	credentialMask bool,
 ) ([]*connectorPB.ConnectorResource, error) {
 
@@ -174,7 +175,7 @@ func (s *service) convertDatamodelArrayToProtoArray(
 		pbConnectorResources[idx], err = s.convertDatamodelToProto(
 			ctx,
 			dbConnectorResources[idx],
-			isBasicView,
+			view,
 			credentialMask,
 		)
 		if err != nil {

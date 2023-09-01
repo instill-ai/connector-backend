@@ -32,13 +32,10 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 
 	var pageSize int64
 	var pageToken string
-	var isBasicView bool
 
 	resp = &connectorPB.ListConnectorResourcesAdminResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
-
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	var connType connectorPB.ConnectorType
 	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
@@ -53,7 +50,7 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 		return nil, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, parseView(req.GetView()), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -69,8 +66,6 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *connectorPB.LookUpConnectorResourceAdminRequest) (resp *connectorPB.LookUpConnectorResourceAdminResponse, err error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
-
-	var isBasicView bool
 
 	resp = &connectorPB.LookUpConnectorResourceAdminResponse{}
 
@@ -96,9 +91,7 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 		return nil, err
 	}
 
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-
-	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
+	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, parseView(req.GetView()))
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +103,13 @@ func (h *PrivateHandler) LookUpConnectorResourceAdmin(ctx context.Context, req *
 
 func (h *PrivateHandler) CheckConnectorResource(ctx context.Context, req *connectorPB.CheckConnectorResourceRequest) (resp *connectorPB.CheckConnectorResourceResponse, err error) {
 
-	var isBasicView = true
-
 	resp = &connectorPB.CheckConnectorResourceResponse{}
 	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
 	if err != nil {
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, isBasicView)
+	connectorResource, err := h.service.GetConnectorResourceByUIDAdmin(ctx, connUID, connectorPB.View_VIEW_BASIC)
 	if err != nil {
 		return nil, err
 	}
@@ -158,10 +149,9 @@ func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req
 	if err != nil {
 		return resp, err
 	}
-	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	// TODO add a service wrapper
-	def, err := h.service.GetConnectorDefinitionByUIDAdmin(ctx, connUID, isBasicView)
+	def, err := h.service.GetConnectorDefinitionByUIDAdmin(ctx, connUID, parseView(req.GetView()))
 	if err != nil {
 		return resp, err
 	}
