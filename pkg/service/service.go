@@ -38,23 +38,23 @@ import (
 
 // Service interface
 type Service interface {
-	ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error)
-	GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
-	GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
-	GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorDefinition, error)
+	ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error)
+	GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, view connectorPB.View, credentialMask bool) (*connectorPB.ConnectorResource, error)
+	GetConnectorDefinitionByID(ctx context.Context, id string, view connectorPB.View) (*connectorPB.ConnectorDefinition, error)
+	GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorDefinition, error)
 
 	// Connector common
-	ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
 	CreateUserConnectorResource(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
-	ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
-	GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error)
+	ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, view connectorPB.View, credentialMask bool) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*connectorPB.ConnectorResource, error)
 	UpdateUserConnectorResourceStateByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, state connectorPB.ConnectorResource_State) (*connectorPB.ConnectorResource, error)
 	DeleteUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string) error
 
-	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
-	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorResource, error)
+	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error)
+	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorResource, error)
 
 	// Execute connector
 	Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, inputs []*structpb.Struct) ([]*structpb.Struct, error)
@@ -202,7 +202,7 @@ func (s *service) RemoveCredentialFieldsWithMaskString(dbConnDefID string, confi
 	connector.RemoveCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
 }
 
-func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error) {
+func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 
@@ -294,7 +294,7 @@ func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, 
 
 	for _, def := range page {
 		def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
-		if isBasicView {
+		if view == connectorPB.View_VIEW_BASIC {
 			def.Spec = nil
 		}
 		def.VendorAttributes = nil
@@ -304,39 +304,39 @@ func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, 
 
 }
 
-func (s *service) GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
+func (s *service) GetConnectorResourceByUID(ctx context.Context, userUid uuid.UUID, uid uuid.UUID, view connectorPB.View, credentialMask bool) (*connectorPB.ConnectorResource, error) {
 
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	dbConnectorResource, err := s.repository.GetConnectorResourceByUID(ctx, userPermalink, uid, isBasicView)
+	dbConnectorResource, err := s.repository.GetConnectorResourceByUID(ctx, userPermalink, uid, view == connectorPB.View_VIEW_BASIC)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, view, credentialMask)
 }
 
-func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, isBasicView bool) (*connectorPB.ConnectorDefinition, error) {
+func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, view connectorPB.View) (*connectorPB.ConnectorDefinition, error) {
 
 	def, err := s.connectors.GetConnectorDefinitionById(id)
 	if err != nil {
 		return nil, err
 	}
 	def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
-	if isBasicView {
+	if view == connectorPB.View_VIEW_BASIC {
 		def.Spec = nil
 	}
 	def.VendorAttributes = nil
 
 	return def, nil
 }
-func (s *service) GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorDefinition, error) {
+func (s *service) GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorDefinition, error) {
 
 	def, err := s.connectors.GetConnectorDefinitionByUid(uid)
 	if err != nil {
 		return nil, err
 	}
 	def = proto.Clone(def).(*connectorPB.ConnectorDefinition)
-	if isBasicView {
+	if view == connectorPB.View_VIEW_BASIC {
 		def.Spec = nil
 	}
 	def.VendorAttributes = nil
@@ -344,16 +344,16 @@ func (s *service) GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid
 	return def, nil
 }
 
-func (s *service) ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
+func (s *service) ListConnectorResources(ctx context.Context, userUid uuid.UUID, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
 	userPermalink := resource.UserUidToUserPermalink(userUid)
 
-	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResources(ctx, userPermalink, pageSize, pageToken, isBasicView, filter)
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResources(ctx, userPermalink, pageSize, pageToken, view == connectorPB.View_VIEW_BASIC, filter)
 	if err != nil {
 		return nil, 0, "", err
 	}
 
-	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, view, true)
 	return pbConnectorResources, totalSize, nextPageToken, err
 
 }
@@ -429,56 +429,56 @@ func (s *service) CreateUserConnectorResource(ctx context.Context, ns resource.N
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, connectorPB.View_VIEW_FULL, true)
 
 }
 
-func (s *service) ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
+func (s *service) ListUserConnectorResources(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListUserConnectorResources(ctx, ownerPermalink, userPermalink, pageSize, pageToken, isBasicView, filter)
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListUserConnectorResources(ctx, ownerPermalink, userPermalink, pageSize, pageToken, view == connectorPB.View_VIEW_BASIC, filter)
 
 	if err != nil {
 		return nil, 0, "", err
 	}
 
-	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, view, true)
 	return pbConnectorResources, totalSize, nextPageToken, err
 
 }
 
-func (s *service) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
+func (s *service) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorResource, int64, string, error) {
 
-	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, isBasicView, filter)
+	dbConnectorResources, totalSize, nextPageToken, err := s.repository.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, view == connectorPB.View_VIEW_BASIC, filter)
 	if err != nil {
 		return nil, 0, "", err
 	}
 
-	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, isBasicView, true)
+	pbConnectorResources, err := s.convertDatamodelArrayToProtoArray(ctx, dbConnectorResources, view, true)
 	return pbConnectorResources, totalSize, nextPageToken, err
 }
 
-func (s *service) GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, isBasicView bool, credentialMask bool) (*connectorPB.ConnectorResource, error) {
+func (s *service) GetUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, view connectorPB.View, credentialMask bool) (*connectorPB.ConnectorResource, error) {
 
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
-	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, isBasicView)
+	dbConnectorResource, err := s.repository.GetUserConnectorResourceByID(ctx, ownerPermalink, userPermalink, id, view == connectorPB.View_VIEW_BASIC)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, credentialMask)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, view, credentialMask)
 }
 
-func (s *service) GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*connectorPB.ConnectorResource, error) {
+func (s *service) GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorResource, error) {
 
-	dbConnectorResource, err := s.repository.GetConnectorResourceByUIDAdmin(ctx, uid, isBasicView)
+	dbConnectorResource, err := s.repository.GetConnectorResourceByUIDAdmin(ctx, uid, view == connectorPB.View_VIEW_BASIC)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, isBasicView, true)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, view, true)
 }
 
 func (s *service) UpdateUserConnectorResourceByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, connectorResource *connectorPB.ConnectorResource) (*connectorPB.ConnectorResource, error) {
@@ -506,7 +506,7 @@ func (s *service) UpdateUserConnectorResourceByID(ctx context.Context, ns resour
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, connectorPB.View_VIEW_FULL, true)
 
 }
 
@@ -612,7 +612,7 @@ func (s *service) UpdateUserConnectorResourceStateByID(ctx context.Context, ns r
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, connectorPB.View_VIEW_FULL, true)
 }
 
 func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, newID string) (*connectorPB.ConnectorResource, error) {
@@ -629,7 +629,7 @@ func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns reso
 		return nil, err
 	}
 
-	return s.convertDatamodelToProto(ctx, dbConnectorResource, false, true)
+	return s.convertDatamodelToProto(ctx, dbConnectorResource, connectorPB.View_VIEW_FULL, true)
 
 }
 

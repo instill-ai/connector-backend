@@ -75,7 +75,6 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 	resp = &connectorPB.ListConnectorDefinitionsResponse{}
 	pageSize := req.GetPageSize()
 	pageToken := req.GetPageToken()
-	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	var connType connectorPB.ConnectorType
 	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
@@ -91,7 +90,7 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	defs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(ctx, pageSize, pageToken, isBasicView, filter)
+	defs, totalSize, nextPageToken, err := h.service.ListConnectorDefinitions(ctx, pageSize, pageToken, parseView(req.GetView()), filter)
 
 	if err != nil {
 		return nil, err
@@ -121,9 +120,8 @@ func (h *PublicHandler) GetConnectorDefinition(ctx context.Context, req *connect
 		span.SetStatus(1, err.Error())
 		return resp, err
 	}
-	isBasicView := (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
-	dbDef, err := h.service.GetConnectorDefinitionByID(ctx, connID, isBasicView)
+	dbDef, err := h.service.GetConnectorDefinitionByID(ctx, connID, parseView(req.GetView()))
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -149,12 +147,10 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 
 	var pageSize int64
 	var pageToken string
-	var isBasicView bool
 
 	resp = &connectorPB.ListConnectorResourcesResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	var connType connectorPB.ConnectorType
 	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
@@ -177,7 +173,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 		return resp, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, userUid, pageSize, pageToken, isBasicView, filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, userUid, pageSize, pageToken, parseView(req.GetView()), filter)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -210,8 +206,6 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	var isBasicView bool
-
 	resp = &connectorPB.LookUpConnectorResourceResponse{}
 
 	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
@@ -243,9 +237,7 @@ func (h *PublicHandler) LookUpConnectorResource(ctx context.Context, req *connec
 		return resp, st.Err()
 	}
 
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
-
-	connectorResource, err := h.service.GetConnectorResourceByUID(ctx, userUid, connUID, isBasicView, true)
+	connectorResource, err := h.service.GetConnectorResourceByUID(ctx, userUid, connUID, parseView(req.GetView()), true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -442,12 +434,10 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 
 	var pageSize int64
 	var pageToken string
-	var isBasicView bool
 
 	resp = &connectorPB.ListUserConnectorResourcesResponse{}
 	pageSize = req.GetPageSize()
 	pageToken = req.GetPageToken()
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	var connType connectorPB.ConnectorType
 	declarations, err := filtering.NewDeclarations([]filtering.DeclarationOption{
@@ -475,7 +465,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 		return resp, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, ns, userUid, pageSize, pageToken, isBasicView, filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, ns, userUid, pageSize, pageToken, parseView(req.GetView()), filter)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -507,11 +497,7 @@ func (h *PublicHandler) GetUserConnectorResource(ctx context.Context, req *conne
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	var isBasicView bool
-
 	resp = &connectorPB.GetUserConnectorResourceResponse{}
-
-	isBasicView = (req.GetView() == connectorPB.View_VIEW_BASIC) || (req.GetView() == connectorPB.View_VIEW_UNSPECIFIED)
 
 	ns, connID, err := h.service.GetRscNamespaceAndNameID(req.Name)
 	if err != nil {
@@ -524,7 +510,7 @@ func (h *PublicHandler) GetUserConnectorResource(ctx context.Context, req *conne
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, isBasicView, true)
+	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, parseView(req.GetView()), true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -616,7 +602,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 		return resp, st.Err()
 	}
 
-	existedConnectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, false, false)
+	existedConnectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_FULL, false)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -659,7 +645,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 	}
 
 	if mask.IsEmpty() {
-		existedConnectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, false, true)
+		existedConnectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_FULL, true)
 		if err != nil {
 			span.SetStatus(1, err.Error())
 			return resp, err
@@ -753,7 +739,7 @@ func (h *PublicHandler) DeleteUserConnectorResource(ctx context.Context, req *co
 		return resp, err
 	}
 
-	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true, true)
+	dbConnector, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_BASIC, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -823,7 +809,7 @@ func (h *PublicHandler) ConnectUserConnectorResource(ctx context.Context, req *c
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true, true)
+	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_BASIC, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1056,7 +1042,7 @@ func (h *PublicHandler) WatchUserConnectorResource(ctx context.Context, req *con
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true, true)
+	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_BASIC, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		logger.Info(string(custom_otel.NewLogMessage(
@@ -1115,7 +1101,7 @@ func (h *PublicHandler) TestUserConnectorResource(ctx context.Context, req *conn
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, true, true)
+	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_BASIC, true)
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -1166,7 +1152,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		return resp, err
 	}
 
-	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, false, true)
+	connectorResource, err := h.service.GetUserConnectorResourceByID(ctx, ns, userUid, connID, connectorPB.View_VIEW_FULL, true)
 	if err != nil {
 		return resp, err
 	}
