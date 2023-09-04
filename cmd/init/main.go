@@ -2,10 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	_ "embed"
@@ -15,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/pkg/connector"
@@ -58,9 +54,6 @@ type Connector struct {
 	Visibility             string         `sql:"type:string"`
 	Task                   string         `sql:"type:string"`
 }
-
-//go:embed prebuilt_list.json
-var prebuiltJson []byte
 
 func main() {
 
@@ -110,93 +103,6 @@ func main() {
 
 	if err != nil {
 		panic(err)
-	}
-
-	if config.Config.Server.PrebuiltConnector.Enabled {
-		fmt.Println("Load PreBuiltConnector")
-		var prebuiltConnectors []PrebuiltConnector
-		err := json.Unmarshal(prebuiltJson, &prebuiltConnectors)
-		if err != nil {
-			panic(err)
-		}
-		for idx := range prebuiltConnectors {
-			// TODO: refactor this
-			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"]; ok {
-				val := val.(string)
-				if val[:4] == "<CFG" {
-					envVal := os.Getenv(val[1 : len(val)-1])
-					if envVal == "" {
-						panic(fmt.Sprintf("%s is missing", val))
-					}
-					prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_key"] = envVal
-				}
-
-			}
-			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["server_url"]; ok {
-				val := val.(string)
-				if val[:4] == "<CFG" {
-					envVal := os.Getenv(val[1 : len(val)-1])
-					if envVal == "" {
-						panic(fmt.Sprintf("%s is missing", val))
-					}
-					prebuiltConnectors[idx].Configuration.(map[string]interface{})["server_url"] = envVal
-				}
-
-			}
-			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_token"]; ok {
-				val := val.(string)
-				if val[:4] == "<CFG" {
-					envVal := os.Getenv(val[1 : len(val)-1])
-					if envVal == "" {
-						panic(fmt.Sprintf("%s is missing", val))
-					}
-					prebuiltConnectors[idx].Configuration.(map[string]interface{})["api_token"] = envVal
-				}
-
-			}
-			if val, ok := prebuiltConnectors[idx].Configuration.(map[string]interface{})["capture_token"]; ok {
-				val := val.(string)
-				if val[:4] == "<CFG" {
-					envVal := os.Getenv(val[1 : len(val)-1])
-					if envVal == "" {
-						panic(fmt.Sprintf("%s is missing", val))
-					}
-					prebuiltConnectors[idx].Configuration.(map[string]interface{})["capture_token"] = envVal
-				}
-			}
-
-			config, err := json.Marshal(prebuiltConnectors[idx].Configuration)
-			if err != nil {
-				panic(err)
-			}
-			connectorType := "CONNECTOR_TYPE_AI"
-			if prebuiltConnectors[idx].Id == "instill-number" {
-				connectorType = "CONNECTOR_TYPE_BLOCKCHAIN"
-
-			}
-			connector := &Connector{
-				BaseDynamic: BaseDynamic{
-					UID: uuid.FromStringOrNil(prebuiltConnectors[idx].Uid),
-				},
-				ID:                     prebuiltConnectors[idx].Id,
-				Owner:                  prebuiltConnectors[idx].Owner,
-				ConnectorDefinitionUID: uuid.FromStringOrNil(prebuiltConnectors[idx].ConnectorDefinitionUid),
-				Tombstone:              false,
-				Configuration:          config,
-				ConnectorType:          connectorType,
-				Visibility:             "VISIBILITY_PUBLIC",
-				State:                  "STATE_CONNECTED",
-				Task:                   prebuiltConnectors[idx].Task,
-			}
-
-			if result := db.Model(&Connector{}).Clauses(clause.OnConflict{
-				UpdateAll: true,
-			}).Create(connector); result.Error != nil {
-				panic(result.Error)
-			}
-
-		}
-
 	}
 
 	// Set tombstone based on definition
