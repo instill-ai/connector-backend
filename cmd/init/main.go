@@ -84,7 +84,7 @@ func main() {
 	})
 
 	// TODO: use pagination
-	conns, _, _, err := repository.ListConnectorResourcesAdmin(ctx, 1000, "", false, filtering.Filter{})
+	conns, _, _, err := repository.ListConnectorResourcesAdmin(ctx, 1000, "", false, filtering.Filter{}, false)
 	if err != nil {
 		panic(err)
 	}

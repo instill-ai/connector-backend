@@ -50,7 +50,7 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 		return nil, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, parseView(req.GetView()), filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResourcesAdmin(ctx, pageSize, pageToken, parseView(req.GetView()), filter, req.GetShowDeleted())
 	if err != nil {
 		return nil, err
 	}

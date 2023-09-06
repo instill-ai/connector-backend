@@ -129,6 +129,7 @@ func (s *service) convertDatamodelToProto(
 		Tombstone:   dbConnectorResource.Tombstone,
 		CreateTime:  timestamppb.New(dbConnectorResource.CreateTime),
 		UpdateTime:  timestamppb.New(dbConnectorResource.UpdateTime),
+		DeleteTime:  timestamppb.New(dbConnectorResource.DeleteTime.Time),
 		Visibility:  connectorPB.ConnectorResource_Visibility(dbConnectorResource.Visibility),
 
 		Configuration: func() *structpb.Struct {

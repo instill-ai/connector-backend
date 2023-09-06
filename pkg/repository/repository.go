@@ -35,12 +35,12 @@ const VisibilityPublic = datamodel.ConnectorResourceVisibility(connectorPB.Conne
 type Repository interface {
 
 	// List all connector resources visible to the user
-	ListConnectorResources(ctx context.Context, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	ListConnectorResources(ctx context.Context, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) ([]*datamodel.ConnectorResource, int64, string, error)
 	GetConnectorResourceByUID(ctx context.Context, userPermalink string, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
 
 	// Operations for resources under {ownerPermalink} namespace, view by {userPermalink}
 	CreateUserConnectorResource(ctx context.Context, ownerPermalink string, userPermalink string, connector *datamodel.ConnectorResource) error
-	ListUserConnectorResources(ctx context.Context, ownerPermalink string, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	ListUserConnectorResources(ctx context.Context, ownerPermalink string, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) ([]*datamodel.ConnectorResource, int64, string, error)
 	GetUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, isBasicView bool) (*datamodel.ConnectorResource, error)
 	UpdateUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, connector *datamodel.ConnectorResource) error
 	DeleteUserConnectorResourceByID(ctx context.Context, ownerPermalink string, userPermalink string, id string) error
@@ -48,7 +48,7 @@ type Repository interface {
 	UpdateUserConnectorResourceStateByID(ctx context.Context, ownerPermalink string, userPermalink string, id string, state datamodel.ConnectorResourceState) error
 
 	// Operations Admin
-	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) ([]*datamodel.ConnectorResource, int64, string, error)
+	ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) ([]*datamodel.ConnectorResource, int64, string, error)
 	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, isBasicView bool) (*datamodel.ConnectorResource, error)
 }
 
@@ -63,7 +63,12 @@ func NewRepository(db *gorm.DB) Repository {
 	}
 }
 
-func (r *repository) listConnectorResources(ctx context.Context, where string, whereArgs []interface{}, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
+func (r *repository) listConnectorResources(ctx context.Context, where string, whereArgs []interface{}, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
+
+	db := r.db
+	if showDeleted {
+		db = db.Unscoped()
+	}
 
 	var expr *clause.Expr
 	if expr, err = r.transpileFilter(filter); err != nil {
@@ -81,9 +86,9 @@ func (r *repository) listConnectorResources(ctx context.Context, where string, w
 
 	logger, _ := logger.GetZapLogger(ctx)
 
-	r.db.Model(&datamodel.ConnectorResource{}).Where(where, whereArgs...).Count(&totalSize)
+	db.Model(&datamodel.ConnectorResource{}).Where(where, whereArgs...).Count(&totalSize)
 
-	queryBuilder := r.db.Model(&datamodel.ConnectorResource{}).Order("create_time DESC, uid DESC").Where(where, whereArgs...)
+	queryBuilder := db.Model(&datamodel.ConnectorResource{}).Order("create_time DESC, uid DESC").Where(where, whereArgs...)
 
 	if pageSize == 0 {
 		pageSize = DefaultPageSize
@@ -138,7 +143,7 @@ func (r *repository) listConnectorResources(ctx context.Context, where string, w
 	defer rows.Close()
 	for rows.Next() {
 		var item datamodel.ConnectorResource
-		if err = r.db.ScanRows(rows, &item); err != nil {
+		if err = db.ScanRows(rows, &item); err != nil {
 			st, err := sterr.CreateErrorResourceInfo(
 				codes.Internal,
 				fmt.Sprintf("[db] list connector error: %s", err.Error()),
@@ -160,7 +165,7 @@ func (r *repository) listConnectorResources(ctx context.Context, where string, w
 		lastUID := (connectors)[len(connectors)-1].UID
 		lastItem := &datamodel.ConnectorResource{}
 
-		if result := r.db.Model(&datamodel.ConnectorResource{}).
+		if result := db.Model(&datamodel.ConnectorResource{}).
 			Where(where, whereArgs...).
 			Order("create_time ASC, uid ASC").Limit(1).Find(lastItem); result.Error != nil {
 			st, err := sterr.CreateErrorResourceInfo(
@@ -187,25 +192,25 @@ func (r *repository) listConnectorResources(ctx context.Context, where string, w
 	return connectors, totalSize, nextPageToken, nil
 }
 
-func (r *repository) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
-	return r.listConnectorResources(ctx, "", []interface{}{}, pageSize, pageToken, isBasicView, filter)
+func (r *repository) ListConnectorResourcesAdmin(ctx context.Context, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
+	return r.listConnectorResources(ctx, "", []interface{}{}, pageSize, pageToken, isBasicView, filter, showDeleted)
 }
 
-func (r *repository) ListConnectorResources(ctx context.Context, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListConnectorResources(ctx context.Context, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
 
 	return r.listConnectorResources(ctx,
 		"(owner = ? OR visibility = ?)",
 		[]interface{}{userPermalink, VisibilityPublic},
-		pageSize, pageToken, isBasicView, filter)
+		pageSize, pageToken, isBasicView, filter, showDeleted)
 
 }
 
-func (r *repository) ListUserConnectorResources(ctx context.Context, ownerPermalink string, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
+func (r *repository) ListUserConnectorResources(ctx context.Context, ownerPermalink string, userPermalink string, pageSize int64, pageToken string, isBasicView bool, filter filtering.Filter, showDeleted bool) (connectors []*datamodel.ConnectorResource, totalSize int64, nextPageToken string, err error) {
 
 	return r.listConnectorResources(ctx,
 		"(owner = ? AND (visibility = ? OR ? = ?))",
 		[]interface{}{ownerPermalink, VisibilityPublic, ownerPermalink, userPermalink},
-		pageSize, pageToken, isBasicView, filter)
+		pageSize, pageToken, isBasicView, filter, showDeleted)
 
 }
 
