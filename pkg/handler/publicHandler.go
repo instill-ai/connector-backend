@@ -173,7 +173,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 		return resp, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, userUid, pageSize, pageToken, parseView(req.GetView()), filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListConnectorResources(ctx, userUid, pageSize, pageToken, parseView(req.GetView()), filter, req.GetShowDeleted())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
@@ -465,7 +465,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 		return resp, err
 	}
 
-	connectorResources, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, ns, userUid, pageSize, pageToken, parseView(req.GetView()), filter)
+	connectorResources, totalSize, nextPageToken, err := h.service.ListUserConnectorResources(ctx, ns, userUid, pageSize, pageToken, parseView(req.GetView()), filter, req.GetShowDeleted())
 	if err != nil {
 		span.SetStatus(1, err.Error())
 		return resp, err
