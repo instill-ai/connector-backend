@@ -59,6 +59,8 @@ func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write
 		map[string]interface{}{
 			"pipeline_id":              pipelineMetadata.GetStructValue().GetFields()["id"].GetStringValue(),
 			"pipeline_uid":             pipelineMetadata.GetStructValue().GetFields()["uid"].GetStringValue(),
+			"pipeline_release_id":      pipelineMetadata.GetStructValue().GetFields()["release_id"].GetStringValue(),
+			"pipeline_release_uid":     pipelineMetadata.GetStructValue().GetFields()["release_uid"].GetStringValue(),
 			"pipeline_owner":           pipelineOwnerUUID,
 			"pipeline_trigger_id":      pipelineMetadata.GetStructValue().GetFields()["trigger_id"].GetStringValue(),
 			"connector_owner_uid":      data.OwnerUID,
