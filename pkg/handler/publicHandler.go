@@ -1181,12 +1181,19 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 	md, _ := metadata.FromIncomingContext(ctx)
 
 	pipelineVal := &structpb.Value{}
-	if len(md.Get("id")) > 0 && len(md.Get("uid")) > 0 && len(md.Get("owner")) > 0 && len(md.Get("trigger_id")) > 0 {
+	if len(md.Get("id")) > 0 &&
+		len(md.Get("uid")) > 0 &&
+		len(md.Get("release_id")) > 0 &&
+		len(md.Get("release_uid")) > 0 &&
+		len(md.Get("owner")) > 0 &&
+		len(md.Get("trigger_id")) > 0 {
 		pipelineVal, _ = structpb.NewValue(map[string]interface{}{
-			"id":         md.Get("id")[0],
-			"uid":        md.Get("uid")[0],
-			"owner":      md.Get("owner")[0],
-			"trigger_id": md.Get("trigger_id")[0],
+			"id":          md.Get("id")[0],
+			"uid":         md.Get("uid")[0],
+			"release_id":  md.Get("release_id")[0],
+			"release_uid": md.Get("release_uid")[0],
+			"owner":       md.Get("owner")[0],
+			"trigger_id":  md.Get("trigger_id")[0],
 		})
 	}
 
