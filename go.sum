@@ -750,10 +750,8 @@ github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
 github.com/instill-ai/connector v0.3.0-alpha.0.20230829012922-393407ab343f h1:0I0fkocfW/Ug1eBrsipAh3rIuRtzq40KDCwLQ4Owlcc=
 github.com/instill-ai/connector v0.3.0-alpha.0.20230829012922-393407ab343f/go.mod h1:CxNAfSjDc/3B2SadH8rXy+0BcDyV15KOjif0ogiWu18=
-github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907065241-5fb87fb31003 h1:kQh5IVA5jZNKAO0x46xNrh/EZk7w3acV8bu3IPtKsvs=
-github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907065241-5fb87fb31003/go.mod h1:63C+5qy3tXcoWkxAdmb03FFJvCGsXmRZGIzZdlZeTro=
-github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907065524-0cc19d751120 h1:riH7vBgNUzkALYrXWb3oD2X4hG1Mn5TXI9FgsR2g+NE=
-github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907065524-0cc19d751120/go.mod h1:63C+5qy3tXcoWkxAdmb03FFJvCGsXmRZGIzZdlZeTro=
+github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907152221-1934b4864cbb h1:BtfyMY7DQnIeuGHE40JSD2qLbAFF3cydV1kX6ZV7/pM=
+github.com/instill-ai/connector-ai v0.3.0-alpha.0.20230907152221-1934b4864cbb/go.mod h1:63C+5qy3tXcoWkxAdmb03FFJvCGsXmRZGIzZdlZeTro=
 github.com/instill-ai/connector-blockchain v0.3.0-alpha.0.20230906052339-fef2adb5bbbf h1:pj0ylXP3ZCRjuNpChAq1NtHc3YaSv9YQXBJBFuDnUwo=
 github.com/instill-ai/connector-blockchain v0.3.0-alpha.0.20230906052339-fef2adb5bbbf/go.mod h1:+i9EwcX6pcifvjZOg6n9OvWkC8iTRi25j4miwfAcMcI=
 github.com/instill-ai/connector-data v0.3.0-alpha.0.20230906052456-4f87b297e545 h1:amfG1InGZGW0OzG3iOaDqhCRRI+n8rCQ+xIyjz/Q4nw=
