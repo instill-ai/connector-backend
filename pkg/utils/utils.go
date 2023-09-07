@@ -65,7 +65,7 @@ func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write
 			"pipeline_trigger_id":      pipelineMetadata.GetStructValue().GetFields()["trigger_id"].GetStringValue(),
 			"connector_owner_uid":      data.OwnerUID,
 			"connector_id":             data.ConnectorID,
-			"connector_uid":            data.ConnectorExecuteUID,
+			"connector_uid":            data.ConnectorUID,
 			"connector_definition_uid": data.ConnectorDefinitionUid,
 			"connector_execute_id":     data.ConnectorExecuteUID,
 			"execute_time":             data.ExecuteTime,
