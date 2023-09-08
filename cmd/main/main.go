@@ -166,6 +166,9 @@ func main() {
 
 	repository := repository.NewRepository(db)
 
+	grpcServerOpts = append(grpcServerOpts, grpc.MaxRecvMsgSize(constant.MaxPayloadSize))
+	grpcServerOpts = append(grpcServerOpts, grpc.MaxSendMsgSize(constant.MaxPayloadSize))
+
 	privateGrpcS := grpc.NewServer(grpcServerOpts...)
 	reflection.Register(privateGrpcS)
 
