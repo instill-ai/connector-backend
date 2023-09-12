@@ -1,8 +1,6 @@
 import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 let proto
-let pHost, cHost, mHost
-let cPrivatePort, cPublicPort, pPublicPort, mPublicPort
 
 export const apiGatewayMode = (__ENV.API_GATEWAY_URL && true);
 
@@ -25,14 +23,14 @@ if (__ENV.API_GATEWAY_PROTOCOL) {
 }
 
 
-export const pipelinePublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://pipeline-backend:8081`
-export const pipelineGRPCPublicHost = `${__ENV.API_GATEWAY_URL}`;
 export const connectorPrivateHost = `http://connector-backend:3082`;
 export const connectorPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://connector-backend:8082`
-export const connectorGRPCPrivateHost = `connector-backend:3082`;
-export const connectorGRPCPublicHost = `${__ENV.API_GATEWAY_URL}`;
+export const pipelinePublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://pipeline-backend:8081`
 export const mgmtPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/base` : `http://mgmt-backend:8084`
 
+export const connectorGRPCPrivateHost = `connector-backend:3082`;
+export const connectorGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `connector-backend:8082`
+export const pipelineGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `pipeline-backend:8081`
 
 
 export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
