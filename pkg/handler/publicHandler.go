@@ -73,7 +73,7 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 	logger, _ := logger.GetZapLogger(ctx)
 
 	resp = &connectorPB.ListConnectorDefinitionsResponse{}
-	pageSize := req.GetPageSize()
+	pageSize := int64(req.GetPageSize())
 	pageToken := req.GetPageToken()
 
 	var connType connectorPB.ConnectorType
@@ -98,7 +98,7 @@ func (h *PublicHandler) ListConnectorDefinitions(ctx context.Context, req *conne
 
 	resp.ConnectorDefinitions = defs
 	resp.NextPageToken = nextPageToken
-	resp.TotalSize = totalSize
+	resp.TotalSize = int32(totalSize)
 
 	logger.Info("ListConnectorDefinitions")
 
@@ -149,7 +149,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 	var pageToken string
 
 	resp = &connectorPB.ListConnectorResourcesResponse{}
-	pageSize = req.GetPageSize()
+	pageSize = int64(req.GetPageSize())
 	pageToken = req.GetPageToken()
 
 	var connType connectorPB.ConnectorType
@@ -188,7 +188,7 @@ func (h *PublicHandler) ListConnectorResources(ctx context.Context, req *connect
 
 	resp.ConnectorResources = connectorResources
 	resp.NextPageToken = nextPageToken
-	resp.TotalSize = totalSize
+	resp.TotalSize = int32(totalSize)
 
 	return resp, nil
 
@@ -436,7 +436,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 	var pageToken string
 
 	resp = &connectorPB.ListUserConnectorResourcesResponse{}
-	pageSize = req.GetPageSize()
+	pageSize = int64(req.GetPageSize())
 	pageToken = req.GetPageToken()
 
 	var connType connectorPB.ConnectorType
@@ -480,7 +480,7 @@ func (h *PublicHandler) ListUserConnectorResources(ctx context.Context, req *con
 
 	resp.ConnectorResources = connectorResources
 	resp.NextPageToken = nextPageToken
-	resp.TotalSize = totalSize
+	resp.TotalSize = int32(totalSize)
 
 	return resp, nil
 
