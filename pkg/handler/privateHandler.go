@@ -34,7 +34,7 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 	var pageToken string
 
 	resp = &connectorPB.ListConnectorResourcesAdminResponse{}
-	pageSize = req.GetPageSize()
+	pageSize = int64(req.GetPageSize())
 	pageToken = req.GetPageToken()
 
 	var connType connectorPB.ConnectorType
@@ -57,7 +57,7 @@ func (h *PrivateHandler) ListConnectorResourcesAdmin(ctx context.Context, req *c
 
 	resp.ConnectorResources = connectorResources
 	resp.NextPageToken = nextPageToken
-	resp.TotalSize = totalSize
+	resp.TotalSize = int32(totalSize)
 
 	return resp, nil
 
