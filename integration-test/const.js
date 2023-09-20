@@ -24,14 +24,13 @@ if (__ENV.API_GATEWAY_PROTOCOL) {
 
 
 export const connectorPrivateHost = `http://connector-backend:3082`;
-export const connectorPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://connector-backend:8082`
-export const pipelinePublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://pipeline-backend:8081`
-export const mgmtPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/base` : `http://mgmt-backend:8084`
+export const connectorPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://api-gateway:8080/vdp`
+export const pipelinePublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/vdp` : `http://api-gateway:8080/vdp`
+export const mgmtPublicHost = apiGatewayMode ? `${proto}://${__ENV.API_GATEWAY_URL}/base` : `http://api-gateway:8080/base`
 
 export const connectorGRPCPrivateHost = `connector-backend:3082`;
-export const connectorGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `connector-backend:8082`
-export const pipelineGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `pipeline-backend:8081`
-
+export const connectorGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `api-gateway:8080`
+export const pipelineGRPCPublicHost = apiGatewayMode ? `${__ENV.API_GATEWAY_URL}`: `api-gateway:8080`
 
 export const csvDstDefRscName = "connector-definitions/airbyte-destination-csv"
 export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a4ad-318d23c9f3c6"
@@ -39,7 +38,10 @@ export const csvDstDefRscPermalink = "connector-definitions/8be1cf83-fde1-477f-a
 export const mySQLDstDefRscName = "connector-definitions/airbyte-destination-mysql"
 export const mySQLDstDefRscPermalink = "connector-definitions/ca81ee7c-3163-4246-af40-094cc31e5e42"
 
-export const namespace = "users/instill-ai"
+export const namespace = "users/admin"
+export const defaultUsername = "admin"
+export const defaultPassword = "password"
+
 
 export const csvDstConfig = {
   "destination_path": "/local/test"
