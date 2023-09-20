@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/propagators/b3"
@@ -42,7 +41,6 @@ import (
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
-	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
@@ -175,12 +173,6 @@ func main() {
 	publicGrpcS := grpc.NewServer(grpcServerOpts...)
 	reflection.Register(publicGrpcS)
 
-	resp, err := mgmtPrivateServiceClient.GetUserAdmin(ctx, &mgmtPB.GetUserAdminRequest{Name: "users/" + constant.DefaultUserID})
-	if err != nil {
-		panic(err)
-	}
-	defaultUserUID := uuid.FromStringOrNil(*resp.User.Uid)
-
 	service := service.NewService(
 		ctx,
 		repository,
@@ -189,7 +181,6 @@ func main() {
 		controllerClient,
 		redisClient,
 		influxDBWriteClient,
-		defaultUserUID,
 	)
 	connectorPB.RegisterConnectorPrivateServiceServer(
 		privateGrpcS,
