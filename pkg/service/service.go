@@ -87,7 +87,6 @@ type service struct {
 	connectorAll                connectorBase.IConnector
 	influxDBWriteClient         api.WriteAPI
 	redisClient                 *redis.Client
-	defaultUserUid              uuid.UUID
 	connectors                  connectorBase.IConnector
 }
 
@@ -100,7 +99,6 @@ func NewService(
 	c controllerPB.ControllerPrivateServiceClient,
 	rc *redis.Client,
 	i api.WriteAPI,
-	defaultUserUid uuid.UUID,
 ) Service {
 	logger, _ := logger.GetZapLogger(t)
 	return &service{
@@ -111,7 +109,6 @@ func NewService(
 		connectorAll:                connector.InitConnectorAll(logger),
 		redisClient:                 rc,
 		influxDBWriteClient:         i,
-		defaultUserUid:              defaultUserUid,
 		connectors:                  connector.InitConnectorAll(logger),
 	}
 }
@@ -130,10 +127,9 @@ func (s *service) GetUser(ctx context.Context) (string, uuid.UUID, error) {
 			return "", uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 		}
 
-		return *userResp.User.Uid, uuid.FromStringOrNil(headerUserUId), nil
+		return userResp.User.Id, uuid.FromStringOrNil(headerUserUId), nil
 	}
-
-	return constant.DefaultUserID, s.defaultUserUid, nil
+	return "", uuid.Nil, status.Errorf(codes.Unauthenticated, "Unauthorized")
 }
 
 func (s *service) injectUserToContext(ctx context.Context, userPermalink string) context.Context {
