@@ -7,7 +7,7 @@ import { connectorPublicHost } from "./const.js"
 import * as constant from "./const.js"
 import * as helper from "./helper.js"
 
-export function CheckCreate() {
+export function CheckCreate(header) {
 
     group(`Connector API: Create destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -31,7 +31,7 @@ export function CheckCreate() {
 
 }
 
-export function CheckList() {
+export function CheckList(header) {
 
     group(`Connector API: List destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -42,7 +42,7 @@ export function CheckList() {
     });
 }
 
-export function CheckGet() {
+export function CheckGet(header) {
 
     group(`Connector API: Get destination connectors by ID [with random "jwt-sub" header]`, () => {
 
@@ -54,12 +54,12 @@ export function CheckGet() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}/connect`,
-            {}, constant.params)
+            {}, header)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`, null, header), {
             [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
@@ -68,13 +68,13 @@ export function CheckGet() {
             [`[with random "jwt-sub" header] GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status is 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
 
-export function CheckUpdate() {
+export function CheckUpdate(header) {
 
     group(`Connector API: Update destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -86,7 +86,7 @@ export function CheckUpdate() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         var csvDstConnectorUpdate = {
             "id": csvDstConnector.id,
@@ -106,13 +106,13 @@ export function CheckUpdate() {
             [`[with random "jwt-sub" header] PATCH /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
 
-export function CheckLookUp() {
+export function CheckLookUp(header) {
 
     group(`Connector API: Look up destination connectors by UID [with random "jwt-sub" header]`, () => {
 
@@ -124,21 +124,21 @@ export function CheckLookUp() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         // Cannot look up a destination connector of a non-exist user
         check(http.request("GET", `${connectorPublicHost}/v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] GET /v1alpha/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 
     });
 }
 
-export function CheckState() {
+export function CheckState(header) {
 
     group(`Connector API: Change state destination connectors [with random "jwt-sub" header]`, () => {
         var csvDstConnector = {
@@ -149,7 +149,7 @@ export function CheckState() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         check(http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/disconnect`, null, constant.paramsHTTPWithJwt), {
             [`[with random "jwt-sub" header] POST /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/disconnect response at UNSPECIFIED state status 401`]: (r) => r.status === 401,
@@ -159,7 +159,7 @@ export function CheckState() {
             [`[with random "jwt-sub" header] POST /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/connect response at UNSPECIFIED state status 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 
@@ -167,7 +167,7 @@ export function CheckState() {
 
 }
 
-export function CheckRename() {
+export function CheckRename(header) {
 
     group(`Connector API: Rename destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -179,7 +179,7 @@ export function CheckRename() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         // Cannot rename destination connector of a non-exist user
         check(http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/rename`,
@@ -189,13 +189,13 @@ export function CheckRename() {
             [`[with random "jwt-sub" header] POST /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/rename response status 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id} response status 204`]: (r) => r.status === 204,
         });
     });
 }
 
-export function CheckExecute() {
+export function CheckExecute(header) {
 
     group(`Connector API: Write destination connectors [with random "jwt-sub" header]`, () => {
 
@@ -212,12 +212,12 @@ export function CheckExecute() {
         }
 
         resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}/connect`,
-            {}, constant.params)
+            {}, header)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`, null, header), {
             [`[with random "jwt-sub" header] GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
@@ -232,13 +232,13 @@ export function CheckExecute() {
         // Wait for 1 sec for the connector writing to the destination-csv before deleting it
         sleep(1)
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 204 (classification)`]: (r) => r.status === 204,
         });
     });
 }
 
-export function CheckTest() {
+export function CheckTest(header) {
 
     group(`Connector API: Test destination connectors by ID [with random "jwt-sub" header]`, () => {
 
@@ -250,12 +250,12 @@ export function CheckTest() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${csvDstConnector.id}/connect`,
-            {}, constant.params)
+            {}, header)
 
-        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`), {
+        check(http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch`, null, header), {
             [`GET /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/watch response connector state is STATE_CONNECTED`]: (r) => r.json().state === "STATE_CONNECTED",
         })
 
@@ -264,7 +264,7 @@ export function CheckTest() {
             [`[with random "jwt-sub" header] POST /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}/testConnection response status is 401`]: (r) => r.status === 401,
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
     });

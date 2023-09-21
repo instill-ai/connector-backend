@@ -16,7 +16,7 @@ const clientPublic = new grpc.Client();
 clientPrivate.load(['proto/vdp/connector/v1alpha'], 'connector_private_service.proto');
 clientPublic.load(['proto/vdp/connector/v1alpha'], 'connector_public_service.proto');
 
-export function CheckList() {
+export function CheckList(metadata) {
 
     group("Connector API: List data connector-resources by admin", () => {
 
@@ -51,10 +51,10 @@ export function CheckList() {
             var resDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
                 parent: `${constant.namespace}`,
                 connector_resource: reqBody
-            })
+            }, metadata)
             clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
                 name: `${constant.namespace}/connector-resources/${resDst.message.connectorResource.id}`
-            })
+            }, metadata)
 
             check(resDst, {
                 [`vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource x${reqBodies.length} HTTP response StatusOK`]: (r) => r.status === grpc.StatusOK,
@@ -133,7 +133,7 @@ export function CheckList() {
         for (const reqBody of reqBodies) {
             check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
                 name: `${constant.namespace}/connector-resources/${reqBody.id}`
-            }), {
+            }, metadata), {
                 [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource x${reqBodies.length} response StatusOK`]: (r) => r.status === grpc.StatusOK,
             });
         }
@@ -143,7 +143,7 @@ export function CheckList() {
     });
 }
 
-export function CheckLookUp() {
+export function CheckLookUp(metadata) {
 
     group("Connector API: Look up data connectors by UID by admin", () => {
 
@@ -165,11 +165,11 @@ export function CheckLookUp() {
         var resCSVDst = clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/CreateUserConnectorResource', {
             parent: `${constant.namespace}`,
             connector_resource: csvDstConnector
-        })
+        }, metadata)
 
         clientPublic.invoke('vdp.connector.v1alpha.ConnectorPublicService/ConnectUserConnectorResource', {
             name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
-        })
+        }, metadata)
 
         check(clientPrivate.invoke('vdp.connector.v1alpha.ConnectorPrivateService/LookUpConnectorResourceAdmin', {
             permalink: `connector-resources/${resCSVDst.message.connectorResource.uid}`
@@ -182,7 +182,7 @@ export function CheckLookUp() {
 
         check(clientPublic.invoke(`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource`, {
             name: `${constant.namespace}/connector-resources/${csvDstConnector.id}`
-        }), {
+        }, metadata), {
             [`vdp.connector.v1alpha.ConnectorPublicService/DeleteUserConnectorResource ${csvDstConnector.id} response StatusOK`]: (r) => r.status === grpc.StatusOK,
         });
 

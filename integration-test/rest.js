@@ -19,17 +19,37 @@ export let options = {
 
 export function setup() {
 
+  var loginResp = http.request("POST", `${constant.mgmtPublicHost}/v1alpha/auth/login`, JSON.stringify({
+    "username": constant.defaultUsername,
+    "password": constant.defaultPassword,
+  }))
+
+  check(loginResp, {
+    [`POST ${constant.mgmtPublicHost}/v1alpha//auth/login response status is 200`]: (
+      r
+    ) => r.status === 200,
+  });
+
+  var header = {
+    "headers": {
+      "Authorization": `Bearer ${loginResp.json().access_token}`
+    },
+    "timeout": "600s",
+  }
+
+
   group("Connector API: Pre delete all connector", () => {
-    for (const connectorResource of http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`).json("connector_resources")) {
+    for (const connectorResource of http.request("GET", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`, null, header).json("connector_resources")) {
       check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${connectorResource.id}`), {
         [`DELETE /v1alpha/${constant.namespace}/connector-resources/${connectorResource.id} response status is 204`]: (r) => r.status === 204,
       });
     }
   });
 
+  return header
 }
 
-export default function (data) {
+export default function (header) {
 
   /*
    * Connector API - API CALLS
@@ -46,43 +66,48 @@ export default function (data) {
   if (!constant.apiGatewayMode) {
 
     // data connectors
-    dataConnectorPrivate.CheckList()
-    dataConnectorPrivate.CheckLookUp()
+    dataConnectorPrivate.CheckList(header)
+    dataConnectorPrivate.CheckLookUp(header)
+
+
+  } else {
 
     // data public with jwt-sub
-    dataConnectorPublicWithJwt.CheckCreate()
-    dataConnectorPublicWithJwt.CheckList()
-    dataConnectorPublicWithJwt.CheckGet()
-    dataConnectorPublicWithJwt.CheckUpdate()
-    dataConnectorPublicWithJwt.CheckLookUp()
-    dataConnectorPublicWithJwt.CheckState()
-    dataConnectorPublicWithJwt.CheckRename()
-    dataConnectorPublicWithJwt.CheckExecute()
-    dataConnectorPublicWithJwt.CheckTest()
+    dataConnectorPublicWithJwt.CheckCreate(header)
+    dataConnectorPublicWithJwt.CheckList(header)
+    dataConnectorPublicWithJwt.CheckGet(header)
+    dataConnectorPublicWithJwt.CheckUpdate(header)
+    dataConnectorPublicWithJwt.CheckLookUp(header)
+    dataConnectorPublicWithJwt.CheckState(header)
+    dataConnectorPublicWithJwt.CheckRename(header)
+    dataConnectorPublicWithJwt.CheckExecute(header)
+    dataConnectorPublicWithJwt.CheckTest(header)
+
+    // data connector definitions
+    dataConnectorDefinition.CheckList(header)
+    dataConnectorDefinition.CheckGet(header)
+
+    // data connectors
+    dataConnectorPublic.CheckCreate(header)
+    dataConnectorPublic.CheckList(header)
+    dataConnectorPublic.CheckGet(header)
+    dataConnectorPublic.CheckUpdate(header)
+    dataConnectorPublic.CheckConnect(header)
+    dataConnectorPublic.CheckLookUp(header)
+    dataConnectorPublic.CheckState(header)
+    dataConnectorPublic.CheckRename(header)
+    dataConnectorPublic.CheckExecute(header)
+    dataConnectorPublic.CheckTest(header)
   }
 
 
-  // data connector definitions
-  dataConnectorDefinition.CheckList()
-  dataConnectorDefinition.CheckGet()
 
-  // data connectors
-  dataConnectorPublic.CheckCreate()
-  dataConnectorPublic.CheckList()
-  dataConnectorPublic.CheckGet()
-  dataConnectorPublic.CheckUpdate()
-  dataConnectorPublic.CheckConnect()
-  dataConnectorPublic.CheckLookUp()
-  dataConnectorPublic.CheckState()
-  dataConnectorPublic.CheckRename()
-  dataConnectorPublic.CheckExecute()
-  dataConnectorPublic.CheckTest()
 
 }
 
-export function teardown(data) {
+export function teardown(header) {
   group("Connector API: Delete all pipelines created by this test", () => {
-    for (const pipeline of http.request("GET", `${pipelinePublicHost}/v1alpha/pipelines?page_size=100`).json("pipelines")) {
+    for (const pipeline of http.request("GET", `${pipelinePublicHost}/v1alpha/pipelines?page_size=100`, null, header).json("pipelines")) {
       check(http.request("DELETE", `${pipelinePublicHost}/v1alpha/pipelines/${pipeline.id}`), {
         [`DELETE /v1alpha/pipelines response status is 204`]: (r) => r.status === 204,
       });

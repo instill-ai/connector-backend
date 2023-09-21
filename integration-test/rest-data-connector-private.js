@@ -16,7 +16,7 @@ import {
 import * as constant from "./const.js"
 import * as helper from "./helper.js"
 
-export function CheckList() {
+export function CheckList(header) {
 
     group("Connector API: List destination connectors by admin", () => {
 
@@ -41,7 +41,7 @@ export function CheckList() {
         // Create connectors
         for (const reqBody of reqBodies) {
             var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-                JSON.stringify(reqBody), constant.params)
+                JSON.stringify(reqBody), header)
             check(resCSVDst, {
                 [`POST /v1alpha/${constant.namespace}/connector-resources x${reqBodies.length} response status 201`]: (r) => r.status === 201,
             });
@@ -54,7 +54,7 @@ export function CheckList() {
         });
 
         var limitedRecords = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?filter=connector_type=CONNECTOR_TYPE_DATA`)
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?page_size=0`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?page_size=0`, null, header), {
             "GET /v1alpha/admin/connector-resources?page_size=0 response status is 200": (r) => r.status === 200,
             "GET /v1alpha/admin/connector-resources?page_size=0 response all records": (r) => r.json().connector_resources.length === limitedRecords.json().connector_resources.length,
         });
@@ -65,7 +65,7 @@ export function CheckList() {
         });
 
         var pageRes = http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?filter=connector_type=CONNECTOR_TYPE_DATA&page_size=1`)
-        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?page_size=1&page_token=${pageRes.json().next_page_token}`), {
+        check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources?page_size=1&page_token=${pageRes.json().next_page_token}`, null, header), {
             [`GET /v1alpha/admin/connector-resources?page_size=1&page_token=${pageRes.json().next_page_token} response status is 200`]: (r) => r.status === 200,
             [`GET /v1alpha/admin/connector-resources?page_size=1&page_token=${pageRes.json().next_page_token} response connectors size 1`]: (r) => r.json().connector_resources.length === 1,
         });
@@ -96,14 +96,14 @@ export function CheckList() {
 
         // Delete the destination connectors
         for (const reqBody of reqBodies) {
-            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${reqBody.id}`), {
+            check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${reqBody.id}`, null, header), {
                 [`DELETE /v1alpha/admin/connector-resources x${reqBodies.length} response status is 204`]: (r) => r.status === 204,
             });
         }
     });
 }
 
-export function CheckLookUp() {
+export function CheckLookUp(header) {
 
     group("Connector API: Look up destination connectors by UID by admin", () => {
 
@@ -115,7 +115,7 @@ export function CheckLookUp() {
         }
 
         var resCSVDst = http.request("POST", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources`,
-            JSON.stringify(csvDstConnector), constant.params)
+            JSON.stringify(csvDstConnector), header)
 
         check(http.request("GET", `${connectorPrivateHost}/v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp`), {
             [`GET /v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response status 200`]: (r) => r.status === 200,
@@ -124,7 +124,7 @@ export function CheckLookUp() {
             [`GET /v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.uid}/lookUp response connector owner is UUID`]: (r) => helper.isValidOwner(r.json().connector_resource.user),
         });
 
-        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`), {
+        check(http.request("DELETE", `${connectorPublicHost}/v1alpha/${constant.namespace}/connector-resources/${resCSVDst.json().connector_resource.id}`, null, header), {
             [`DELETE /v1alpha/admin/connector-resources/${resCSVDst.json().connector_resource.id} response status 204`]: (r) => r.status === 204,
         });
 
