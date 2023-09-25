@@ -9,11 +9,12 @@ import (
 
 	"github.com/instill-ai/connector-backend/config"
 
+	connectorBase "github.com/instill-ai/component/pkg/base"
 	connectorAI "github.com/instill-ai/connector-ai/pkg"
 	connectorBlockchain "github.com/instill-ai/connector-blockchain/pkg"
 	connectorData "github.com/instill-ai/connector-data/pkg"
 	connectorDataAirbyte "github.com/instill-ai/connector-data/pkg/airbyte"
-	connectorBase "github.com/instill-ai/connector/pkg/base"
+	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
 
 const credentialMaskString = "*****MASK*****"
@@ -85,17 +86,31 @@ func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 	return connector
 }
 
-func (c *Connector) CreateConnection(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorBase.IConnection, error) {
+func (c *Connector) CreateExecution(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorBase.IExecution, error) {
 	switch {
 	case c.Data.HasUid(defUid):
-		return c.Data.CreateConnection(defUid, config, logger)
+		return c.Data.CreateExecution(defUid, config, logger)
 	case c.Blockchain.HasUid(defUid):
-		return c.Blockchain.CreateConnection(defUid, config, logger)
+		return c.Blockchain.CreateExecution(defUid, config, logger)
 	case c.AI.HasUid(defUid):
-		return c.AI.CreateConnection(defUid, config, logger)
+		return c.AI.CreateExecution(defUid, config, logger)
 
 	default:
 		return nil, fmt.Errorf("no connector uid: %s", defUid)
+	}
+}
+
+func (c *Connector) Test(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorPB.ConnectorResource_State, error) {
+	switch {
+	case c.Data.HasUid(defUid):
+		return c.Data.Test(defUid, config, logger)
+	case c.Blockchain.HasUid(defUid):
+		return c.Blockchain.Test(defUid, config, logger)
+	case c.AI.HasUid(defUid):
+		return c.AI.Test(defUid, config, logger)
+
+	default:
+		return connectorPB.ConnectorResource_STATE_ERROR, fmt.Errorf("no connector uid: %s", defUid)
 	}
 }
 

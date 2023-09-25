@@ -29,7 +29,7 @@ import (
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
-	connectorBase "github.com/instill-ai/connector/pkg/base"
+	connectorBase "github.com/instill-ai/component/pkg/base"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
@@ -652,7 +652,7 @@ func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uu
 		return nil
 	}()
 
-	con, err := s.connectorAll.CreateConnection(dbConnectorResource.ConnectorDefinitionUID, configuration, logger)
+	con, err := s.connectorAll.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -681,13 +681,7 @@ func (s *service) CheckConnectorResourceByUID(ctx context.Context, connUID uuid.
 		return nil
 	}()
 
-	con, err := s.connectorAll.CreateConnection(dbConnector.ConnectorDefinitionUID, configuration, logger)
-
-	if err != nil {
-		return connectorPB.ConnectorResource_STATE_ERROR.Enum(), nil
-	}
-
-	state, err := con.Test()
+	state, err := s.connectorAll.Test(dbConnector.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return connectorPB.ConnectorResource_STATE_ERROR.Enum(), nil
 	}

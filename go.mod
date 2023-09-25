@@ -10,11 +10,11 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
-	github.com/instill-ai/connector v0.4.0-alpha
-	github.com/instill-ai/connector-ai v0.4.0-alpha
-	github.com/instill-ai/connector-blockchain v0.4.0-alpha
-	github.com/instill-ai/connector-data v0.4.0-alpha
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230914101327-aa4d53e6c5fc
+	github.com/instill-ai/component v0.4.0-alpha.0.20230925171029-e3485c428e72
+	github.com/instill-ai/connector-ai v0.4.0-alpha.0.20230925171709-e10b93f26bd8
+	github.com/instill-ai/connector-blockchain v0.4.0-alpha.0.20230925171713-0fe1f7f97327
+	github.com/instill-ai/connector-data v0.4.0-alpha.0.20230925171705-a84c483c087d
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20230925170910-6416b8d2be1a
 	github.com/instill-ai/usage-client v0.2.4-alpha.0.20230814155646-874e57a1e4b0
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
@@ -31,7 +31,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.16.0
 	go.opentelemetry.io/otel/sdk/metric v0.39.0
 	go.opentelemetry.io/otel/trace v1.16.0
-	go.uber.org/zap v1.24.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/net v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc
@@ -46,7 +46,6 @@ require (
 	cloud.google.com/go/longrunning v0.5.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/allegro/bigcache v1.2.1 // indirect
-	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/catalinc/hashcash v0.0.0-20220723060415-5e3ec3e24f67 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -94,7 +93,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
