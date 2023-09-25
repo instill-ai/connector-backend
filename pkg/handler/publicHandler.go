@@ -28,8 +28,8 @@ import (
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
+	connectorConfigLoader "github.com/instill-ai/component/pkg/configLoader"
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
-	connectorConfigLoader "github.com/instill-ai/connector/pkg/configLoader"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"

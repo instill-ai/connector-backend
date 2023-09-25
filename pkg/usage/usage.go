@@ -16,8 +16,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	connectorBase "github.com/instill-ai/component/pkg/base"
 	connectorData "github.com/instill-ai/connector-data/pkg"
-	connectorBase "github.com/instill-ai/connector/pkg/base"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	usagePB "github.com/instill-ai/protogen-go/base/usage/v1alpha"
 	usageClient "github.com/instill-ai/usage-client/client"
