@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.12.0-alpha...v0.13.0-alpha) (2023-09-30)
+
+
+### Bug Fixes
+
+* **proto,handler:** use `int32` in proto pkg to prevent the `total_size` converted to `string` ([#168](https://github.com/instill-ai/connector-backend/issues/168)) ([1319d23](https://github.com/instill-ai/connector-backend/commit/1319d23b1011deb1e0b9de246da7e771a6fd56fd))
+
+
+### Miscellaneous Chores
+
+* **release:** release v0.13.0-alpha ([f035a94](https://github.com/instill-ai/connector-backend/commit/f035a94b2b7db28217e02987b1a1e7c720c0c46f))
+
 ## [0.12.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.11.0-alpha...v0.12.0-alpha) (2023-09-13)
 
 
