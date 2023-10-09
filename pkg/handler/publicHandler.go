@@ -28,7 +28,6 @@ import (
 	"github.com/instill-ai/x/checkfield"
 	"github.com/instill-ai/x/sterr"
 
-	connectorConfigLoader "github.com/instill-ai/component/pkg/configLoader"
 	custom_otel "github.com/instill-ai/connector-backend/pkg/logger/otel"
 	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
 	healthcheckPB "github.com/instill-ai/protogen-go/common/healthcheck/v1alpha"
@@ -325,25 +324,6 @@ func (h *PublicHandler) CreateUserConnectorResource(ctx context.Context, req *co
 			[]*errdetails.BadRequest_FieldViolation{
 				{
 					Field:       "REQUIRED fields",
-					Description: err.Error(),
-				},
-			},
-		)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		span.SetStatus(1, st.Err().Error())
-		return resp, st.Err()
-	}
-
-	// Validate JSON Schema
-	configLoader := connectorConfigLoader.InitJSONSchema(logger)
-	if err := connectorConfigLoader.ValidateJSONSchema(configLoader.ConnJSONSchema, req.GetConnectorResource(), false); err != nil {
-		st, err := sterr.CreateErrorBadRequest(
-			"[handler] create connector error",
-			[]*errdetails.BadRequest_FieldViolation{
-				{
-					Field:       "connector",
 					Description: err.Error(),
 				},
 			},
@@ -1197,7 +1177,7 @@ func (h *PublicHandler) ExecuteUserConnectorResource(ctx context.Context, req *c
 		})
 	}
 
-	if outputs, err := h.service.Execute(ctx, ns, userUid, connID, req.GetInputs()); err != nil {
+	if outputs, err := h.service.Execute(ctx, ns, userUid, connID, req.GetTask(), req.GetInputs()); err != nil {
 		span.SetStatus(1, err.Error())
 		dataPoint.ComputeTimeDuration = time.Since(startTime).Seconds()
 		dataPoint.Status = mgmtPB.Status_STATUS_ERRORED

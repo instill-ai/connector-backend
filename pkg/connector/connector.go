@@ -19,11 +19,11 @@ import (
 
 const credentialMaskString = "*****MASK*****"
 
+var connector connectorBase.IConnector
+
 type Connector struct {
-	connectorBase.BaseConnector
-	Data       connectorBase.IConnector
-	Blockchain connectorBase.IConnector
-	AI         connectorBase.IConnector
+	connectorBase.Connector
+	connectorUIDMap map[uuid.UUID]connectorBase.IConnector
 }
 
 func GetConnectorDataOptions() connectorData.ConnectorOptions {
@@ -42,76 +42,34 @@ func GetConnectorDataOptions() connectorData.ConnectorOptions {
 
 func InitConnectorAll(logger *zap.Logger) connectorBase.IConnector {
 
-	connectorData := connectorData.Init(logger, GetConnectorDataOptions())
-	connectorBlockchain := connectorBlockchain.Init(logger, connectorBlockchain.ConnectorOptions{})
-	connectorAI := connectorAI.Init(logger, connectorAI.ConnectorOptions{})
-
-	connector := &Connector{
-		BaseConnector: connectorBase.BaseConnector{},
-		Data:          connectorData,
-		Blockchain:    connectorBlockchain,
-		AI:            connectorAI,
+	connector = &Connector{
+		Connector:       connectorBase.Connector{Component: connectorBase.Component{Logger: logger}},
+		connectorUIDMap: map[uuid.UUID]connectorBase.IConnector{},
 	}
 
-	for _, uid := range connectorData.ListConnectorDefinitionUids() {
-		def, err := connectorData.GetConnectorDefinitionByUid(uid)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		err = connector.AddConnectorDefinition(uid, def.GetId(), def)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	}
-	for _, uid := range connectorBlockchain.ListConnectorDefinitionUids() {
-		def, err := connectorBlockchain.GetConnectorDefinitionByUid(uid)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		err = connector.AddConnectorDefinition(uid, def.GetId(), def)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	}
-	for _, uid := range connectorAI.ListConnectorDefinitionUids() {
-		def, err := connectorAI.GetConnectorDefinitionByUid(uid)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		err = connector.AddConnectorDefinition(uid, def.GetId(), def)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-	}
+	connector.(*Connector).ImportDefinitions(connectorData.Init(logger, GetConnectorDataOptions()))
+	connector.(*Connector).ImportDefinitions(connectorBlockchain.Init(logger))
+	connector.(*Connector).ImportDefinitions(connectorAI.Init(logger))
+
 	return connector
 }
 
-func (c *Connector) CreateExecution(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorBase.IExecution, error) {
-	switch {
-	case c.Data.HasUid(defUid):
-		return c.Data.CreateExecution(defUid, config, logger)
-	case c.Blockchain.HasUid(defUid):
-		return c.Blockchain.CreateExecution(defUid, config, logger)
-	case c.AI.HasUid(defUid):
-		return c.AI.CreateExecution(defUid, config, logger)
-
-	default:
-		return nil, fmt.Errorf("no connector uid: %s", defUid)
+func (c *Connector) ImportDefinitions(con connectorBase.IConnector) {
+	for _, v := range con.ListConnectorDefinitions() {
+		err := c.AddConnectorDefinition(v)
+		if err != nil {
+			panic(err)
+		}
+		c.connectorUIDMap[uuid.FromStringOrNil(v.Uid)] = con
 	}
 }
 
-func (c *Connector) Test(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorPB.ConnectorResource_State, error) {
-	switch {
-	case c.Data.HasUid(defUid):
-		return c.Data.Test(defUid, config, logger)
-	case c.Blockchain.HasUid(defUid):
-		return c.Blockchain.Test(defUid, config, logger)
-	case c.AI.HasUid(defUid):
-		return c.AI.Test(defUid, config, logger)
+func (c *Connector) CreateExecution(defUID uuid.UUID, task string, config *structpb.Struct, logger *zap.Logger) (connectorBase.IExecution, error) {
+	return c.connectorUIDMap[defUID].CreateExecution(defUID, task, config, logger)
+}
 
-	default:
-		return connectorPB.ConnectorResource_STATE_ERROR, fmt.Errorf("no connector uid: %s", defUid)
-	}
+func (c *Connector) Test(defUid uuid.UUID, config *structpb.Struct, logger *zap.Logger) (connectorPB.ConnectorResource_State, error) {
+	return c.connectorUIDMap[defUid].Test(defUid, config, logger)
 }
 
 func MaskCredentialFields(connector connectorBase.IConnector, defId string, config *structpb.Struct) {

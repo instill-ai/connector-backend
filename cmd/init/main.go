@@ -93,7 +93,7 @@ func main() {
 	var uids []uuid.UUID
 	for idx := range conns {
 		uid := conns[idx].ConnectorDefinitionUID
-		if airbyteConnector.HasUid(uid) {
+		if _, err = airbyteConnector.GetConnectorDefinitionByUID(uid); err == nil {
 			uids = append(uids, uid)
 
 		}

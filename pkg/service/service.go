@@ -57,7 +57,7 @@ type Service interface {
 	GetConnectorResourceByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorResource, error)
 
 	// Execute connector
-	Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, inputs []*structpb.Struct) ([]*structpb.Struct, error)
+	Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, task string, inputs []*structpb.Struct) ([]*structpb.Struct, error)
 
 	// Shared public/private method for checking connector's connection
 	CheckConnectorResourceByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.ConnectorResource_State, error)
@@ -313,7 +313,7 @@ func (s *service) GetConnectorResourceByUID(ctx context.Context, userUid uuid.UU
 
 func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, view connectorPB.View) (*connectorPB.ConnectorDefinition, error) {
 
-	def, err := s.connectors.GetConnectorDefinitionById(id)
+	def, err := s.connectors.GetConnectorDefinitionByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (s *service) GetConnectorDefinitionByID(ctx context.Context, id string, vie
 }
 func (s *service) GetConnectorDefinitionByUIDAdmin(ctx context.Context, uid uuid.UUID, view connectorPB.View) (*connectorPB.ConnectorDefinition, error) {
 
-	def, err := s.connectors.GetConnectorDefinitionByUid(uid)
+	def, err := s.connectors.GetConnectorDefinitionByUID(uid)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +361,7 @@ func (s *service) CreateUserConnectorResource(ctx context.Context, ns resource.N
 	ownerPermalink := ns.String()
 	userPermalink := resource.UserUidToUserPermalink(userUid)
 
-	connDefResp, err := s.connectors.GetConnectorDefinitionById(strings.Split(connectorResource.ConnectorDefinitionName, "/")[1])
+	connDefResp, err := s.connectors.GetConnectorDefinitionByID(strings.Split(connectorResource.ConnectorDefinitionName, "/")[1])
 	if err != nil {
 		return nil, err
 	}
@@ -629,7 +629,7 @@ func (s *service) UpdateUserConnectorResourceIDByID(ctx context.Context, ns reso
 
 }
 
-func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, inputs []*structpb.Struct) ([]*structpb.Struct, error) {
+func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uuid.UUID, id string, task string, inputs []*structpb.Struct) ([]*structpb.Struct, error) {
 
 	logger, _ := logger.GetZapLogger(ctx)
 	ownerPermalink := ns.String()
@@ -652,12 +652,17 @@ func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uu
 		return nil
 	}()
 
-	con, err := s.connectorAll.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, configuration, logger)
+	if task == "" {
+		task = "default"
+	}
+
+	con, err := s.connectorAll.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, task, configuration, logger)
+
 	if err != nil {
 		return nil, err
 	}
 
-	return con.Execute(inputs)
+	return con.ExecuteWithValidation(inputs)
 }
 
 func (s *service) CheckConnectorResourceByUID(ctx context.Context, connUID uuid.UUID) (*connectorPB.ConnectorResource_State, error) {
