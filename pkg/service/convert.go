@@ -43,7 +43,7 @@ func (s *service) convertProtoToDatamodel(
 	createTime = pbConnectorResource.GetCreateTime().AsTime()
 	updateTime = pbConnectorResource.GetUpdateTime().AsTime()
 
-	connectorDefinition, err := s.connectors.GetConnectorDefinitionById(strings.Split(pbConnectorResource.ConnectorDefinitionName, "/")[1])
+	connectorDefinition, err := s.connectors.GetConnectorDefinitionByID(strings.Split(pbConnectorResource.ConnectorDefinitionName, "/")[1])
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (s *service) convertDatamodelToProto(
 	if err != nil {
 		return nil, err
 	}
-	dbConnDef, err := s.connectors.GetConnectorDefinitionByUid(dbConnectorResource.ConnectorDefinitionUID)
+	dbConnDef, err := s.connectors.GetConnectorDefinitionByUID(dbConnectorResource.ConnectorDefinitionUID)
 	if err != nil {
 		return nil, err
 	}
