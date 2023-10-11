@@ -128,10 +128,10 @@ export function teardown(metadata) {
     for (const pipeline of client.invoke('vdp.pipeline.v1alpha.PipelinePublicService/ListPipelines', {
       pageSize: 1000
     }, metadata).message.pipelines) {
-      check(client.invoke(`vdp.pipeline.v1alpha.PipelinePublicService/DeletePipeline`, {
-        name: `pipelines/${pipeline.id}`
+      check(client.invoke(`vdp.pipeline.v1alpha.PipelinePublicService/DeleteUserPipeline`, {
+        name: `${constant.namespace}/pipelines/${pipeline.id}`
       }, metadata), {
-        [`vdp.pipeline.v1alpha.PipelinePublicService/DeletePipeline response StatusOK`]: (r) => r.status === grpc.StatusOK,
+        [`vdp.pipeline.v1alpha.PipelinePublicService/DeleteUserPipeline response StatusOK`]: (r) => r.status === grpc.StatusOK,
       });
     }
 
