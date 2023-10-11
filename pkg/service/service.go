@@ -652,10 +652,6 @@ func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uu
 		return nil
 	}()
 
-	if task == "" {
-		task = "default"
-	}
-
 	con, err := s.connectorAll.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, task, configuration, logger)
 
 	if err != nil {
