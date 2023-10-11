@@ -115,7 +115,7 @@ func main() {
 					return false
 				}
 				// stop logging successful private function calls
-				if match, _ := regexp.MatchString("model.model.v1alpha.ModelPrivateService/.*Admin$", fullMethodName); match {
+				if match, _ := regexp.MatchString("vdp.connector.v1alpha.ConnectorPrivateService/.*Admin$", fullMethodName); match {
 					return false
 				}
 			}
