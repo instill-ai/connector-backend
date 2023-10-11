@@ -10,10 +10,10 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
-	github.com/instill-ai/component v0.5.0-alpha.0.20231009140320-4a7e8ba84a93
-	github.com/instill-ai/connector-ai v0.5.0-alpha.0.20231009162400-f9725bf6a756
-	github.com/instill-ai/connector-blockchain v0.5.0-alpha.0.20231009162412-8d9e6463b8b4
-	github.com/instill-ai/connector-data v0.5.0-alpha.0.20231009162350-f75bb83038c6
+	github.com/instill-ai/component v0.5.0-alpha.0.20231011175850-6e15dc306543
+	github.com/instill-ai/connector-ai v0.5.0-alpha.0.20231011164730-a5112e7c0b3d
+	github.com/instill-ai/connector-blockchain v0.5.0-alpha.0.20231011164804-5177e90f9382
+	github.com/instill-ai/connector-data v0.5.0-alpha.0.20231012055742-b71cfb1ae793
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231009130709-dfa678a1ed2b
 	github.com/instill-ai/usage-client v0.2.4-alpha.0.20230814155646-874e57a1e4b0
 	github.com/instill-ai/x v0.3.0-alpha
