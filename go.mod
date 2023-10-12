@@ -10,10 +10,10 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
-	github.com/instill-ai/component v0.5.0-alpha.0.20231011175850-6e15dc306543
-	github.com/instill-ai/connector-ai v0.5.0-alpha.0.20231011164730-a5112e7c0b3d
-	github.com/instill-ai/connector-blockchain v0.5.0-alpha.0.20231011164804-5177e90f9382
-	github.com/instill-ai/connector-data v0.5.0-alpha.0.20231012055742-b71cfb1ae793
+	github.com/instill-ai/component v0.6.0-alpha
+	github.com/instill-ai/connector-ai v0.6.0-alpha
+	github.com/instill-ai/connector-blockchain v0.6.0-alpha
+	github.com/instill-ai/connector-data v0.5.0-alpha.0.20231013070827-2052c437a21e
 	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231009130709-dfa678a1ed2b
 	github.com/instill-ai/usage-client v0.2.4-alpha.0.20230814155646-874e57a1e4b0
 	github.com/instill-ai/x v0.3.0-alpha
@@ -32,7 +32,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.39.0
 	go.opentelemetry.io/otel/trace v1.16.0
 	go.uber.org/zap v1.26.0
-	golang.org/x/net v0.10.0
+	golang.org/x/net v0.17.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.56.2
@@ -119,12 +119,12 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
