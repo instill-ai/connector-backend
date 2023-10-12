@@ -141,8 +141,6 @@ func (h *PrivateHandler) CheckConnectorResource(ctx context.Context, req *connec
 
 func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req *connectorPB.LookUpConnectorDefinitionAdminRequest) (resp *connectorPB.LookUpConnectorDefinitionAdminResponse, err error) {
 
-	logger, _ := logger.GetZapLogger(ctx)
-
 	resp = &connectorPB.LookUpConnectorDefinitionAdminResponse{}
 
 	connUID, err := resource.GetRscPermalinkUID(req.GetPermalink())
@@ -156,8 +154,6 @@ func (h *PrivateHandler) LookUpConnectorDefinitionAdmin(ctx context.Context, req
 		return resp, err
 	}
 	resp.ConnectorDefinition = def
-
-	logger.Info("GetConnectorDefinitionAdmin")
 
 	return resp, nil
 }
