@@ -18,8 +18,8 @@ import (
 
 	connectorBase "github.com/instill-ai/component/pkg/base"
 	connectorData "github.com/instill-ai/connector-data/pkg"
-	mgmtPB "github.com/instill-ai/protogen-go/base/mgmt/v1alpha"
-	usagePB "github.com/instill-ai/protogen-go/base/usage/v1alpha"
+	mgmtPB "github.com/instill-ai/protogen-go/core/mgmt/v1alpha"
+	usagePB "github.com/instill-ai/protogen-go/core/usage/v1alpha"
 	usageClient "github.com/instill-ai/usage-client/client"
 	usageReporter "github.com/instill-ai/usage-client/reporter"
 )
