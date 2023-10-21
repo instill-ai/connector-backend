@@ -1,6 +1,6 @@
 module github.com/instill-ai/connector-backend
 
-go 1.19
+go 1.21
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -10,17 +10,17 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/iancoleman/strcase v0.2.0
 	github.com/influxdata/influxdb-client-go/v2 v2.12.3
-	github.com/instill-ai/component v0.6.0-alpha
+	github.com/instill-ai/component v0.6.0-alpha.0.20231020232016-9d1ae211a973
 	github.com/instill-ai/connector-ai v0.6.0-alpha
 	github.com/instill-ai/connector-blockchain v0.6.0-alpha
 	github.com/instill-ai/connector-data v0.5.0-alpha.0.20231013070827-2052c437a21e
-	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231009130709-dfa678a1ed2b
-	github.com/instill-ai/usage-client v0.2.4-alpha.0.20230814155646-874e57a1e4b0
+	github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231019202606-71607ddcd93f
+	github.com/instill-ai/usage-client v0.2.4-alpha.0.20231019203021-70410a0a8061
 	github.com/instill-ai/x v0.3.0-alpha
 	github.com/jackc/pgx/v5 v5.3.0
 	github.com/knadh/koanf v1.5.0
 	github.com/mennanov/fieldmask-utils v1.0.0
-	github.com/redis/go-redis/v9 v9.0.5
+	github.com/redis/go-redis/v9 v9.2.0
 	go.einride.tech/aip v0.60.0
 	go.opentelemetry.io/contrib/propagators/b3 v1.17.0
 	go.opentelemetry.io/otel v1.16.0
@@ -38,8 +38,8 @@ require (
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
 	gorm.io/datatypes v1.0.7
-	gorm.io/driver/postgres v1.4.4
-	gorm.io/gorm v1.23.8
+	gorm.io/driver/postgres v1.4.5
+	gorm.io/gorm v1.24.2
 )
 
 require (
@@ -91,7 +91,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgtype v1.12.0 // indirect
+	github.com/jackc/pgtype v1.13.0 // indirect
 	github.com/jackc/pgx/v4 v4.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
