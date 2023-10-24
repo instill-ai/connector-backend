@@ -1,26 +1,32 @@
 package utils
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/instill-ai/connector-backend/config"
 	"github.com/instill-ai/connector-backend/internal/resource"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 
+	componentBase "github.com/instill-ai/component/pkg/base"
+	connector "github.com/instill-ai/connector/pkg"
+	connectorAirbyte "github.com/instill-ai/connector/pkg/airbyte"
 	mgmtPB "github.com/instill-ai/protogen-go/core/mgmt/v1alpha"
 )
 
 const (
-	CreateEvent     string = "Create"
-	UpdateEvent     string = "Update"
-	DeleteEvent     string = "Delete"
-	ConnectEvent    string = "Connect"
-	DisconnectEvent string = "Disconnect"
-	RenameEvent     string = "Rename"
-	ExecuteEvent    string = "Execute"
+	CreateEvent          string = "Create"
+	UpdateEvent          string = "Update"
+	DeleteEvent          string = "Delete"
+	ConnectEvent         string = "Connect"
+	DisconnectEvent      string = "Disconnect"
+	RenameEvent          string = "Rename"
+	ExecuteEvent         string = "Execute"
+	credentialMaskString string = "*****MASK*****"
 )
 
 func IsAuditEvent(eventName string) bool {
@@ -73,4 +79,56 @@ func NewDataPoint(data UsageMetricData, pipelineMetadata *structpb.Value) *write
 		},
 		time.Now(),
 	)
+}
+
+func MaskCredentialFields(connector componentBase.IConnector, defId string, config *structpb.Struct) {
+	maskCredentialFields(connector, defId, config, "")
+}
+
+func maskCredentialFields(connector componentBase.IConnector, defId string, config *structpb.Struct, prefix string) {
+
+	for k, v := range config.GetFields() {
+		key := prefix + k
+		if connector.IsCredentialField(defId, key) {
+			config.GetFields()[k] = structpb.NewStringValue(credentialMaskString)
+		}
+		if v.GetStructValue() != nil {
+			maskCredentialFields(connector, defId, v.GetStructValue(), fmt.Sprintf("%s.", key))
+		}
+
+	}
+}
+
+func RemoveCredentialFieldsWithMaskString(connector componentBase.IConnector, defId string, config *structpb.Struct) {
+	removeCredentialFieldsWithMaskString(connector, defId, config, "")
+}
+
+func removeCredentialFieldsWithMaskString(connector componentBase.IConnector, defId string, config *structpb.Struct, prefix string) {
+
+	for k, v := range config.GetFields() {
+		key := prefix + k
+		if connector.IsCredentialField(defId, key) {
+			if v.GetStringValue() == credentialMaskString {
+				delete(config.GetFields(), k)
+			}
+		}
+		if v.GetStructValue() != nil {
+			removeCredentialFieldsWithMaskString(connector, defId, v.GetStructValue(), fmt.Sprintf("%s.", key))
+		}
+
+	}
+}
+
+func GetConnectorOptions() connector.ConnectorOptions {
+	return connector.ConnectorOptions{
+		Airbyte: connectorAirbyte.ConnectorOptions{
+			MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
+			MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
+			MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
+			MountTargetAirbyte:    config.Config.Connector.Airbyte.MountTarget.Airbyte,
+			ExcludeLocalConnector: config.Config.Connector.Airbyte.ExcludeLocalConnector,
+			VDPProtocolPath:       "/etc/vdp/vdp_protocol.yaml",
+		},
+	}
+
 }

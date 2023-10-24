@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/pkg/connector"
+
 	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
@@ -16,8 +16,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	connectorBase "github.com/instill-ai/component/pkg/base"
-	connectorData "github.com/instill-ai/connector-data/pkg"
+	componentBase "github.com/instill-ai/component/pkg/base"
+	connector "github.com/instill-ai/connector/pkg"
 	mgmtPB "github.com/instill-ai/protogen-go/core/mgmt/v1alpha"
 	usagePB "github.com/instill-ai/protogen-go/core/usage/v1alpha"
 	usageClient "github.com/instill-ai/usage-client/client"
@@ -37,7 +37,7 @@ type usage struct {
 	redisClient              *redis.Client
 	reporter                 usageReporter.Reporter
 	version                  string
-	connectorData            connectorBase.IConnector
+	connectorData            componentBase.IConnector
 }
 
 // NewUsage initiates a usage instance
@@ -69,7 +69,7 @@ func NewUsage(ctx context.Context, r repository.Repository, ma mgmtPB.MgmtPrivat
 		redisClient:              rc,
 		reporter:                 reporter,
 		version:                  version,
-		connectorData:            connectorData.Init(logger, connector.GetConnectorDataOptions()),
+		connectorData:            connector.Init(logger, utils.GetConnectorOptions()),
 	}
 }
 

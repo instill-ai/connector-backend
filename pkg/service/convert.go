@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
+	"github.com/instill-ai/connector-backend/pkg/utils"
 
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 )
@@ -158,7 +158,7 @@ func (s *service) convertDatamodelToProto(
 	}
 	if view != connectorPB.View_VIEW_BASIC {
 		if credentialMask {
-			connector.MaskCredentialFields(s.connectors, dbConnDef.Id, pbConnectorResource.Configuration)
+			utils.MaskCredentialFields(s.connectors, dbConnDef.Id, pbConnectorResource.Configuration)
 		}
 		if view == connectorPB.View_VIEW_FULL {
 			pbConnectorResource.ConnectorDefinition = dbConnDef

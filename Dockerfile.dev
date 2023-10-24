@@ -25,12 +25,6 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-# tools for integration test
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/*
-RUN pip install jsonschema pyyaml
-
 # -- set up Go
 
 COPY go.mod go.sum ./

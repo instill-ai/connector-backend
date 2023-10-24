@@ -14,13 +14,14 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/instill-ai/connector-backend/config"
-	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
 	"github.com/instill-ai/connector-backend/pkg/repository"
+	"github.com/instill-ai/connector-backend/pkg/utils"
 
 	database "github.com/instill-ai/connector-backend/pkg/db"
-	connectorDataAirbyte "github.com/instill-ai/connector-data/pkg/airbyte"
+	connector "github.com/instill-ai/connector/pkg"
+	connectorAirbyte "github.com/instill-ai/connector/pkg/airbyte"
 )
 
 type PrebuiltConnector struct {
@@ -74,14 +75,7 @@ func main() {
 
 	repository := repository.NewRepository(db)
 
-	airbyte := connectorDataAirbyte.Init(logger, connectorDataAirbyte.ConnectorOptions{
-		MountSourceVDP:        config.Config.Connector.Airbyte.MountSource.VDP,
-		MountTargetVDP:        config.Config.Connector.Airbyte.MountTarget.VDP,
-		MountSourceAirbyte:    config.Config.Connector.Airbyte.MountSource.Airbyte,
-		MountTargetAirbyte:    config.Config.Connector.Airbyte.MountTarget.Airbyte,
-		ExcludeLocalConnector: config.Config.Connector.Airbyte.ExcludeLocalConnector,
-		VDPProtocolPath:       "/etc/vdp/vdp_protocol.yaml",
-	})
+	airbyte := connectorAirbyte.Init(logger, utils.GetConnectorOptions().Airbyte)
 
 	// TODO: use pagination
 	conns, _, _, err := repository.ListConnectorResourcesAdmin(ctx, 1000, "", false, filtering.Filter{}, false)
@@ -89,7 +83,7 @@ func main() {
 		panic(err)
 	}
 
-	airbyteConnector := airbyte.(*connectorDataAirbyte.Connector)
+	airbyteConnector := airbyte.(*connectorAirbyte.Connector)
 	var uids []uuid.UUID
 	for idx := range conns {
 		uid := conns[idx].ConnectorDefinitionUID
@@ -106,7 +100,7 @@ func main() {
 	}
 
 	// Set tombstone based on definition
-	connectors := connector.InitConnectorAll(logger)
+	connectors := connector.Init(logger, utils.GetConnectorOptions())
 	definitions := connectors.ListConnectorDefinitions()
 	for idx := range definitions {
 		if definitions[idx].Tombstone {
