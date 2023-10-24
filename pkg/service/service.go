@@ -20,7 +20,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/instill-ai/connector-backend/internal/resource"
-	"github.com/instill-ai/connector-backend/pkg/connector"
 	"github.com/instill-ai/connector-backend/pkg/constant"
 	"github.com/instill-ai/connector-backend/pkg/datamodel"
 	"github.com/instill-ai/connector-backend/pkg/logger"
@@ -29,7 +28,8 @@ import (
 	"github.com/instill-ai/x/paginate"
 	"github.com/instill-ai/x/sterr"
 
-	connectorBase "github.com/instill-ai/component/pkg/base"
+	componentBase "github.com/instill-ai/component/pkg/base"
+	connector "github.com/instill-ai/connector/pkg"
 	mgmtPB "github.com/instill-ai/protogen-go/core/mgmt/v1alpha"
 	connectorPB "github.com/instill-ai/protogen-go/vdp/connector/v1alpha"
 	controllerPB "github.com/instill-ai/protogen-go/vdp/controller/v1alpha"
@@ -84,10 +84,9 @@ type service struct {
 	mgmtPrivateServiceClient    mgmtPB.MgmtPrivateServiceClient
 	pipelinePublicServiceClient pipelinePB.PipelinePublicServiceClient
 	controllerClient            controllerPB.ControllerPrivateServiceClient
-	connectorAll                connectorBase.IConnector
 	influxDBWriteClient         api.WriteAPI
 	redisClient                 *redis.Client
-	connectors                  connectorBase.IConnector
+	connectors                  componentBase.IConnector
 }
 
 // NewService initiates a service instance
@@ -106,10 +105,9 @@ func NewService(
 		mgmtPrivateServiceClient:    u,
 		pipelinePublicServiceClient: p,
 		controllerClient:            c,
-		connectorAll:                connector.InitConnectorAll(logger),
 		redisClient:                 rc,
 		influxDBWriteClient:         i,
-		connectors:                  connector.InitConnectorAll(logger),
+		connectors:                  connector.Init(logger, utils.GetConnectorOptions()),
 	}
 }
 
@@ -195,7 +193,7 @@ func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespac
 }
 
 func (s *service) RemoveCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct) {
-	connector.RemoveCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
+	utils.RemoveCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
 }
 
 func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error) {
@@ -652,7 +650,7 @@ func (s *service) Execute(ctx context.Context, ns resource.Namespace, userUid uu
 		return nil
 	}()
 
-	con, err := s.connectorAll.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, task, configuration, logger)
+	con, err := s.connectors.CreateExecution(dbConnectorResource.ConnectorDefinitionUID, task, configuration, logger)
 
 	if err != nil {
 		return nil, err
@@ -682,7 +680,7 @@ func (s *service) CheckConnectorResourceByUID(ctx context.Context, connUID uuid.
 		return nil
 	}()
 
-	state, err := s.connectorAll.Test(dbConnector.ConnectorDefinitionUID, configuration, logger)
+	state, err := s.connectors.Test(dbConnector.ConnectorDefinitionUID, configuration, logger)
 	if err != nil {
 		return connectorPB.ConnectorResource_STATE_ERROR.Enum(), nil
 	}
