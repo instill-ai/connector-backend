@@ -70,9 +70,11 @@ export const paramsHTTPWithJwt = {
 }
 
 export const clsModelOutputs = [{
-  "classification": {
-    "category": "person",
-    "score": 0.99
+  "data": {
+    "classification": {
+      "category": "person",
+      "score": 0.99
+    }
   }
 }]
 
