@@ -789,10 +789,10 @@ github.com/influxdata/influxdb-client-go/v2 v2.12.3 h1:28nRlNMRIV4QbtIUvxhWqaxn0
 github.com/influxdata/influxdb-client-go/v2 v2.12.3/go.mod h1:IrrLUbCjjfkmRuaCiGQg4m2GbkaeJDcuWoxiWdQEbA0=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 h1:W9WBk7wlPfJLvMCdtV4zPulc4uCPrlywQOmbFOhgQNU=
 github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839/go.mod h1:xaLFMmpvUxqXtVkUJfg9QmT88cDaCJ3ZKgdZ78oO8Qo=
-github.com/instill-ai/component v0.6.0-alpha.0.20231025152234-6831f3393759 h1:go3JnA03QryYa9axlEIn3+6kYiNDWPylv8Jwsp/EHCc=
-github.com/instill-ai/component v0.6.0-alpha.0.20231025152234-6831f3393759/go.mod h1:Iy0XA86lTQdAp60+YLJmyKKKZu/ONq+JfmbmjLvyA6E=
-github.com/instill-ai/connector v0.4.0-alpha.0.20231025154107-a42b31f13dd0 h1:niH/75tcK2HnatFJWRKTgUDqGr4K1jvd8j0TRUaBCxQ=
-github.com/instill-ai/connector v0.4.0-alpha.0.20231025154107-a42b31f13dd0/go.mod h1:mlRpobR4jVxdcSPR08FqPAiv/qwwJpp3bjkwb5UEYCc=
+github.com/instill-ai/component v0.6.0-alpha.0.20231026154255-a1903a066149 h1:nxpyrka2zgbg2gtMliolzBpCZtUfatMWRi4MNXhPL28=
+github.com/instill-ai/component v0.6.0-alpha.0.20231026154255-a1903a066149/go.mod h1:LAufWJ0hJGFaKhVMIES9XeN+TWdyOjDvAnV3Br6xKWs=
+github.com/instill-ai/connector v0.4.0-alpha.0.20231027070502-13d5b2bb74ae h1:7YAOyEhBJIqG/IJYfRJXM9tgYT1xlglNRBQRfMlVuP8=
+github.com/instill-ai/connector v0.4.0-alpha.0.20231027070502-13d5b2bb74ae/go.mod h1:F/QZKv6u16vyAl4rPXLGDx1vZwyZSTsSjaz5AfWThPQ=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231019202606-71607ddcd93f h1:hweU93u6qsg8GH/YSogOfa+wOZEnkilGsijcy1xKX7E=
 github.com/instill-ai/protogen-go v0.3.3-alpha.0.20231019202606-71607ddcd93f/go.mod h1:q/YL5TZXD9nvmJ7Rih4gY3/B2HT2+GiFdxeZp9D+yE4=
 github.com/instill-ai/usage-client v0.2.4-alpha.0.20231019203021-70410a0a8061 h1:lOp2fORCj76/gfPuLqB3TEN2cvFRJHUQOxwFSl4qxEw=
@@ -2049,8 +2049,8 @@ google.golang.org/grpc v1.42.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ5
 google.golang.org/grpc v1.43.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
 google.golang.org/grpc v1.45.0/go.mod h1:lN7owxKUQEqMfSyQikvvk5tf/6zMPsrK+ONuO11+0rQ=
 google.golang.org/grpc v1.46.2/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
-google.golang.org/grpc v1.56.2 h1:fVRFRnXvU+x6C4IlHZewvJOVHoOv1TUuQyoRsYnB4bI=
-google.golang.org/grpc v1.56.2/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
+google.golang.org/grpc v1.56.3 h1:8I4C0Yq1EjstUzUJzpcRVbuYA2mODtEmpWiQoN/b2nc=
+google.golang.org/grpc v1.56.3/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0/go.mod h1:6Kw0yEErY5E/yWrBtf03jp27GLLJujG4z/JK95pnjjw=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
