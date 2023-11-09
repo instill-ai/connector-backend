@@ -659,6 +659,7 @@ func (h *PublicHandler) UpdateUserConnectorResource(ctx context.Context, req *co
 		return resp, err
 	}
 	configuration := &structpb.Struct{}
+	h.service.KeepCredentialFieldsWithMaskString(dbConnDefID, pbConnectorToUpdate.Configuration)
 	proto.Merge(configuration, pbConnectorToUpdate.Configuration)
 
 	// Only the fields mentioned in the field mask will be copied to `pbPipelineToUpdate`, other fields are left intact
