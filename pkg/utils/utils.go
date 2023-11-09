@@ -103,6 +103,10 @@ func RemoveCredentialFieldsWithMaskString(connector componentBase.IConnector, de
 	removeCredentialFieldsWithMaskString(connector, defId, config, "")
 }
 
+func KeepCredentialFieldsWithMaskString(connector componentBase.IConnector, defId string, config *structpb.Struct) {
+	keepCredentialFieldsWithMaskString(connector, defId, config, "")
+}
+
 func removeCredentialFieldsWithMaskString(connector componentBase.IConnector, defId string, config *structpb.Struct, prefix string) {
 
 	for k, v := range config.GetFields() {
@@ -114,6 +118,19 @@ func removeCredentialFieldsWithMaskString(connector componentBase.IConnector, de
 		}
 		if v.GetStructValue() != nil {
 			removeCredentialFieldsWithMaskString(connector, defId, v.GetStructValue(), fmt.Sprintf("%s.", key))
+		}
+
+	}
+}
+func keepCredentialFieldsWithMaskString(connector componentBase.IConnector, defId string, config *structpb.Struct, prefix string) {
+
+	for k, v := range config.GetFields() {
+		key := prefix + k
+		if !connector.IsCredentialField(defId, key) {
+			delete(config.GetFields(), k)
+		}
+		if v.GetStructValue() != nil {
+			keepCredentialFieldsWithMaskString(connector, defId, v.GetStructValue(), fmt.Sprintf("%s.", key))
 		}
 
 	}

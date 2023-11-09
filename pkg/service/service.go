@@ -76,6 +76,7 @@ type Service interface {
 	ConvertOwnerPermalinkToName(permalink string) (string, error)
 	ConvertOwnerNameToPermalink(name string) (string, error)
 	RemoveCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct)
+	KeepCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct)
 	GetUser(ctx context.Context) (string, uuid.UUID, error)
 }
 
@@ -194,6 +195,10 @@ func (s *service) GetRscNamespaceAndPermalinkUID(path string) (resource.Namespac
 
 func (s *service) RemoveCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct) {
 	utils.RemoveCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
+}
+
+func (s *service) KeepCredentialFieldsWithMaskString(dbConnDefID string, config *structpb.Struct) {
+	utils.KeepCredentialFieldsWithMaskString(s.connectors, dbConnDefID, config)
 }
 
 func (s *service) ListConnectorDefinitions(ctx context.Context, pageSize int64, pageToken string, view connectorPB.View, filter filtering.Filter) ([]*connectorPB.ConnectorDefinition, int64, string, error) {
