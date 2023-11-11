@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.1-alpha](https://github.com/instill-ai/connector-backend/compare/v0.15.0-alpha...v0.15.1-alpha) (2023-11-11)
+
+
+### Bug Fixes
+
+* **handler:** fix connector resource field can not be reset with empty value ([#183](https://github.com/instill-ai/connector-backend/issues/183)) ([41e8245](https://github.com/instill-ai/connector-backend/commit/41e82457b9963c32962d45045ad5a8ea9a6fc680))
+
 ## [0.15.0-alpha](https://github.com/instill-ai/connector-backend/compare/v0.14.0-alpha...v0.15.0-alpha) (2023-10-27)
 
 
