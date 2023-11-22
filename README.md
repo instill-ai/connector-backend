@@ -1,3 +1,5 @@
+This repository has been archived, and its contents have been merged into the [pipeline-backend](https://github.com/instill-ai/pipeline-backend).
+
 # connector-backend
 
 [![Integration Test](https://github.com/instill-ai/connector-backend/actions/workflows/integration-test.yml/badge.svg)](https://github.com/instill-ai/connector-backend/actions/workflows/integration-test.yml)
